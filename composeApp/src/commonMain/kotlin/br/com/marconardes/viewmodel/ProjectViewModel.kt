@@ -9,8 +9,9 @@ import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
+import cafe.adriel.voyager.core.model.ScreenModel
 
-class ProjectViewModel {
+class ProjectViewModel : ScreenModel {
     private val _projects = MutableStateFlow<List<Project>>(emptyList())
     val projects: StateFlow<List<Project>> = _projects.asStateFlow()
 
