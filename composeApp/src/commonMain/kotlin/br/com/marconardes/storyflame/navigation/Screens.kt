@@ -6,12 +6,13 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material.icons.filled.Delete
-import androidx.compose.material.icons.filled.Edit
-import androidx.compose.material.icons.filled.KeyboardArrowDown
-import androidx.compose.material.icons.filled.KeyboardArrowUp
+// Removed unused Material Icon imports:
+// import androidx.compose.material.icons.Icons
+// import androidx.compose.material.icons.automirrored.filled.ArrowBack
+// import androidx.compose.material.icons.filled.Delete
+// import androidx.compose.material.icons.filled.Edit
+// import androidx.compose.material.icons.filled.KeyboardArrowDown
+// import androidx.compose.material.icons.filled.KeyboardArrowUp
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -93,15 +94,8 @@ data class ChapterListScreen(val projectId: String) : Screen {
         Scaffold(
             topBar = {
                 TopAppBar(
-                    title = { Text(selectedProjectDetails?.name ?: "Chapters") },
-                    navigationIcon = {
-                        IconButton(onClick = { navigator.pop() }) {
-                            Icon(
-                                imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                                contentDescription = "Back"
-                            )
-                        }
-                    }
+                    title = { Text(selectedProjectDetails?.name ?: "Chapters") }
+                    // Removed navigationIcon
                 )
             }
         ) { paddingValues ->
@@ -149,43 +143,31 @@ data class ChapterListScreen(val projectId: String) : Screen {
                                     verticalAlignment = Alignment.CenterVertically
                                 ) {
                                     Text(chapter.title, modifier = Modifier.weight(1f))
-                                    IconButton(onClick = {
+                                    TextButton(onClick = {
                                         editingChapter = chapter
                                         editChapterTitleInput = chapter.title
                                         showEditChapterDialog = true
                                     }) {
-                                        Icon(
-                                            imageVector = Icons.Filled.Edit,
-                                            contentDescription = "Edit Title"
-                                        )
+                                        Text("Edit Title")
                                     }
-                                    IconButton(onClick = {
+                                    TextButton(onClick = {
                                         selectedProjectDetails?.let { proj ->
                                             projectViewModel.deleteChapter(proj, chapter.id)
                                         }
                                     }) {
-                                        Icon(
-                                            imageVector = Icons.Filled.Delete,
-                                            contentDescription = "Delete Chapter"
-                                        )
+                                        Text("Del")
                                     }
-                                    IconButton(
+                                    TextButton(
                                         onClick = { projectViewModel.moveChapter(selectedProjectDetails!!, chapter.id, true) },
                                         enabled = chapter.order > 0
                                     ) {
-                                        Icon(
-                                            imageVector = Icons.Filled.KeyboardArrowUp,
-                                            contentDescription = "Move Up"
-                                        )
+                                        Text("Up")
                                     }
-                                    IconButton(
+                                    TextButton(
                                         onClick = { projectViewModel.moveChapter(selectedProjectDetails!!, chapter.id, false) },
                                         enabled = chapter.order < chapters.size - 1
                                     ) {
-                                        Icon(
-                                            imageVector = Icons.Filled.KeyboardArrowDown,
-                                            contentDescription = "Move Down"
-                                        )
+                                        Text("Dn")
                                     }
                                 }
                                 HorizontalDivider()
@@ -271,12 +253,8 @@ data class ChapterEditorScreen(val projectId: String, val chapterId: String) : S
         Scaffold(
             topBar = {
                 TopAppBar(
-                    title = { Text(chapter?.title ?: "Edit Chapter") },
-                    navigationIcon = {
-                        IconButton(onClick = { navigator.pop() }) {
-                            Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
-                        }
-                    }
+                    title = { Text(chapter?.title ?: "Edit Chapter") }
+                    // Removed navigationIcon
                 )
             }
         ) { paddingValues ->
