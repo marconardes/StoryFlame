@@ -44,8 +44,8 @@ kotlin {
             implementation(libs.voyager.navigator)
             implementation(libs.voyager.screenmodel)
             implementation(libs.voyager.transitions)
-            implementation("androidx.compose.material:material-icons-core")
-            implementation("androidx.compose.material:material-icons-extended")
+            implementation("androidx.compose.material:material-icons-core:1.6.0")
+            implementation("androidx.compose.material:material-icons-extended:1.6.0")
         }
         commonTest.dependencies {
             implementation(libs.kotlin.test)
