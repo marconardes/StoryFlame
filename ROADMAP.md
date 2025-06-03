@@ -1,12 +1,18 @@
-Roadmap do Projeto StoryFlame
+# Roadmap do Projeto StoryFlame
 
 Este documento descreve as funcionalidades implementadas e os planos futuros para o StoryFlame, uma ferramenta de escrita criativa desenvolvida em Flutter.
-Funcionalidades Implementadas (V)
-Funcionalidades Não Implementadas(X)
-Funcionalidades Parciais (P)
+
+## Legenda de Status
+- Funcionalidades Implementadas (V)
+- Funcionalidades Não Implementadas(X)
+- Funcionalidades Parciais (P)
+- Planejado (🟡)
+
+## Funcionalidades Implementadas
 
 As seguintes funcionalidades foram desenvolvidas e estão presentes na versão atual do aplicativo:
-Núcleo Essencial e Gerenciamento 
+
+### Núcleo Essencial e Gerenciamento
 
     Gerenciamento de Projetos: (Prioridade: 10/10)
         Criação, abertura e listagem de múltiplos projetos de escrita. (Prioridade: 10/10)
@@ -35,7 +41,7 @@ Núcleo Essencial e Gerenciamento
         Proteção de projetos individuais por senha simples (hash SHA-256 da senha é armazenado). (Prioridade: 9/10)
         Interface para definir, alterar, remover e verificar senhas. (Prioridade: 9/10)
 
-Organização Narrativa
+### Organização Narrativa
 
     Fichas de Personagem: (Prioridade: 10/10)
         Criação, edição e exclusão de fichas de personagem detalhadas (nome, apelido, descrições, história, traços, relacionamentos, notas). (Prioridade: 10/10)
@@ -49,10 +55,9 @@ Organização Narrativa
         Possibilidade de vincular eventos a capítulos específicos. (Prioridade: 9/10)
         Reordenação manual dos eventos na timeline. (Prioridade: 9/10)
 
-Próximos Passos e Funcionalidades Futuras (Planejado 🟡)
+## Próximos Passos e Funcionalidades Futuras (Planejado 🟡)
 
-As seguintes funcionalidades e melhorias estão planejadas para futuras versões do StoryFlame:
-Organização Narrativa Avançada (Restante da Fase 2)
+### Organização Narrativa Avançada (Restante da Fase 2)
 
     Banco de Locais: (Prioridade: 8/10)
         Criação de fichas detalhadas para locais (descrição, história, atmosfera, etc.). (Prioridade: 8/10)
@@ -67,7 +72,7 @@ Organização Narrativa Avançada (Restante da Fase 2)
         Interface gráfica mais elaborada para a timeline (ex: barras cronológicas, filtros por data/personagem/capítulo). (Prioridade: 7/10)
         Diferentes modos de visualização da timeline. (Prioridade: 7/10)
 
-Recursos Avançados de Escrita e Produtividade (Fase 3)
+### Recursos Avançados de Escrita e Produtividade (Fase 3)
 
     Banco Criativo: (Prioridade: 6/10)
         Seção para armazenar ideias, frases inspiradoras, ganchos de enredo, prompts de escrita. (Prioridade: 6/10)
@@ -79,7 +84,7 @@ Recursos Avançados de Escrita e Produtividade (Fase 3)
         Funcionalidade para exportar um projeto inteiro em um formato que possa ser importado por outra instância do StoryFlame (ex: arquivo zip contendo o JSON do projeto e imagens associadas). (Prioridade: 5/10)
         Mecanismo de feedback/revisão simples se dois usuários estiverem trabalhando no mesmo local (não colaboração em tempo real). (Prioridade: 5/10)
 
-Melhorias Gerais e de UI/UX
+### Melhorias Gerais e de UI/UX
 
     Exportação PDF Avançada: (Prioridade: 7/10)
         Preservar a formatação rica do editor (negrito, itálico, sublinhado, cabeçalhos, listas) na exportação para PDF. (Prioridade: 7/10)
@@ -93,7 +98,7 @@ Melhorias Gerais e de UI/UX
     Testes Automatizados: (Prioridade: 8/10)
         Implementação de testes unitários e de widget para garantir a estabilidade do código. (Prioridade: 8/10)
 
-Recursos de Inteligência Artificial (Fase Futura - Pós-MVP)
+### Recursos de Inteligência Artificial (Fase Futura - Pós-MVP)
 
     Sugestões de Escrita: (Prioridade: 5/10)
         Sugestões contextuais para sinônimos, frases alternativas, ou continuação de ideias. (Prioridade: 5/10)
@@ -104,7 +109,7 @@ Recursos de Inteligência Artificial (Fase Futura - Pós-MVP)
         Assistência na geração de nomes de personagens, locais ou títulos. (Prioridade: 3/10)
         Sugestões de plots ou desenvolvimento de cenas com base em prompts. (Prioridade: 3/10)
 
-Publicação e Integração (Fase Futura - Pós-MVP)
+### Publicação e Integração (Fase Futura - Pós-MVP)
 
     Exportação para Formatos de E-book: (Prioridade: 4/10)
         Suporte para exportar em formatos como ePub ou Mobi. (Prioridade: 4/10)
