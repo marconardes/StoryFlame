@@ -1,114 +1,119 @@
-Roadmap do Projeto StoryFlame
+# Roadmap do Projeto StoryFlame
 
-Este documento descreve as funcionalidades implementadas e os planos futuros para o StoryFlame, uma ferramenta de escrita criativa desenvolvida em Flutter.
-Funcionalidades Implementadas (V)
-Funcionalidades Não Implementadas(X)
-Funcionalidades Parciais (P)
+**Nota Importante:** O código-fonte atual deste projeto é um placeholder inicial. Este roadmap descreve as funcionalidades planejadas para o futuro. No momento, nenhuma das funcionalidades listadas abaixo está implementada no código, exceto pela estrutura básica do projeto.
 
-As seguintes funcionalidades foram desenvolvidas e estão presentes na versão atual do aplicativo:
-Núcleo Essencial e Gerenciamento 
+## Legenda de Status
+- (V) Funcionalidade Implementada
+- (X) Funcionalidade Não Implementada
+- (P) Funcionalidade Parcial
+- (🟡) Funcionalidade Planejada
 
-    Gerenciamento de Projetos:
-        Criação, abertura e listagem de múltiplos projetos de escrita.
-        Persistência local dos dados do projeto em formato JSON.
-    Organização por Capítulos/Cenas:
-        Estruturação de projetos em capítulos ou cenas ordenáveis.
-        CRUD completo para capítulos (adicionar, editar título, excluir, reordenar).
-    Resumo por Capítulo/Cena:
-        Adição e edição de resumos textuais para cada capítulo/cena.
-    Editor de Texto Focado:
-        Integração do editor de texto rico flutter_quill.
-        Funcionalidades de formatação básica (negrito, itálico, sublinhado, cabeçalhos H1-H3).
-        Salvamento automático com debounce do conteúdo do capítulo ativo.
-    Acompanhamento de Progresso:
-        Contador de palavras em tempo real no editor para o capítulo atual.
-        Estatísticas diárias da contagem total de palavras do projeto.
-        Definição de metas de escrita diárias e totais por projeto.
-        Visualização do progresso em relação às metas.
-    Modo Escuro:
-        Alternância entre tema claro e escuro com persistência da preferência do usuário.
-        Adaptação da UI, incluindo o editor, para ambos os modos.
-    Exportação de Conteúdo:
-        Exportação do projeto completo para formato .txt (incluindo títulos de projeto/capítulo, resumos e conteúdo).
-        Exportação do projeto completo para formato .pdf (conteúdo principal dos capítulos como texto puro, mas estrutura de títulos e resumos preservada).
-    Segurança Básica:
-        Proteção de projetos individuais por senha simples (hash SHA-256 da senha é armazenado).
-        Interface para definir, alterar, remover e verificar senhas.
+## Funcionalidades Planejadas (Visão Geral)
 
-Organização Narrativa
+A seguir estão as funcionalidades planejadas para o StoryFlame, atualmente em estágio inicial de desenvolvimento (código placeholder):
 
-    Fichas de Personagem:
-        Criação, edição e exclusão de fichas de personagem detalhadas (nome, apelido, descrições, história, traços, relacionamentos, notas).
-        Listagem e acesso às fichas dentro de cada projeto.
-    Glossário Interno:
-        Criação, edição e exclusão de termos e suas definições, categorização e notas.
-        Listagem e acesso aos termos do glossário dentro de cada projeto.
-    Timeline de Eventos:
-        Criação, edição e exclusão de eventos em uma linha do tempo narrativa.
-        Atributos como título, descrição, data/hora do evento (flexível), ordem manual, notas.
-        Possibilidade de vincular eventos a capítulos específicos.
-        Reordenação manual dos eventos na timeline.
+### Núcleo Essencial e Gerenciamento
 
-Próximos Passos e Funcionalidades Futuras (Planejado 🟡)
+    (X) Gerenciamento de Projetos: (Prioridade: 10/10)
+        (X) Criação, abertura e listagem de múltiplos projetos de escrita. (Prioridade: 10/10)
+        (X) Persistência local dos dados do projeto em formato JSON. (Prioridade: 10/10)
+    (X) Organização por Capítulos/Cenas: (Prioridade: 10/10)
+        (X) Estruturação de projetos em capítulos ou cenas ordenáveis. (Prioridade: 10/10)
+        (X) CRUD completo para capítulos (adicionar, editar título, excluir, reordenar). (Prioridade: 10/10)
+    (X) Resumo por Capítulo/Cena: (Prioridade: 9/10)
+        (X) Adição e edição de resumos textuais para cada capítulo/cena. (Prioridade: 9/10)
+    (X) Editor de Texto Focado: (Prioridade: 10/10)
+        (X) Integração do editor de texto rico flutter_quill. (Prioridade: 10/10)
+        (X) Funcionalidades de formatação básica (negrito, itálico, sublinhado, cabeçalhos H1-H3). (Prioridade: 9/10)
+        (X) Salvamento automático com debounce do conteúdo do capítulo ativo. (Prioridade: 9/10)
+    (X) Acompanhamento de Progresso: (Prioridade: 9/10)
+        (X) Contador de palavras em tempo real no editor para o capítulo atual. (Prioridade: 9/10)
+        (X) Estatísticas diárias da contagem total de palavras do projeto. (Prioridade: 9/10)
+        (X) Definição de metas de escrita diárias e totais por projeto. (Prioridade: 9/10)
+        (X) Visualização do progresso em relação às metas. (Prioridade: 9/10)
+    (X) Modo Escuro: (Prioridade: 9/10)
+        (X) Alternância entre tema claro e escuro com persistência da preferência do usuário. (Prioridade: 9/10)
+        (X) Adaptação da UI, incluindo o editor, para ambos os modos. (Prioridade: 9/10)
+    (X) Exportação de Conteúdo: (Prioridade: 9/10)
+        (X) Exportação do projeto completo para formato .txt (incluindo títulos de projeto/capítulo, resumos e conteúdo). (Prioridade: 9/10)
+        (X) Exportação do projeto completo para formato .pdf (conteúdo principal dos capítulos como texto puro, mas estrutura de títulos e resumos preservada). (Prioridade: 8/10)
+    (X) Segurança Básica: (Prioridade: 9/10)
+        (X) Proteção de projetos individuais por senha simples (hash SHA-256 da senha é armazenado). (Prioridade: 9/10)
+        (X) Interface para definir, alterar, remover e verificar senhas. (Prioridade: 9/10)
 
-As seguintes funcionalidades e melhorias estão planejadas para futuras versões do StoryFlame:
-Organização Narrativa Avançada (Restante da Fase 2)
+### Organização Narrativa
 
-    Banco de Locais:
-        Criação de fichas detalhadas para locais (descrição, história, atmosfera, etc.).
-        Vinculação de locais a cenas/eventos.
-    Banco de Objetos/Itens Mágicos:
-        Criação de fichas para objetos importantes (descrição, relevância, poderes, etc.).
-    Ligações Explícitas entre Elementos:
-        Interface para vincular explicitamente personagens a cenas/capítulos específicos.
-        Visualização de quais personagens participam em cada cena/evento.
-        Vinculação de termos do glossário diretamente no texto do editor (ex: tooltip ou link).
-    Melhorias na Visualização da Timeline:
-        Interface gráfica mais elaborada para a timeline (ex: barras cronológicas, filtros por data/personagem/capítulo).
-        Diferentes modos de visualização da timeline.
+    (X) Fichas de Personagem: (Prioridade: 10/10)
+        (X) Criação, edição e exclusão de fichas de personagem detalhadas (nome, apelido, descrições, história, traços, relacionamentos, notas). (Prioridade: 10/10)
+        (X) Listagem e acesso às fichas dentro de cada projeto. (Prioridade: 10/10)
+    (X) Glossário Interno: (Prioridade: 9/10)
+        (X) Criação, edição e exclusão de termos e suas definições, categorização e notas. (Prioridade: 9/10)
+        (X) Listagem e acesso aos termos do glossário dentro de cada projeto. (Prioridade: 9/10)
+    (X) Timeline de Eventos: (Prioridade: 9/10)
+        (X) Criação, edição e exclusão de eventos em uma linha do tempo narrativa. (Prioridade: 9/10)
+        (X) Atributos como título, descrição, data/hora do evento (flexível), ordem manual, notas. (Prioridade: 9/10)
+        (X) Possibilidade de vincular eventos a capítulos específicos. (Prioridade: 9/10)
+        (X) Reordenação manual dos eventos na timeline. (Prioridade: 9/10)
 
-Recursos Avançados de Escrita e Produtividade (Fase 3)
+## Próximos Passos e Funcionalidades Futuras (Planejado 🟡)
 
-    Banco Criativo:
-        Seção para armazenar ideias, frases inspiradoras, ganchos de enredo, prompts de escrita.
-        Organização por tags ou categorias.
-    Templates de Estrutura Narrativa:
-        Disponibilização de templates comuns (ex: Jornada do Herói, Estrutura de Três Atos) para auxiliar no planejamento.
-        Possibilidade de criar e salvar templates customizados.
-    Colaboração Local (Simples):
-        Funcionalidade para exportar um projeto inteiro em um formato que possa ser importado por outra instância do StoryFlame (ex: arquivo zip contendo o JSON do projeto e imagens associadas).
-        Mecanismo de feedback/revisão simples se dois usuários estiverem trabalhando no mesmo local (não colaboração em tempo real).
+### Organização Narrativa Avançada (Restante da Fase 2)
 
-Melhorias Gerais e de UI/UX
+    (🟡) Banco de Locais: (Prioridade: 8/10)
+        (🟡) Criação de fichas detalhadas para locais (descrição, história, atmosfera, etc.). (Prioridade: 8/10)
+        (🟡) Vinculação de locais a cenas/eventos. (Prioridade: 7/10)
+    (🟡) Banco de Objetos/Itens Mágicos: (Prioridade: 7/10)
+        (🟡) Criação de fichas para objetos importantes (descrição, relevância, poderes, etc.). (Prioridade: 7/10)
+    (🟡) Ligações Explícitas entre Elementos: (Prioridade: 8/10)
+        (🟡) Interface para vincular explicitamente personagens a cenas/capítulos específicos. (Prioridade: 8/10)
+        (🟡) Visualização de quais personagens participam em cada cena/evento. (Prioridade: 8/10)
+        (🟡) Vinculação de termos do glossário diretamente no texto do editor (ex: tooltip ou link). (Prioridade: 7/10)
+    (🟡) Melhorias na Visualização da Timeline: (Prioridade: 7/10)
+        (🟡) Interface gráfica mais elaborada para a timeline (ex: barras cronológicas, filtros por data/personagem/capítulo). (Prioridade: 7/10)
+        (🟡) Diferentes modos de visualização da timeline. (Prioridade: 7/10)
 
-    Exportação PDF Avançada:
-        Preservar a formatação rica do editor (negrito, itálico, sublinhado, cabeçalhos, listas) na exportação para PDF.
-    Personalização Avançada do Editor:
-        Mais opções de fontes.
-        Configurações de espaçamento, indentação.
-    Interface de Usuário (UI) e Experiência do Usuário (UX):
-        Refinamentos gerais na interface para torná-la mais polida e intuitiva.
-        Melhorias na navegação e feedback visual.
-        Otimizações de performance, especialmente ao lidar com projetos muito grandes.
-    Testes Automatizados:
-        Implementação de testes unitários e de widget para garantir a estabilidade do código.
+### Recursos Avançados de Escrita e Produtividade (Fase 3)
 
-Recursos de Inteligência Artificial (Fase Futura - Pós-MVP)
+    (X) Banco Criativo: (Prioridade: 6/10)
+        (X) Seção para armazenar ideias, frases inspiradoras, ganchos de enredo, prompts de escrita. (Prioridade: 6/10)
+        (X) Organização por tags ou categorias. (Prioridade: 6/10)
+    (X) Templates de Estrutura Narrativa: (Prioridade: 7/10)
+        (X) Disponibilização de templates comuns (ex: Jornada do Herói, Estrutura de Três Atos) para auxiliar no planejamento. (Prioridade: 7/10)
+        (X) Possibilidade de criar e salvar templates customizados. (Prioridade: 6/10)
+    (X) Colaboração Local (Simples): (Prioridade: 5/10)
+        (X) Funcionalidade para exportar um projeto inteiro em um formato que possa ser importado por outra instância do StoryFlame (ex: arquivo zip contendo o JSON do projeto e imagens associadas). (Prioridade: 5/10)
+        (X) Mecanismo de feedback/revisão simples se dois usuários estiverem trabalhando no mesmo local (não colaboração em tempo real). (Prioridade: 5/10)
 
-    Sugestões de Escrita:
-        Sugestões contextuais para sinônimos, frases alternativas, ou continuação de ideias.
-    Análise de Texto:
-        Correção gramatical e de estilo mais avançada.
-        Análise de ritmo, clareza e tom do texto.
-    Geração Assistida:
-        Assistência na geração de nomes de personagens, locais ou títulos.
-        Sugestões de plots ou desenvolvimento de cenas com base em prompts.
+### Melhorias Gerais e de UI/UX
 
-Publicação e Integração (Fase Futura - Pós-MVP)
+    (X) Exportação PDF Avançada: (Prioridade: 7/10)
+        (X) Preservar a formatação rica do editor (negrito, itálico, sublinhado, cabeçalhos, listas) na exportação para PDF. (Prioridade: 7/10)
+    (X) Personalização Avançada do Editor: (Prioridade: 6/10)
+        (X) Mais opções de fontes. (Prioridade: 6/10)
+        (X) Configurações de espaçamento, indentação. (Prioridade: 6/10)
+    (X) Interface de Usuário (UI) e Experiência do Usuário (UX): (Prioridade: 8/10)
+        (X) Refinamentos gerais na interface para torná-la mais polida e intuitiva. (Prioridade: 8/10)
+        (X) Melhorias na navegação e feedback visual. (Prioridade: 7/10)
+        (X) Otimizações de performance, especialmente ao lidar com projetos muito grandes. (Prioridade: 7/10)
+    (🟡) Testes Automatizados: (Prioridade: 8/10)
+        (🟡) Implementação de testes unitários e de widget para garantir a estabilidade do código. (Prioridade: 8/10)
 
-    Exportação para Formatos de E-book:
-        Suporte para exportar em formatos como ePub ou Mobi.
-    Integração com Plataformas de Publicação:
-        (Muito ambicioso) Possibilidade de publicação direta ou preparação de manuscrito para plataformas como Kindle Direct Publishing (KDP), Wattpad, etc.
+### Recursos de Inteligência Artificial (Fase Futura - Pós-MVP)
+
+    (X) Sugestões de Escrita: (Prioridade: 5/10)
+        (X) Sugestões contextuais para sinônimos, frases alternativas, ou continuação de ideias. (Prioridade: 5/10)
+    (X) Análise de Texto: (Prioridade: 4/10)
+        (X) Correção gramatical e de estilo mais avançada. (Prioridade: 4/10)
+        (X) Análise de ritmo, clareza e tom do texto. (Prioridade: 4/10)
+    (X) Geração Assistida: (Prioridade: 3/10)
+        (X) Assistência na geração de nomes de personagens, locais ou títulos. (Prioridade: 3/10)
+        (X) Sugestões de plots ou desenvolvimento de cenas com base em prompts. (Prioridade: 3/10)
+
+### Publicação e Integração (Fase Futura - Pós-MVP)
+
+    (X) Exportação para Formatos de E-book: (Prioridade: 4/10)
+        (X) Suporte para exportar em formatos como ePub ou Mobi. (Prioridade: 4/10)
+    (X) Integração com Plataformas de Publicação: (Prioridade: 2/10)
+        (X) (Muito ambicioso) Possibilidade de publicação direta ou preparação de manuscrito para plataformas como Kindle Direct Publishing (KDP), Wattpad, etc. (Prioridade: 2/10)
 
 Este roadmap é um guia e poderá ser ajustado conforme o desenvolvimento do projeto e o feedback dos usuários.
