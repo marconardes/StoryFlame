@@ -101,6 +101,16 @@ class ProjectViewModel {
         saveProjects()
     }
 
+    fun updateChapterSummary(project: Project, chapterId: String, newSummary: String) {
+        val updatedChapters = project.chapters.map {
+            if (it.id == chapterId) it.copy(summary = newSummary) else it
+        }.toMutableList()
+        val updatedProject = project.copy(chapters = updatedChapters)
+
+        updateProjectInList(updatedProject)
+        saveProjects()
+    }
+
     fun deleteChapter(project: Project, chapterId: String) {
         val updatedChapters = project.chapters.filterNot { it.id == chapterId }.toMutableList()
         // Re-evaluate order for remaining chapters if necessary, for now, just remove

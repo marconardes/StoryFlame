@@ -219,4 +219,44 @@ class ProjectViewModelTest {
         assertEquals(0, projectInSave.chapters.find { it.id == chapterAlphaId }!!.order)
         assertEquals(1, projectInSave.chapters.find { it.id == chapterBetaId }!!.order)
     }
+
+    @Test
+    fun `updateChapterSummary should change summary and save`() = runTest {
+        // Setup: Ensure a clean slate for this test if relying on @BeforeTest for mock data reset
+        // @BeforeTest should handle mockLoadedJsonDataForTest = null
+
+        viewModel.createProject("Test Project for Summary")
+        var project = viewModel.projects.first().first { it.name == "Test Project for Summary" }
+        viewModel.addChapter(project, "Chapter for Summary")
+
+        project = viewModel.projects.first().first { it.name == "Test Project for Summary" } // Refresh project instance
+        val chapter = project.chapters.first()
+        viewModel.selectProject(project) // Ensure project is selected
+
+        val newSummary = "This is the updated chapter summary."
+        viewModel.updateChapterSummary(project, chapter.id, newSummary)
+
+        val updatedProject = viewModel.projects.first().find { it.id == project.id }
+        assertNotNull(updatedProject, "Project should exist after update")
+        val updatedChapter = updatedProject.chapters.find { it.id == chapter.id }
+        assertNotNull(updatedChapter, "Chapter should exist after update")
+        assertEquals(newSummary, updatedChapter.summary, "Chapter summary should be updated in ViewModel state")
+
+        assertNotNull(mockSavedJsonDataForTest, "Save function was not called after updating summary")
+        assertTrue(
+            mockSavedJsonDataForTest!!.contains(newSummary),
+            "Saved JSON does not contain the new summary. JSON: $mockSavedJsonDataForTest"
+        )
+        assertTrue(
+            mockSavedJsonDataForTest!!.contains(chapter.id),
+            "Saved JSON does not reference the correct chapter ID for summary update. JSON: $mockSavedJsonDataForTest"
+        )
+        // More specific JSON check:
+        val savedProjects = Json.decodeFromString<List<Project>>(mockSavedJsonDataForTest!!)
+        val savedProject = savedProjects.find { it.id == project.id }
+        assertNotNull(savedProject, "Saved project not found in JSON")
+        val savedChapter = savedProject.chapters.find { it.id == chapter.id }
+        assertNotNull(savedChapter, "Saved chapter not found in JSON")
+        assertEquals(newSummary, savedChapter.summary, "New summary not correctly saved in JSON")
+    }
 }

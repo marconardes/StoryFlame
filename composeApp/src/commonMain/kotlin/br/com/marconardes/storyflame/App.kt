@@ -151,42 +151,61 @@ fun App() {
                 } else {
                     LazyColumn(modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp).fillMaxWidth()) {
                         items(chapters) { chapter ->
-                            Row(
-                                modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp),
-                                verticalAlignment = Alignment.CenterVertically
-                                // Removed Arrangement.SpaceBetween to allow more space for buttons
-                            ) {
-                                Column(modifier = Modifier.weight(1f)) {
-                                    Text(chapter.title, style = MaterialTheme.typography.bodyLarge)
-                                    Text("Order: ${chapter.order}", style = MaterialTheme.typography.bodySmall)
+                            Column(modifier = Modifier.fillMaxWidth().padding(vertical = 8.dp)) { // Each chapter item is now a Column
+                                Row(
+                                    modifier = Modifier.fillMaxWidth(),
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
+                                    Column(modifier = Modifier.weight(1f)) {
+                                        Text(chapter.title, style = MaterialTheme.typography.bodyLarge)
+                                        Text("Order: ${chapter.order}", style = MaterialTheme.typography.bodySmall)
+                                    }
+                                    Row(verticalAlignment = Alignment.CenterVertically) {
+                                        TextButton(
+                                            onClick = { projectViewModel.moveChapter(proj, chapter.id, moveUp = true) },
+                                            enabled = chapter.order > 0
+                                        ) {
+                                            Text("Up")
+                                        }
+                                        TextButton(
+                                            onClick = { projectViewModel.moveChapter(proj, chapter.id, moveUp = false) },
+                                            enabled = chapter.order < chapters.size - 1
+                                        ) {
+                                            Text("Dn") // Down abbreviated
+                                        }
+                                        Spacer(modifier = Modifier.width(4.dp))
+                                        TextButton(onClick = {
+                                            editingChapter = chapter
+                                            editChapterTitleInput = chapter.title
+                                            showEditChapterDialog = true
+                                        }) {
+                                            Text("Edit Title") // Clarified button
+                                        }
+                                        Spacer(modifier = Modifier.width(4.dp))
+                                        Button(onClick = {
+                                            projectViewModel.deleteChapter(proj, chapter.id)
+                                        }) {
+                                            Text("Del")
+                                        }
+                                    }
                                 }
-                                Row(verticalAlignment = Alignment.CenterVertically) {
-                                    TextButton(
-                                        onClick = { projectViewModel.moveChapter(proj, chapter.id, moveUp = true) },
-                                        enabled = chapter.order > 0
-                                    ) {
-                                        Text("Up")
-                                    }
-                                    TextButton(
-                                        onClick = { projectViewModel.moveChapter(proj, chapter.id, moveUp = false) },
-                                        enabled = chapter.order < chapters.size - 1
-                                    ) {
-                                        Text("Dn") // Down abbreviated
-                                    }
-                                    Spacer(modifier = Modifier.width(4.dp))
-                                    TextButton(onClick = {
-                                        editingChapter = chapter
-                                        editChapterTitleInput = chapter.title
-                                        showEditChapterDialog = true
-                                    }) {
-                                        Text("Edit")
-                                    }
-                                    Spacer(modifier = Modifier.width(4.dp))
-                                    Button(onClick = {
-                                        projectViewModel.deleteChapter(proj, chapter.id)
-                                    }) {
-                                        Text("Del")
-                                    }
+                                Spacer(modifier = Modifier.height(8.dp)) // Space between title/buttons and summary field
+
+                                var summaryInput by remember(chapter.id, chapter.summary) { mutableStateOf(chapter.summary) }
+                                OutlinedTextField(
+                                    value = summaryInput,
+                                    onValueChange = { summaryInput = it },
+                                    label = { Text("Summary") },
+                                    modifier = Modifier.height(100.dp).fillMaxWidth(),
+                                    singleLine = false
+                                )
+                                TextButton(
+                                    onClick = {
+                                        projectViewModel.updateChapterSummary(proj, chapter.id, summaryInput)
+                                    },
+                                    modifier = Modifier.align(Alignment.End).padding(top = 4.dp)
+                                ) {
+                                    Text("Save Summary")
                                 }
                             }
                         }
