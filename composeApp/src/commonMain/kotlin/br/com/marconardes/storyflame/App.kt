@@ -9,23 +9,33 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.clickable
+// import androidx.compose.foundation.clickable // No longer directly used in App.kt
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
-import androidx.compose.material3.AlertDialog
+// import androidx.compose.foundation.lazy.LazyColumn // Moved to ProjectListView and ChapterSectionView
+// import androidx.compose.foundation.lazy.items // Moved
+// import androidx.compose.material3.AlertDialog // Moved to EditChapterTitleDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedTextField
+// import androidx.compose.material3.OutlinedTextField // Moved to specific views
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
+// import androidx.compose.material3.TextButton // Moved
 import androidx.compose.runtime.*
+// import androidx.compose.runtime.LaunchedEffect // Moved to ChapterItemView
+// import androidx.compose.runtime.snapshotFlow // Moved to ChapterItemView
 import androidx.compose.ui.Alignment
-import br.com.marconardes.model.Chapter
+import br.com.marconardes.model.Chapter // Still needed for state variables
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+// import br.com.marconardes.storyflame.view.RichTextEditorView // Not directly used in App.kt
+import br.com.marconardes.storyflame.view.ChapterSectionView
+import br.com.marconardes.storyflame.view.EditChapterTitleDialog
+import br.com.marconardes.storyflame.view.ProjectCreationView
+import br.com.marconardes.storyflame.view.ProjectListView
 import br.com.marconardes.viewmodel.ProjectViewModel
+// import com.mohamedrejeb.richeditor.model.RichTextState // Not directly used in App.kt
+// import kotlinx.coroutines.flow.collectLatest // Moved
+// import kotlinx.coroutines.flow.debounce // Moved
 import org.jetbrains.compose.resources.painterResource
 import org.jetbrains.compose.ui.tooling.preview.Preview
 
@@ -66,151 +76,32 @@ fun App() {
 
             Spacer(modifier = Modifier.height(16.dp))
 
-            // Project Creation UI
-            var newProjectName by remember { mutableStateOf("") }
-            Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.padding(horizontal = 16.dp)) {
-                OutlinedTextField(
-                    value = newProjectName,
-                    onValueChange = { newProjectName = it },
-                    label = { Text("New Project Name") },
-                    modifier = Modifier.weight(1f)
-                )
-                Spacer(modifier = Modifier.width(8.dp))
-                Button(onClick = {
-                    if (newProjectName.isNotBlank()) {
-                        projectViewModel.createProject(newProjectName)
-                        newProjectName = "" // Clear text field
-                    }
-                }) {
-                    Text("Create")
-                }
-            }
+            ProjectCreationView(projectViewModel = projectViewModel, modifier = Modifier.fillMaxWidth())
 
             Spacer(modifier = Modifier.height(16.dp))
 
-            // Displaying the list of projects
             Text("Projects:", style = MaterialTheme.typography.headlineSmall, modifier = Modifier.padding(top = 16.dp))
-            LazyColumn(
-                modifier = Modifier
-                    .padding(horizontal = 16.dp, vertical = 8.dp)
-                    .fillMaxWidth()
-                    .heightIn(max = 200.dp) // Limit height of project list
-            ) {
-                items(projects) { project ->
-                    Column(
-                        modifier = Modifier
-                            .padding(vertical = 8.dp)
-                            .fillMaxWidth()
-                            .clickable { projectViewModel.selectProject(project) }
-                    ) {
-                        Text(
-                            text = "Project Name: ${project.name}",
-                            style = MaterialTheme.typography.bodyLarge,
-                            color = if (project.id == selectedProject?.id) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface
-                        )
-                        Text("Creation Date: ${project.creationDate}", style = MaterialTheme.typography.bodySmall)
-                    }
-                }
-            }
+            ProjectListView(
+                projects = projects,
+                selectedProject = selectedProject,
+                onProjectSelected = projectViewModel::selectProject,
+                modifier = Modifier.fillMaxWidth() // Adjust modifier as needed
+            )
 
             HorizontalDivider(modifier = Modifier.padding(vertical = 16.dp))
 
-            // Displaying Chapters of Selected Project
             selectedProject?.let { proj ->
-                Text("Chapters for: ${proj.name}", style = MaterialTheme.typography.headlineSmall, modifier = Modifier.padding(bottom = 8.dp))
-
-                // Add Chapter UI
-                var newChapterTitle by remember { mutableStateOf("") }
-                Row(
-                    verticalAlignment = Alignment.CenterVertically,
-                    modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp).fillMaxWidth()
-                ) {
-                    OutlinedTextField(
-                        value = newChapterTitle,
-                        onValueChange = { newChapterTitle = it },
-                        label = { Text("New Chapter Title") },
-                        modifier = Modifier.weight(1f)
-                    )
-                    Spacer(modifier = Modifier.width(8.dp))
-                    Button(onClick = {
-                        if (newChapterTitle.isNotBlank()) {
-                            projectViewModel.addChapter(proj, newChapterTitle)
-                            newChapterTitle = "" // Clear text field
-                        }
-                    }) {
-                        Text("Add")
-                    }
-                }
-
-                if (chapters.isEmpty()) {
-                    Text(
-                        "No chapters in this project yet. Add one above!",
-                        modifier = Modifier.padding(16.dp),
-                        style = MaterialTheme.typography.bodyMedium
-                    )
-                } else {
-                    LazyColumn(modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp).fillMaxWidth()) {
-                        items(chapters) { chapter ->
-                            Column(modifier = Modifier.fillMaxWidth().padding(vertical = 8.dp)) { // Each chapter item is now a Column
-                                Row(
-                                    modifier = Modifier.fillMaxWidth(),
-                                    verticalAlignment = Alignment.CenterVertically
-                                ) {
-                                    Column(modifier = Modifier.weight(1f)) {
-                                        Text(chapter.title, style = MaterialTheme.typography.bodyLarge)
-                                        Text("Order: ${chapter.order}", style = MaterialTheme.typography.bodySmall)
-                                    }
-                                    Row(verticalAlignment = Alignment.CenterVertically) {
-                                        TextButton(
-                                            onClick = { projectViewModel.moveChapter(proj, chapter.id, moveUp = true) },
-                                            enabled = chapter.order > 0
-                                        ) {
-                                            Text("Up")
-                                        }
-                                        TextButton(
-                                            onClick = { projectViewModel.moveChapter(proj, chapter.id, moveUp = false) },
-                                            enabled = chapter.order < chapters.size - 1
-                                        ) {
-                                            Text("Dn") // Down abbreviated
-                                        }
-                                        Spacer(modifier = Modifier.width(4.dp))
-                                        TextButton(onClick = {
-                                            editingChapter = chapter
-                                            editChapterTitleInput = chapter.title
-                                            showEditChapterDialog = true
-                                        }) {
-                                            Text("Edit Title") // Clarified button
-                                        }
-                                        Spacer(modifier = Modifier.width(4.dp))
-                                        Button(onClick = {
-                                            projectViewModel.deleteChapter(proj, chapter.id)
-                                        }) {
-                                            Text("Del")
-                                        }
-                                    }
-                                }
-                                Spacer(modifier = Modifier.height(8.dp)) // Space between title/buttons and summary field
-
-                                var summaryInput by remember(chapter.id, chapter.summary) { mutableStateOf(chapter.summary) }
-                                OutlinedTextField(
-                                    value = summaryInput,
-                                    onValueChange = { summaryInput = it },
-                                    label = { Text("Summary") },
-                                    modifier = Modifier.height(100.dp).fillMaxWidth(),
-                                    singleLine = false
-                                )
-                                TextButton(
-                                    onClick = {
-                                        projectViewModel.updateChapterSummary(proj, chapter.id, summaryInput)
-                                    },
-                                    modifier = Modifier.align(Alignment.End).padding(top = 4.dp)
-                                ) {
-                                    Text("Save Summary")
-                                }
-                            }
-                        }
-                    }
-                }
+                ChapterSectionView(
+                    selectedProject = proj,
+                    chapters = chapters,
+                    projectViewModel = projectViewModel,
+                    onShowEditChapterDialog = { chapterToEdit ->
+                        editingChapter = chapterToEdit
+                        editChapterTitleInput = chapterToEdit.title
+                        showEditChapterDialog = true
+                    },
+                    modifier = Modifier.fillMaxWidth() // Adjust modifier as needed
+                )
             } ?: run {
                 Text(
                     "Select a project to view its chapters.",
@@ -219,41 +110,26 @@ fun App() {
                 )
             }
 
-            // Edit Chapter Dialog
-            if (showEditChapterDialog && editingChapter != null && selectedProject != null) {
-                AlertDialog(
-                    onDismissRequest = { showEditChapterDialog = false },
-                    title = { Text("Edit Chapter Title") },
-                    text = {
-                        OutlinedTextField(
-                            value = editChapterTitleInput,
-                            onValueChange = { editChapterTitleInput = it },
-                            label = { Text("Chapter Title") },
-                            modifier = Modifier.fillMaxWidth()
+            EditChapterTitleDialog(
+                editingChapter = editingChapter,
+                editChapterTitleInput = editChapterTitleInput,
+                onTitleChange = { editChapterTitleInput = it },
+                onDismiss = {
+                    showEditChapterDialog = false
+                    editingChapter = null // Clear editing state
+                },
+                onSave = {
+                    if (editingChapter != null && selectedProject != null) { // Ensure non-null before saving
+                        projectViewModel.updateChapterTitle(
+                            selectedProject!!, // Already checked selectedProject is not null
+                            editingChapter!!.id,
+                            editChapterTitleInput
                         )
-                    },
-                    confirmButton = {
-                        Button(
-                            onClick = {
-                                projectViewModel.updateChapterTitle(
-                                    selectedProject!!, // selectedProject is checked by if condition
-                                    editingChapter!!.id, // editingChapter is checked by if condition
-                                    editChapterTitleInput
-                                )
-                                showEditChapterDialog = false
-                                editingChapter = null
-                            }
-                        ) {
-                            Text("Save")
-                        }
-                    },
-                    dismissButton = {
-                        TextButton(onClick = { showEditChapterDialog = false }) {
-                            Text("Cancel")
-                        }
                     }
-                )
-            }
+                    showEditChapterDialog = false
+                    editingChapter = null // Clear editing state
+                }
+            )
         }
     }
 }

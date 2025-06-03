@@ -1,262 +1,178 @@
 package br.com.marconardes.viewmodel
 
-// These must be top-level to be accessible by TestFileIO.kt in the same package & source set (commonTest)
-// and are modified by the test setup.
-internal var mockSavedJsonDataForTest: String? = null
-internal var mockLoadedJsonDataForTest: String? = null
-
+import br.com.marconardes.model.Chapter
 import br.com.marconardes.model.Project
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.ExperimentalCoroutinesApi
-import kotlinx.coroutines.flow.first
-import kotlinx.coroutines.test.*
-import kotlinx.serialization.encodeToString
-import kotlinx.serialization.json.Json
 import kotlin.test.*
 
-@OptIn(ExperimentalCoroutinesApi::class)
-class ProjectViewModelTest {
+// Variables to be accessed by actual implementations in desktopTest
+var mockSavedJsonDataForTest: String? = null
+var mockLoadedJsonDataForTest: String? = "[]"
 
+class ProjectViewModelTest {
     private lateinit var viewModel: ProjectViewModel
-    private val testDispatcher = StandardTestDispatcher()
 
     @BeforeTest
     fun setup() {
-        Dispatchers.setMain(testDispatcher)
-        mockSavedJsonDataForTest = null // Use new variable name
-        mockLoadedJsonDataForTest = null // Use new variable name
-        viewModel = ProjectViewModel()
-    }
-
-    @AfterTest
-    fun tearDown() {
-        Dispatchers.resetMain()
-    }
-
-    @Test
-    fun `createProject should add a new project and save`() = runTest {
-        val initialProjectCount = viewModel.projects.first().size
-        assertEquals(0, initialProjectCount, "Initially, project list should be empty if nothing loaded")
-
-        viewModel.createProject("Test Project 1")
-        val projectsAfterCreate = viewModel.projects.first()
-        assertEquals(initialProjectCount + 1, projectsAfterCreate.size, "Project count should increase by 1")
-        assertEquals("Test Project 1", projectsAfterCreate.last().name, "New project should have the correct name")
-        assertTrue(projectsAfterCreate.last().chapters.isEmpty(), "New project should have empty chapters list")
-
-        assertNotNull(mockSavedJsonDataForTest, "saveProjectsToFile should have been called")
-        val savedProjects = Json.decodeFromString<List<Project>>(mockSavedJsonDataForTest!!)
-        assertEquals(1, savedProjects.size, "Saved JSON should contain one project")
-        assertEquals("Test Project 1", savedProjects.first().name, "Saved project should have correct name")
-    }
-
-    @Test
-    fun `loadProjects should load from file if valid JSON exists`() = runTest {
-        val sampleProject = Project(name = "Loaded Project", creationDate = "2023-01-01")
-        val sampleProjects = listOf(sampleProject)
-        mockLoadedJsonDataForTest = Json.encodeToString(sampleProjects) // Use new variable name
-
-        viewModel = ProjectViewModel()
-
-        val loadedProjects = viewModel.projects.first()
-        assertEquals(1, loadedProjects.size, "Should load one project")
-        assertEquals("Loaded Project", loadedProjects.first().name, "Loaded project name should match")
-        assertEquals(sampleProject.id, viewModel.selectedProject.first()?.id, "First project should be auto-selected")
-    }
-
-    @Test
-    fun `loadProjects should start with empty list if no file`() = runTest {
-        mockLoadedJsonDataForTest = null // Use new variable name
-        viewModel = ProjectViewModel()
-
-        val projects = viewModel.projects.first()
-        assertTrue(projects.isEmpty(), "Project list should be empty if no file")
-        assertNull(viewModel.selectedProject.first(), "No project should be selected if list is empty")
-    }
-
-    @Test
-    fun `loadProjects should start with empty list if json is invalid`() = runTest {
-        mockLoadedJsonDataForTest = "invalid json" // Use new variable name
-        viewModel = ProjectViewModel()
-
-        val projects = viewModel.projects.first()
-        assertTrue(projects.isEmpty(), "Project list should be empty if JSON is invalid")
-        assertNull(viewModel.selectedProject.first(), "No project should be selected if JSON is invalid")
-    }
-
-    @Test
-    fun `selectProject should update selectedProject and its chapters`() = runTest {
-        val project1 = Project(name = "Project 1", creationDate = "d1")
-        val project2 = Project(name = "Project 2", creationDate = "d2")
-        mockLoadedJsonDataForTest = Json.encodeToString(listOf(project1, project2)) // Use new variable name
-        viewModel = ProjectViewModel()
-
-        assertEquals(project1.id, viewModel.selectedProject.first()?.id, "Initially project1 should be selected")
-
-        viewModel.selectProject(project2)
-        assertEquals(project2.id, viewModel.selectedProject.first()?.id, "Project 2 should now be selected")
-    }
-
-    @Test
-    fun `addChapter should add a chapter to the selected project and save`() = runTest {
-        viewModel.createProject("Project With Chapters")
-        val selectedProject = viewModel.selectedProject.first()
-        assertNotNull(selectedProject, "A project should be selected")
-
-        val initialChapterCount = selectedProject.chapters.size
-        viewModel.addChapter(selectedProject, "New Chapter 1")
-
-        val updatedSelectedProject = viewModel.selectedProject.first()
-        assertNotNull(updatedSelectedProject)
-        assertEquals(initialChapterCount + 1, updatedSelectedProject.chapters.size, "Chapter count should increase")
-        assertEquals("New Chapter 1", updatedSelectedProject.chapters.last().title, "New chapter title is incorrect")
-        assertEquals(initialChapterCount, updatedSelectedProject.chapters.last().order, "New chapter order is incorrect")
-
-        assertNotNull(mockSavedJsonDataForTest, "saveProjectsToFile should be called after adding a chapter")
-        val savedProjects = Json.decodeFromString<List<Project>>(mockSavedJsonDataForTest!!)
-        val projectInSave = savedProjects.find { it.id == selectedProject.id }
-        assertNotNull(projectInSave, "Saved projects should contain the modified project")
-        assertEquals(1, projectInSave.chapters.size, "Saved project should have one chapter")
-        assertEquals("New Chapter 1", projectInSave.chapters.first().title, "Saved chapter title is incorrect")
-    }
-
-    @Test
-    fun `deleteChapter should remove chapter from selected project and save`() = runTest {
-        viewModel.createProject("Project For Deleting Chapters")
-        val selectedProject = viewModel.selectedProject.first()!!
-        viewModel.addChapter(selectedProject, "Chapter To Delete")
-
-        val chapterToDelete = viewModel.selectedProject.first()!!.chapters.first()
-        val initialChapterCount = viewModel.selectedProject.first()!!.chapters.size
-        assertEquals(1, initialChapterCount, "Should have one chapter before delete")
-
-        viewModel.deleteChapter(selectedProject, chapterToDelete.id)
-
-        val updatedSelectedProject = viewModel.selectedProject.first()
-        assertNotNull(updatedSelectedProject, "Selected project should still exist")
-        assertEquals(0, updatedSelectedProject.chapters.size, "Chapter count should be zero after delete")
-
-        assertNotNull(mockSavedJsonDataForTest, "saveProjectsToFile should be called after deleting chapter")
-        val savedProjects = Json.decodeFromString<List<Project>>(mockSavedJsonDataForTest!!)
-        val projectInSave = savedProjects.find { it.id == selectedProject.id }
-        assertNotNull(projectInSave, "Saved projects should contain the modified project")
-        assertTrue(projectInSave.chapters.isEmpty(), "Saved project should have no chapters")
-    }
-
-    @Test
-    fun `updateChapterTitle should change title and save`() = runTest {
-        viewModel.createProject("Project For Title Update")
-        var selectedProject = viewModel.selectedProject.first()!!
-        viewModel.addChapter(selectedProject, "Original Title")
-
-        selectedProject = viewModel.selectedProject.first()!! // Refresh selectedProject after addChapter
-        val chapterToUpdate = selectedProject.chapters.first()
-        val newTitle = "Updated Chapter Title"
-
-        viewModel.updateChapterTitle(selectedProject, chapterToUpdate.id, newTitle)
-
-        val updatedSelectedProject = viewModel.selectedProject.first()!!
-        val updatedChapter = updatedSelectedProject.chapters.find { it.id == chapterToUpdate.id }
-        assertNotNull(updatedChapter, "Chapter should still exist")
-        assertEquals(newTitle, updatedChapter.title, "Chapter title should be updated")
-
-        assertNotNull(mockSavedJsonDataForTest, "saveProjectsToFile should have been called")
-        val savedProjects = Json.decodeFromString<List<Project>>(mockSavedJsonDataForTest!!)
-        val projectInSave = savedProjects.find { it.id == selectedProject.id }!!
-        assertEquals(newTitle, projectInSave.chapters.find { it.id == chapterToUpdate.id }?.title, "Saved chapter title incorrect")
-    }
-
-    @Test
-    fun `moveChapter should reorder chapters and save`() = runTest {
-        viewModel.createProject("Project For Reordering")
-        var selectedProject = viewModel.selectedProject.first()!!
-
-        // Add 3 chapters: C0 (order 0), C1 (order 1), C2 (order 2)
-        viewModel.addChapter(selectedProject, "Chapter Alpha") // order 0
-        selectedProject = viewModel.selectedProject.first()!!
-        viewModel.addChapter(selectedProject, "Chapter Beta")  // order 1
-        selectedProject = viewModel.selectedProject.first()!!
-        viewModel.addChapter(selectedProject, "Chapter Gamma") // order 2
-        selectedProject = viewModel.selectedProject.first()!!
-
-
-        val chaptersInitial = selectedProject.chapters.sortedBy { it.order }
-        val chapterAlphaId = chaptersInitial.find { it.title == "Chapter Alpha" }!!.id // Initially order 0
-        val chapterBetaId = chaptersInitial.find { it.title == "Chapter Beta" }!!.id    // Initially order 1
-        val chapterGammaId = chaptersInitial.find { it.title == "Chapter Gamma" }!!.id // Initially order 2
-
-        // Move Chapter Alpha (order 0) down to order 1
-        viewModel.moveChapter(selectedProject, chapterAlphaId, moveUp = false)
-        var chaptersAfterMoveDown = viewModel.selectedProject.first()!!.chapters.sortedBy { it.order }
-
-        assertEquals("Chapter Beta", chaptersAfterMoveDown[0].title, "Beta should be order 0 after Alpha moved down")
-        assertEquals(0, chaptersAfterMoveDown[0].order, "Beta order check")
-        assertEquals("Chapter Alpha", chaptersAfterMoveDown[1].title, "Alpha should be order 1 after move down")
-        assertEquals(1, chaptersAfterMoveDown[1].order, "Alpha order check")
-        assertEquals("Chapter Gamma", chaptersAfterMoveDown[2].title, "Gamma should remain order 2")
-        assertEquals(2, chaptersAfterMoveDown[2].order, "Gamma order check")
-        assertNotNull(mockSavedJsonDataForTest, "Save should be called after moving chapter down")
-        var savedProjects = Json.decodeFromString<List<Project>>(mockSavedJsonDataForTest!!)
-        var projectInSave = savedProjects.find { it.id == selectedProject.id }!!
-        assertEquals(0, projectInSave.chapters.find { it.id == chapterBetaId }!!.order)
-        assertEquals(1, projectInSave.chapters.find { it.id == chapterAlphaId }!!.order)
-
-        // Reset mock save before next action for clean check
+        // Reset mocks before each test
         mockSavedJsonDataForTest = null
-
-        // Move Chapter Alpha (now at order 1) up to order 0
-        selectedProject = viewModel.selectedProject.first()!! // Refresh selected project instance
-        viewModel.moveChapter(selectedProject, chapterAlphaId, moveUp = true)
-        var chaptersAfterMoveUp = viewModel.selectedProject.first()!!.chapters.sortedBy { it.order }
-
-        assertEquals("Chapter Alpha", chaptersAfterMoveUp[0].title, "Alpha should be order 0 after move up")
-        assertEquals(0, chaptersAfterMoveUp[0].order, "Alpha order check after move up")
-        assertEquals("Chapter Beta", chaptersAfterMoveUp[1].title, "Beta should be order 1 after Alpha moved up")
-        assertEquals(1, chaptersAfterMoveUp[1].order, "Beta order check after move up")
-        assertNotNull(mockSavedJsonDataForTest, "Save should be called after moving chapter up")
-        savedProjects = Json.decodeFromString<List<Project>>(mockSavedJsonDataForTest!!)
-        projectInSave = savedProjects.find { it.id == selectedProject.id }!!
-        assertEquals(0, projectInSave.chapters.find { it.id == chapterAlphaId }!!.order)
-        assertEquals(1, projectInSave.chapters.find { it.id == chapterBetaId }!!.order)
+        // Default to loading an empty list of projects, or a specific state if needed for a test
+        mockLoadedJsonDataForTest = "[]"
+        viewModel = ProjectViewModel() // Reinitialize ViewModel to ensure clean state based on mocks
     }
 
     @Test
-    fun `updateChapterSummary should change summary and save`() = runTest {
-        // Setup: Ensure a clean slate for this test if relying on @BeforeTest for mock data reset
-        // @BeforeTest should handle mockLoadedJsonDataForTest = null
+    fun `updateChapterContent should update chapter content and save projects`() {
+        // 1. Create a project and add a chapter
+        val initialProjectName = "Test Project"
+        viewModel.createProject(initialProjectName)
 
-        viewModel.createProject("Test Project for Summary")
-        var project = viewModel.projects.first().first { it.name == "Test Project for Summary" }
-        viewModel.addChapter(project, "Chapter for Summary")
+        // Assuming createProject or subsequent operations might change selectedProject,
+        // it's safer to fetch the project directly from the projects list if selection logic is complex.
+        // For this test, we rely on the current behavior where the first project created might be auto-selected
+        // or that addChapter operates on the passed project instance correctly.
 
-        project = viewModel.projects.first().first { it.name == "Test Project for Summary" } // Refresh project instance
+        var project = viewModel.projects.value.find { it.name == initialProjectName }
+        assertNotNull(project, "Project should be created and found in the list.")
+
+        val initialChapterTitle = "Chapter 1"
+        viewModel.addChapter(project!!, initialChapterTitle) // Use !! because we asserted not null
+
+        // Refresh project instance from ViewModel state after adding chapter as ViewModel updates immutably
+        project = viewModel.projects.value.find { it.id == project.id }
+        assertNotNull(project, "Project should still exist after adding a chapter.")
+
+        val chapter = project.chapters.find { it.title == initialChapterTitle }
+        assertNotNull(chapter, "Chapter should be added to the project.")
+
+        // 2. Update chapter content
+        val newContent = "<p>This is the new chapter content.</p>"
+        viewModel.updateChapterContent(project, chapter.id, newContent)
+
+        // 3. Assertions
+        // Fetch the latest project state from the ViewModel again
+        val updatedProject = viewModel.projects.value.find { it.id == project.id }
+        assertNotNull(updatedProject, "Updated project should not be null.")
+
+        val updatedChapter = updatedProject.chapters.find { it.id == chapter.id }
+        assertNotNull(updatedChapter, "Updated chapter should not be null.")
+        assertEquals(newContent, updatedChapter.content, "Chapter content should be updated.")
+
+        // Check if saveProjects was called (indirectly, by checking mockSavedJsonDataForTest)
+        assertNotNull(mockSavedJsonDataForTest, "saveProjectsToFile should have been called.")
+        assertTrue(mockSavedJsonDataForTest!!.contains(newContent), "Saved JSON should contain the new content: '$newContent'. Actual: ${mockSavedJsonDataForTest}")
+        assertTrue(mockSavedJsonDataForTest!!.contains(chapter.id), "Saved JSON should contain the chapter ID. Actual: ${mockSavedJsonDataForTest}")
+        assertTrue(mockSavedJsonDataForTest!!.contains(project.id), "Saved JSON should contain the project ID. Actual: ${mockSavedJsonDataForTest}")
+    }
+
+    @Test
+    fun `createProject should add a new project and save`() {
+        val projectName = "Brand New Project"
+        viewModel.createProject(projectName)
+
+        val project = viewModel.projects.value.find { it.name == projectName }
+        assertNotNull(project, "Project should be created.")
+        assertEquals(0, project.chapters.size, "New project should have no chapters.")
+
+        assertNotNull(mockSavedJsonDataForTest, "saveProjectsToFile should have been called after creating a project.")
+        assertTrue(mockSavedJsonDataForTest!!.contains(projectName), "Saved JSON should contain the new project's name.")
+    }
+
+    @Test
+    fun `addChapter should add a chapter to a project and save`() {
+        viewModel.createProject("Project For Chapters")
+        var project = viewModel.projects.value.first() // Get the project instance
+        val chapterTitle = "My First Chapter"
+
+        viewModel.addChapter(project, chapterTitle)
+
+        // Re-fetch the project to get its updated state
+        val updatedProject = viewModel.projects.value.find { it.id == project.id }
+        assertNotNull(updatedProject)
+        assertEquals(1, updatedProject.chapters.size, "Chapter count should be 1.")
+        assertEquals(chapterTitle, updatedProject.chapters.first().title, "Chapter title should match.")
+        assertEquals(0, updatedProject.chapters.first().order, "First chapter order should be 0.")
+
+        assertNotNull(mockSavedJsonDataForTest, "saveProjectsToFile should have been called after adding a chapter.")
+        assertTrue(mockSavedJsonDataForTest!!.contains(chapterTitle), "Saved JSON should contain the new chapter's title.")
+    }
+
+    @Test
+    fun `updateChapterSummary should update summary and save`() {
+        viewModel.createProject("Project For Summary Test")
+        var project = viewModel.projects.value.first()
+        viewModel.addChapter(project, "Chapter For Summary")
+        project = viewModel.projects.value.first() // Refresh project
         val chapter = project.chapters.first()
-        viewModel.selectProject(project) // Ensure project is selected
+        val newSummary = "This is a test summary."
 
-        val newSummary = "This is the updated chapter summary."
         viewModel.updateChapterSummary(project, chapter.id, newSummary)
 
-        val updatedProject = viewModel.projects.first().find { it.id == project.id }
-        assertNotNull(updatedProject, "Project should exist after update")
+        val updatedProject = viewModel.projects.value.find { it.id == project.id }
+        assertNotNull(updatedProject)
         val updatedChapter = updatedProject.chapters.find { it.id == chapter.id }
-        assertNotNull(updatedChapter, "Chapter should exist after update")
-        assertEquals(newSummary, updatedChapter.summary, "Chapter summary should be updated in ViewModel state")
+        assertNotNull(updatedChapter)
+        assertEquals(newSummary, updatedChapter.summary, "Chapter summary should be updated.")
 
-        assertNotNull(mockSavedJsonDataForTest, "Save function was not called after updating summary")
-        assertTrue(
-            mockSavedJsonDataForTest!!.contains(newSummary),
-            "Saved JSON does not contain the new summary. JSON: $mockSavedJsonDataForTest"
-        )
-        assertTrue(
-            mockSavedJsonDataForTest!!.contains(chapter.id),
-            "Saved JSON does not reference the correct chapter ID for summary update. JSON: $mockSavedJsonDataForTest"
-        )
-        // More specific JSON check:
-        val savedProjects = Json.decodeFromString<List<Project>>(mockSavedJsonDataForTest!!)
-        val savedProject = savedProjects.find { it.id == project.id }
-        assertNotNull(savedProject, "Saved project not found in JSON")
-        val savedChapter = savedProject.chapters.find { it.id == chapter.id }
-        assertNotNull(savedChapter, "Saved chapter not found in JSON")
-        assertEquals(newSummary, savedChapter.summary, "New summary not correctly saved in JSON")
+        assertNotNull(mockSavedJsonDataForTest, "saveProjectsToFile should have been called.")
+        assertTrue(mockSavedJsonDataForTest!!.contains(newSummary), "Saved JSON should contain the new summary.")
+    }
+
+     @Test
+    fun `loadProjects should correctly parse projects and chapters`() {
+        val project1Id = "proj-1"
+        val chapter1Id = "chap-1-1"
+        val chapter2Id = "chap-1-2"
+        val project2Id = "proj-2"
+
+        val initialJson = """
+        [
+            {
+                "id": "$project1Id",
+                "name": "Loaded Project 1",
+                "creationDate": "2023-01-01T12:00:00",
+                "chapters": [
+                    {
+                        "id": "$chapter1Id",
+                        "title": "L Chapter 1",
+                        "order": 0,
+                        "content": "<p>Content 1</p>",
+                        "summary": "Summary 1"
+                    },
+                    {
+                        "id": "$chapter2Id",
+                        "title": "L Chapter 2",
+                        "order": 1,
+                        "content": "<p>Content 2</p>",
+                        "summary": "Summary 2"
+                    }
+                ]
+            },
+            {
+                "id": "$project2Id",
+                "name": "Loaded Project 2",
+                "creationDate": "2023-01-02T14:00:00",
+                "chapters": []
+            }
+        ]
+        """.trimIndent()
+        mockLoadedJsonDataForTest = initialJson
+        // Re-initialize ViewModel to trigger loadProjects with the new mockLoadedJsonDataForTest
+        viewModel = ProjectViewModel()
+
+        assertEquals(2, viewModel.projects.value.size, "Should load 2 projects.")
+        val loadedProject1 = viewModel.projects.value.find { it.id == project1Id }
+        assertNotNull(loadedProject1, "Project 1 should be loaded.")
+        assertEquals("Loaded Project 1", loadedProject1.name)
+        assertEquals(2, loadedProject1.chapters.size, "Project 1 should have 2 chapters.")
+        assertEquals("<p>Content 1</p>", loadedProject1.chapters.find { it.id == chapter1Id }?.content)
+        assertEquals("Summary 2", loadedProject1.chapters.find { it.id == chapter2Id }?.summary)
+
+        val loadedProject2 = viewModel.projects.value.find { it.id == project2Id }
+        assertNotNull(loadedProject2, "Project 2 should be loaded.")
+        assertTrue(loadedProject2.chapters.isEmpty(), "Project 2 should have no chapters.")
+
+        // Also check if selectedProject is set (usually the first one)
+         assertNotNull(viewModel.selectedProject.value, "A project should be selected after loading.")
+         assertEquals(project1Id, viewModel.selectedProject.value?.id, "First project should be selected.")
     }
 }

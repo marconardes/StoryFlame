@@ -22,10 +22,10 @@ A seguir estão as funcionalidades planejadas para o StoryFlame, atualmente em e
         (V) CRUD completo para capítulos (adicionar, editar título, excluir, reordenar). (Prioridade: 10/10)
     (V) Resumo por Capítulo/Cena: (Prioridade: 9/10)
         (V) Adição e edição de resumos textuais para cada capítulo/cena. (Prioridade: 9/10)
-    (X) Editor de Texto Focado: (Prioridade: 10/10)
-        (X) Integração do editor de texto rico flutter_quill. (Prioridade: 10/10)
-        (X) Funcionalidades de formatação básica (negrito, itálico, sublinhado, cabeçalhos H1-H3). (Prioridade: 9/10)
-        (X) Salvamento automático com debounce do conteúdo do capítulo ativo. (Prioridade: 9/10)
+    (V) Editor de Texto Focado: (Prioridade: 10/10)
+        (V) Integração do editor de texto rico (compose-rich-editor). (Prioridade: 10/10)
+        (V) Funcionalidades de formatação básica (negrito, itálico, sublinhado, cabeçalhos H1-H3). (Prioridade: 9/10)
+        (V) Salvamento automático com debounce do conteúdo do capítulo ativo. (Prioridade: 9/10)
     (X) Acompanhamento de Progresso: (Prioridade: 9/10)
         (X) Contador de palavras em tempo real no editor para o capítulo atual. (Prioridade: 9/10)
         (X) Estatísticas diárias da contagem total de palavras do projeto. (Prioridade: 9/10)
@@ -92,11 +92,12 @@ A seguir estão as funcionalidades planejadas para o StoryFlame, atualmente em e
         (X) Mais opções de fontes. (Prioridade: 6/10)
         (X) Configurações de espaçamento, indentação. (Prioridade: 6/10)
     (X) Interface de Usuário (UI) e Experiência do Usuário (UX): (Prioridade: 8/10)
-        (X) Refinamentos gerais na interface para torná-la mais polida e intuitiva. (Prioridade: 8/10)
+        (P) Refinamentos gerais na interface para torná-la mais polida e intuitiva. (Prioridade: 8/10)
+            - Refatoração inicial da estrutura da tela principal (`App.kt`).
         (X) Melhorias na navegação e feedback visual. (Prioridade: 7/10)
         (X) Otimizações de performance, especialmente ao lidar com projetos muito grandes. (Prioridade: 7/10)
-    (🟡) Testes Automatizados: (Prioridade: 8/10)
-        (🟡) Implementação de testes unitários e de widget para garantir a estabilidade do código. (Prioridade: 8/10)
+    (P) Testes Automatizados: (Prioridade: 8/10) # Assuming tests are partially implemented due to previous step
+        (P) Implementação de testes unitários e de widget para garantir a estabilidade do código. (Prioridade: 8/10) # Assuming tests are partially implemented
 
 ### Recursos de Inteligência Artificial (Fase Futura - Pós-MVP)
 

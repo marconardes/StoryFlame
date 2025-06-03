@@ -10,10 +10,6 @@ import kotlinx.datetime.toLocalDateTime
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 
-// Expected functions for platform-specific file I/O
-expect fun saveProjectsToFile(jsonString: String)
-expect fun loadProjectsFromFile(): String?
-
 class ProjectViewModel {
     private val _projects = MutableStateFlow<List<Project>>(emptyList())
     val projects: StateFlow<List<Project>> = _projects.asStateFlow()
@@ -132,6 +128,17 @@ class ProjectViewModel {
 
         updateProjectInList(updatedProject)
         saveProjects()
+    }
+
+    fun updateChapterContent(project: Project, chapterId: String, newContent: String) {
+        val updatedChapters = project.chapters.map {
+            if (it.id == chapterId) it.copy(content = newContent) else it
+        }.toMutableList() // Ensure it's a MutableList if project.chapters is not
+        val updatedProject = project.copy(chapters = updatedChapters)
+
+        updateProjectInList(updatedProject) // This already updates _projects and _selectedProject
+        saveProjects()
+        println("Chapter $chapterId content updated in ViewModel.") // For confirmation
     }
 
     // Basic reorder: move chapter one position up or down.
