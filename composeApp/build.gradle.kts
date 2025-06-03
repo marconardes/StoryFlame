@@ -41,6 +41,9 @@ kotlin {
             implementation("org.jetbrains.kotlinx:kotlinx-datetime:0.6.0")
             implementation(libs.kotlinx.serialization.json)
             implementation("com.mohamedrejeb.richeditor:richeditor-compose:1.0.0-rc12")
+            implementation(libs.voyager.navigator)
+            implementation(libs.voyager.screenmodel)
+            implementation(libs.voyager.transitions)
         }
         commonTest.dependencies {
             implementation(libs.kotlin.test)
