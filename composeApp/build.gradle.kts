@@ -43,11 +43,22 @@ kotlin {
         }
         commonTest.dependencies {
             implementation(libs.kotlin.test)
+            implementation(libs.kotlinx.coroutines.test)
         }
         desktopMain.dependencies {
             implementation(compose.desktop.currentOs)
             implementation(libs.kotlinx.coroutinesSwing)
         }
+        // commonTest already has libs.kotlin.test which should provide necessary abstractions.
+        // useJUnitPlatform() below will ensure JUnit 5 is used if available.
+        // val desktopTest by getting { // Explicitly defining desktopTest dependencies block
+        //     dependencies {
+        //         // implementation(libs.kotlin.testJunit) // Removed again to avoid conflict
+        //     }
+        // }
+    }
+    tasks.withType<Test>().configureEach {
+        useJUnitPlatform()
     }
 }
 

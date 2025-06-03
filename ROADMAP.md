@@ -14,12 +14,12 @@ A seguir estão as funcionalidades planejadas para o StoryFlame, atualmente em e
 
 ### Núcleo Essencial e Gerenciamento
 
-    (X) Gerenciamento de Projetos: (Prioridade: 10/10)
-        (X) Criação, abertura e listagem de múltiplos projetos de escrita. (Prioridade: 10/10)
-        (X) Persistência local dos dados do projeto em formato JSON. (Prioridade: 10/10)
-    (X) Organização por Capítulos/Cenas: (Prioridade: 10/10)
-        (X) Estruturação de projetos em capítulos ou cenas ordenáveis. (Prioridade: 10/10)
-        (X) CRUD completo para capítulos (adicionar, editar título, excluir, reordenar). (Prioridade: 10/10)
+    (V) Gerenciamento de Projetos: (Prioridade: 10/10)
+        (V) Criação, abertura e listagem de múltiplos projetos de escrita. (Prioridade: 10/10)
+        (V) Persistência local dos dados do projeto em formato JSON. (Prioridade: 10/10)
+    (V) Organização por Capítulos/Cenas: (Prioridade: 10/10)
+        (V) Estruturação de projetos em capítulos ou cenas ordenáveis. (Prioridade: 10/10)
+        (P) CRUD completo para capítulos (adicionar, editar título, excluir, reordenar). (Prioridade: 10/10)
     (X) Resumo por Capítulo/Cena: (Prioridade: 9/10)
         (X) Adição e edição de resumos textuais para cada capítulo/cena. (Prioridade: 9/10)
     (X) Editor de Texto Focado: (Prioridade: 10/10)
