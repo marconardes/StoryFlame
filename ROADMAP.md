@@ -19,7 +19,7 @@ A seguir estão as funcionalidades planejadas para o StoryFlame, atualmente em e
         (V) Persistência local dos dados do projeto em formato JSON. (Prioridade: 10/10)
     (V) Organização por Capítulos/Cenas: (Prioridade: 10/10)
         (V) Estruturação de projetos em capítulos ou cenas ordenáveis. (Prioridade: 10/10)
-        (P) CRUD completo para capítulos (adicionar, editar título, excluir, reordenar). (Prioridade: 10/10)
+        (V) CRUD completo para capítulos (adicionar, editar título, excluir, reordenar). (Prioridade: 10/10)
     (X) Resumo por Capítulo/Cena: (Prioridade: 9/10)
         (X) Adição e edição de resumos textuais para cada capítulo/cena. (Prioridade: 9/10)
     (X) Editor de Texto Focado: (Prioridade: 10/10)
