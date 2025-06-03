@@ -13,13 +13,16 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
+import br.com.marconardes.model.Chapter
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import br.com.marconardes.viewmodel.ProjectViewModel
@@ -38,6 +41,11 @@ fun App() {
         val selectedProject by projectViewModel.selectedProject.collectAsState()
         val chapters by projectViewModel.selectedProjectChapters.collectAsState()
         var showContent by remember { mutableStateOf(false) }
+
+        // State for Edit Chapter Dialog
+        var showEditChapterDialog by remember { mutableStateOf(false) }
+        var editingChapter by remember { mutableStateOf<Chapter?>(null) }
+        var editChapterTitleInput by remember { mutableStateOf("") }
 
         Column(
             modifier = Modifier
@@ -145,17 +153,40 @@ fun App() {
                         items(chapters) { chapter ->
                             Row(
                                 modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp),
-                                verticalAlignment = Alignment.CenterVertically,
-                                horizontalArrangement = Arrangement.SpaceBetween
+                                verticalAlignment = Alignment.CenterVertically
+                                // Removed Arrangement.SpaceBetween to allow more space for buttons
                             ) {
                                 Column(modifier = Modifier.weight(1f)) {
                                     Text(chapter.title, style = MaterialTheme.typography.bodyLarge)
                                     Text("Order: ${chapter.order}", style = MaterialTheme.typography.bodySmall)
                                 }
-                                Button(onClick = {
-                                    projectViewModel.deleteChapter(proj, chapter.id)
-                                }) {
-                                    Text("Del")
+                                Row(verticalAlignment = Alignment.CenterVertically) {
+                                    TextButton(
+                                        onClick = { projectViewModel.moveChapter(proj, chapter.id, moveUp = true) },
+                                        enabled = chapter.order > 0
+                                    ) {
+                                        Text("Up")
+                                    }
+                                    TextButton(
+                                        onClick = { projectViewModel.moveChapter(proj, chapter.id, moveUp = false) },
+                                        enabled = chapter.order < chapters.size - 1
+                                    ) {
+                                        Text("Dn") // Down abbreviated
+                                    }
+                                    Spacer(modifier = Modifier.width(4.dp))
+                                    TextButton(onClick = {
+                                        editingChapter = chapter
+                                        editChapterTitleInput = chapter.title
+                                        showEditChapterDialog = true
+                                    }) {
+                                        Text("Edit")
+                                    }
+                                    Spacer(modifier = Modifier.width(4.dp))
+                                    Button(onClick = {
+                                        projectViewModel.deleteChapter(proj, chapter.id)
+                                    }) {
+                                        Text("Del")
+                                    }
                                 }
                             }
                         }
@@ -166,6 +197,42 @@ fun App() {
                     "Select a project to view its chapters.",
                     modifier = Modifier.padding(16.dp),
                     style = MaterialTheme.typography.bodyMedium
+                )
+            }
+
+            // Edit Chapter Dialog
+            if (showEditChapterDialog && editingChapter != null && selectedProject != null) {
+                AlertDialog(
+                    onDismissRequest = { showEditChapterDialog = false },
+                    title = { Text("Edit Chapter Title") },
+                    text = {
+                        OutlinedTextField(
+                            value = editChapterTitleInput,
+                            onValueChange = { editChapterTitleInput = it },
+                            label = { Text("Chapter Title") },
+                            modifier = Modifier.fillMaxWidth()
+                        )
+                    },
+                    confirmButton = {
+                        Button(
+                            onClick = {
+                                projectViewModel.updateChapterTitle(
+                                    selectedProject!!, // selectedProject is checked by if condition
+                                    editingChapter!!.id, // editingChapter is checked by if condition
+                                    editChapterTitleInput
+                                )
+                                showEditChapterDialog = false
+                                editingChapter = null
+                            }
+                        ) {
+                            Text("Save")
+                        }
+                    },
+                    dismissButton = {
+                        TextButton(onClick = { showEditChapterDialog = false }) {
+                            Text("Cancel")
+                        }
+                    }
                 )
             }
         }

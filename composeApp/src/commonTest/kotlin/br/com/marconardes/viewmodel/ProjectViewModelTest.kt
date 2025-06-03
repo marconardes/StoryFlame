@@ -142,4 +142,81 @@ class ProjectViewModelTest {
         assertNotNull(projectInSave, "Saved projects should contain the modified project")
         assertTrue(projectInSave.chapters.isEmpty(), "Saved project should have no chapters")
     }
+
+    @Test
+    fun `updateChapterTitle should change title and save`() = runTest {
+        viewModel.createProject("Project For Title Update")
+        var selectedProject = viewModel.selectedProject.first()!!
+        viewModel.addChapter(selectedProject, "Original Title")
+
+        selectedProject = viewModel.selectedProject.first()!! // Refresh selectedProject after addChapter
+        val chapterToUpdate = selectedProject.chapters.first()
+        val newTitle = "Updated Chapter Title"
+
+        viewModel.updateChapterTitle(selectedProject, chapterToUpdate.id, newTitle)
+
+        val updatedSelectedProject = viewModel.selectedProject.first()!!
+        val updatedChapter = updatedSelectedProject.chapters.find { it.id == chapterToUpdate.id }
+        assertNotNull(updatedChapter, "Chapter should still exist")
+        assertEquals(newTitle, updatedChapter.title, "Chapter title should be updated")
+
+        assertNotNull(mockSavedJsonDataForTest, "saveProjectsToFile should have been called")
+        val savedProjects = Json.decodeFromString<List<Project>>(mockSavedJsonDataForTest!!)
+        val projectInSave = savedProjects.find { it.id == selectedProject.id }!!
+        assertEquals(newTitle, projectInSave.chapters.find { it.id == chapterToUpdate.id }?.title, "Saved chapter title incorrect")
+    }
+
+    @Test
+    fun `moveChapter should reorder chapters and save`() = runTest {
+        viewModel.createProject("Project For Reordering")
+        var selectedProject = viewModel.selectedProject.first()!!
+
+        // Add 3 chapters: C0 (order 0), C1 (order 1), C2 (order 2)
+        viewModel.addChapter(selectedProject, "Chapter Alpha") // order 0
+        selectedProject = viewModel.selectedProject.first()!!
+        viewModel.addChapter(selectedProject, "Chapter Beta")  // order 1
+        selectedProject = viewModel.selectedProject.first()!!
+        viewModel.addChapter(selectedProject, "Chapter Gamma") // order 2
+        selectedProject = viewModel.selectedProject.first()!!
+
+
+        val chaptersInitial = selectedProject.chapters.sortedBy { it.order }
+        val chapterAlphaId = chaptersInitial.find { it.title == "Chapter Alpha" }!!.id // Initially order 0
+        val chapterBetaId = chaptersInitial.find { it.title == "Chapter Beta" }!!.id    // Initially order 1
+        val chapterGammaId = chaptersInitial.find { it.title == "Chapter Gamma" }!!.id // Initially order 2
+
+        // Move Chapter Alpha (order 0) down to order 1
+        viewModel.moveChapter(selectedProject, chapterAlphaId, moveUp = false)
+        var chaptersAfterMoveDown = viewModel.selectedProject.first()!!.chapters.sortedBy { it.order }
+
+        assertEquals("Chapter Beta", chaptersAfterMoveDown[0].title, "Beta should be order 0 after Alpha moved down")
+        assertEquals(0, chaptersAfterMoveDown[0].order, "Beta order check")
+        assertEquals("Chapter Alpha", chaptersAfterMoveDown[1].title, "Alpha should be order 1 after move down")
+        assertEquals(1, chaptersAfterMoveDown[1].order, "Alpha order check")
+        assertEquals("Chapter Gamma", chaptersAfterMoveDown[2].title, "Gamma should remain order 2")
+        assertEquals(2, chaptersAfterMoveDown[2].order, "Gamma order check")
+        assertNotNull(mockSavedJsonDataForTest, "Save should be called after moving chapter down")
+        var savedProjects = Json.decodeFromString<List<Project>>(mockSavedJsonDataForTest!!)
+        var projectInSave = savedProjects.find { it.id == selectedProject.id }!!
+        assertEquals(0, projectInSave.chapters.find { it.id == chapterBetaId }!!.order)
+        assertEquals(1, projectInSave.chapters.find { it.id == chapterAlphaId }!!.order)
+
+        // Reset mock save before next action for clean check
+        mockSavedJsonDataForTest = null
+
+        // Move Chapter Alpha (now at order 1) up to order 0
+        selectedProject = viewModel.selectedProject.first()!! // Refresh selected project instance
+        viewModel.moveChapter(selectedProject, chapterAlphaId, moveUp = true)
+        var chaptersAfterMoveUp = viewModel.selectedProject.first()!!.chapters.sortedBy { it.order }
+
+        assertEquals("Chapter Alpha", chaptersAfterMoveUp[0].title, "Alpha should be order 0 after move up")
+        assertEquals(0, chaptersAfterMoveUp[0].order, "Alpha order check after move up")
+        assertEquals("Chapter Beta", chaptersAfterMoveUp[1].title, "Beta should be order 1 after Alpha moved up")
+        assertEquals(1, chaptersAfterMoveUp[1].order, "Beta order check after move up")
+        assertNotNull(mockSavedJsonDataForTest, "Save should be called after moving chapter up")
+        savedProjects = Json.decodeFromString<List<Project>>(mockSavedJsonDataForTest!!)
+        projectInSave = savedProjects.find { it.id == selectedProject.id }!!
+        assertEquals(0, projectInSave.chapters.find { it.id == chapterAlphaId }!!.order)
+        assertEquals(1, projectInSave.chapters.find { it.id == chapterBetaId }!!.order)
+    }
 }
