@@ -98,8 +98,8 @@ A seguir estão as funcionalidades planejadas para o StoryFlame, atualmente em e
         (X) Mais opções de fontes. (Prioridade: 6/10)
         (X) Configurações de espaçamento, indentação. (Prioridade: 6/10)
     (X) Interface de Usuário (UI) e Experiência do Usuário (UX): (Prioridade: 8/10)
-        (P) Refinamentos gerais na interface para torná-la mais polida e intuitiva. (Prioridade: 8/10)
-            - Refatoração inicial da estrutura da tela principal (`App.kt`).
+        (V) Refinamentos gerais na interface para torná-la mais polida e intuitiva. (Prioridade: 8/10) # Status to V due to navigation refactor
+            - (V) Implementação de arquitetura multi-telas para melhor navegação (Projetos -> Capítulos -> Tela de Escolha de Ação -> Editor Dedicado para Sumário/Conteúdo).
         (X) Melhorias na navegação e feedback visual. (Prioridade: 7/10)
         (X) Otimizações de performance, especialmente ao lidar com projetos muito grandes. (Prioridade: 7/10)
     (P) Testes Automatizados: (Prioridade: 8/10) # Assuming tests are partially implemented due to previous step
