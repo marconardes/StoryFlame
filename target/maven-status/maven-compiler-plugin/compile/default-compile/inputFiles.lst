@@ -1,0 +1,9 @@
+/app/src/main/java/br/com/marconardes/storyflame/swing/Main.java
+/app/src/main/java/br/com/marconardes/storyflame/swing/model/Project.java
+/app/src/main/java/br/com/marconardes/storyflame/swing/view/ChapterEditorListener.java
+/app/src/main/java/br/com/marconardes/storyflame/swing/view/ProjectListView.java
+/app/src/main/java/br/com/marconardes/storyflame/swing/view/ChapterSelectionListener.java
+/app/src/main/java/br/com/marconardes/storyflame/swing/view/ChapterEditorView.java
+/app/src/main/java/br/com/marconardes/storyflame/swing/view/ChapterSectionView.java
+/app/src/main/java/br/com/marconardes/storyflame/swing/model/Chapter.java
+/app/src/main/java/br/com/marconardes/storyflame/swing/viewmodel/ProjectViewModel.java
