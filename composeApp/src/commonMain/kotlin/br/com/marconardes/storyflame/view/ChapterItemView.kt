@@ -9,7 +9,6 @@ import androidx.compose.ui.unit.dp
 import br.com.marconardes.model.Chapter
 import br.com.marconardes.model.Project
 import br.com.marconardes.viewmodel.ProjectViewModel
-import com.mohamedrejeb.richeditor.model.RichTextState
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.debounce
 import androidx.compose.runtime.snapshotFlow // Corrected import
@@ -81,25 +80,5 @@ fun ChapterItemView(
         Spacer(modifier = Modifier.height(8.dp))
         Text("Chapter Content:", style = MaterialTheme.typography.titleMedium)
 
-        val editorState = remember(chapter.id, chapter.content) {
-            RichTextState().apply {
-                setHtml(chapter.content ?: "") // Load existing content using setHtml
-            }
-        }
-
-        RichTextEditorView(state = editorState, modifier = Modifier.fillMaxWidth().height(200.dp))
-
-        LaunchedEffect(editorState, project, chapter.id) {
-            snapshotFlow { editorState.toHtml() }
-                .debounce(1000L)
-                .collectLatest { contentHtml ->
-                    val currentChapterFromState = projectViewModel.selectedProject.value?.chapters?.find { it.id == chapter.id }
-                    if (currentChapterFromState?.content != contentHtml) {
-                        if (contentHtml.isNotBlank() && contentHtml != "<p></p>") {
-                            projectViewModel.updateChapterContent(project, chapter.id, contentHtml)
-                        }
-                    }
-                }
-        }
     }
 }
