@@ -22,10 +22,10 @@ A seguir estão as funcionalidades planejadas para o StoryFlame, atualmente em e
         (V) CRUD completo para capítulos (adicionar, editar título, excluir, reordenar). (Prioridade: 10/10)
     (V) Resumo por Capítulo/Cena: (Prioridade: 9/10)
         (V) Adição e edição de resumos textuais para cada capítulo/cena. (Prioridade: 9/10)
-    (V) Editor de Texto Focado: (Prioridade: 10/10)
-        (V) Integração do editor de texto rico (compose-rich-editor). (Prioridade: 10/10)
-        (V) Funcionalidades de formatação básica (negrito, itálico, sublinhado, cabeçalhos H1-H3). (Prioridade: 9/10)
-        (V) Salvamento automático com debounce do conteúdo do capítulo ativo. (Prioridade: 9/10)
+    (V) Editor de Markdown Simples: (Prioridade: 10/10)
+        (V) Integração de editor de Markdown simples (TextField). (Prioridade: 10/10)
+        (X) Funcionalidades de formatação básica (negrito, itálico, sublinhado, cabeçalhos H1-H3) via toolbar ou assistentes. (Prioridade: 9/10)
+        (V) Salvamento automático com debounce do conteúdo Markdown do capítulo ativo. (Prioridade: 9/10)
     (X) Acompanhamento de Progresso: (Prioridade: 9/10)
         (X) Contador de palavras em tempo real no editor para o capítulo atual. (Prioridade: 9/10)
         (X) Estatísticas diárias da contagem total de palavras do projeto. (Prioridade: 9/10)
@@ -71,6 +71,12 @@ A seguir estão as funcionalidades planejadas para o StoryFlame, atualmente em e
     (🟡) Melhorias na Visualização da Timeline: (Prioridade: 7/10)
         (🟡) Interface gráfica mais elaborada para a timeline (ex: barras cronológicas, filtros por data/personagem/capítulo). (Prioridade: 7/10)
         (🟡) Diferentes modos de visualização da timeline. (Prioridade: 7/10)
+
+### Melhorias no Editor de Markdown
+    (🟡) Pré-visualização de Markdown em tempo real no editor.
+    (🟡) Barra de ferramentas para auxiliar na escrita de Markdown (inserção de negrito, itálico, listas, links, etc.).
+    (🟡) Suporte para sintaxe de Markdown estendida (tabelas, notas de rodapé, etc.), se aplicável.
+    (🟡) Opção de conversão de HTML existente (de capítulos antigos) para Markdown (investigar viabilidade).
 
 ### Recursos Avançados de Escrita e Produtividade (Fase 3)
 
