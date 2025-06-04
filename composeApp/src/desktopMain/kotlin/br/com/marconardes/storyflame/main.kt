@@ -1,7 +1,20 @@
 package br.com.marconardes.storyflame
 
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.remember
 import androidx.compose.ui.window.Window
 import androidx.compose.ui.window.application
+import br.com.marconardes.storyflame.navigation.ChapterActionChoiceScreenParams
+import br.com.marconardes.storyflame.navigation.ChapterActionChoiceScreenView
+import br.com.marconardes.storyflame.navigation.ChapterEditorScreenParams
+import br.com.marconardes.storyflame.navigation.ChapterEditorScreenView
+import br.com.marconardes.storyflame.navigation.ChapterListScreenParams
+import br.com.marconardes.storyflame.navigation.ChapterListScreenView
+import br.com.marconardes.storyflame.navigation.CustomNavigator
+import br.com.marconardes.storyflame.navigation.ProjectListScreenView
+import br.com.marconardes.storyflame.navigation.Routes
+import br.com.marconardes.viewmodel.ProjectViewModel // Import ProjectViewModel
 
 fun main() = application {
     Window(
@@ -11,20 +24,6 @@ fun main() = application {
         App()
     }
 }
-
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.remember
-import br.com.marconardes.storyflame.navigation.CustomNavigator
-import br.com.marconardes.storyflame.navigation.Routes
-import br.com.marconardes.storyflame.navigation.ChapterActionChoiceScreenParams
-import br.com.marconardes.storyflame.navigation.ChapterActionChoiceScreenView
-import br.com.marconardes.storyflame.navigation.ChapterEditorScreenParams
-import br.com.marconardes.storyflame.navigation.ChapterEditorScreenView
-import br.com.marconardes.storyflame.navigation.ChapterListScreenParams
-import br.com.marconardes.storyflame.navigation.ChapterListScreenView
-import br.com.marconardes.storyflame.navigation.ProjectListScreenView
-import br.com.marconardes.viewmodel.ProjectViewModel // Import ProjectViewModel
 
 @Composable
 internal actual fun AppNavigationHost() {
