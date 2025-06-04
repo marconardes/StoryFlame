@@ -38,7 +38,10 @@ import androidx.compose.runtime.snapshotFlow // Added for Markdown auto-save
 
 @OptIn(ExperimentalMaterial3Api::class) // For Scaffold and TopAppBar
 @Composable
-fun ProjectListScreenView(projectViewModel: ProjectViewModel = ProjectViewModel() /* TODO: Review ViewModel instantiation */) {
+fun ProjectListScreenView(
+    projectViewModel: ProjectViewModel,
+    onNavigateToChapterList: (projectId: String) -> Unit
+) {
     val projects by projectViewModel.projects.collectAsState()
     val selectedProject by projectViewModel.selectedProject.collectAsState()
     // val navigator = LocalNavigator.currentOrThrow // Removed: Voyager
@@ -61,8 +64,7 @@ fun ProjectListScreenView(projectViewModel: ProjectViewModel = ProjectViewModel(
                 projects = projects,
                 selectedProject = selectedProject,
                 onProjectSelected = { project ->
-                    // TODO: Navigate to ChapterListScreen(projectId = project.id)
-                    // navigator.push(ChapterListScreen(projectId = project.id)) // Removed: Voyager
+                        onNavigateToChapterList(project.id)
                 },
                 modifier = Modifier.fillMaxWidth()
             )
@@ -76,7 +78,12 @@ data class ChapterActionChoiceScreenParams(val projectId: String, val chapterId:
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun ChapterActionChoiceScreenView(params: ChapterActionChoiceScreenParams, projectViewModel: ProjectViewModel = ProjectViewModel() /* TODO: Review ViewModel instantiation */) {
+fun ChapterActionChoiceScreenView(
+    params: ChapterActionChoiceScreenParams,
+    projectViewModel: ProjectViewModel,
+    onNavigateToChapterEditor: (projectId: String, chapterId: String, initialFocus: String?) -> Unit,
+    onNavigateBack: () -> Unit
+) {
     // val projectViewModel: ProjectViewModel = rememberScreenModel { ProjectViewModel() } // Removed: Voyager
     // val navigator = LocalNavigator.currentOrThrow // Removed: Voyager
 
@@ -99,7 +106,7 @@ fun ChapterActionChoiceScreenView(params: ChapterActionChoiceScreenParams, proje
                 TopAppBar(
                     title = { Text("Actions for: ${currentChapter?.title ?: "Chapter"}") },
                     navigationIcon = {
-                        TextButton(onClick = { /* TODO: Navigate back */ /* navigator.pop() */ }) { // Removed: Voyager
+                        TextButton(onClick = onNavigateBack) {
                             Text("Back") // Already "Back" from previous step, but ensuring it is.
                         }
                     }
@@ -119,14 +126,14 @@ fun ChapterActionChoiceScreenView(params: ChapterActionChoiceScreenParams, proje
                     Text("Chapter: ${currentChapter.title}", style = MaterialTheme.typography.titleSmall) // Translated
                     Spacer(modifier = Modifier.height(32.dp))
                     Button(
-                        onClick = { /* TODO: Navigate to ChapterEditorScreen(params.projectId, params.chapterId, initialFocus = "summary") */ /* navigator.replace(ChapterEditorScreen(projectId, chapterId, initialFocus = "summary")) */ }, // Removed: Voyager
+                        onClick = { onNavigateToChapterEditor(params.projectId, params.chapterId, "summary") },
                         modifier = Modifier.fillMaxWidth(0.8f)
                     ) {
                         Text("Edit Summary") // Translated
                     }
                     Spacer(modifier = Modifier.height(16.dp))
                     Button(
-                        onClick = { /* TODO: Navigate to ChapterEditorScreen(params.projectId, params.chapterId, initialFocus = "content") */ /* navigator.replace(ChapterEditorScreen(projectId, chapterId, initialFocus = "content")) */ }, // Removed: Voyager
+                        onClick = { onNavigateToChapterEditor(params.projectId, params.chapterId, "content") },
                         modifier = Modifier.fillMaxWidth(0.8f)
                     ) {
                         Text("Edit Content (Markdown)") // Translated
@@ -144,7 +151,12 @@ data class ChapterListScreenParams(val projectId: String) // Renamed from Chapte
 
 @OptIn(ExperimentalMaterial3Api::class) // For Scaffold, TopAppBar
 @Composable
-fun ChapterListScreenView(params: ChapterListScreenParams, projectViewModel: ProjectViewModel = ProjectViewModel() /* TODO: Review ViewModel instantiation */) {
+fun ChapterListScreenView(
+    params: ChapterListScreenParams,
+    projectViewModel: ProjectViewModel,
+    onNavigateToChapterActionChoice: (projectId: String, chapterId: String) -> Unit,
+    onNavigateBack: () -> Unit
+) {
     // val projectViewModel: ProjectViewModel = rememberScreenModel { ProjectViewModel() } // Removed: Voyager
     // val navigator = LocalNavigator.currentOrThrow // Removed: Voyager
 
@@ -169,7 +181,7 @@ fun ChapterListScreenView(params: ChapterListScreenParams, projectViewModel: Pro
                 TopAppBar(
                     title = { Text(selectedProjectDetails?.name ?: "Chapters") },
                     navigationIcon = {
-                        TextButton(onClick = { /* TODO: Navigate back */ /* navigator.pop() */ }) { // Removed: Voyager
+                        TextButton(onClick = onNavigateBack) {
                             Text("Back")
                         }
                     }
@@ -215,8 +227,7 @@ fun ChapterListScreenView(params: ChapterListScreenParams, projectViewModel: Pro
                                         .fillMaxWidth()
                                         .padding(vertical = 4.dp)
                                         .clickable {
-                                            // TODO: Navigate to ChapterActionChoiceScreen(projectId = params.projectId, chapterId = chapter.id)
-                                            // navigator.push(ChapterActionChoiceScreen(projectId = projectId, chapterId = chapter.id)) // Removed: Voyager
+                                            onNavigateToChapterActionChoice(params.projectId, chapter.id)
                                         },
                                     verticalAlignment = Alignment.CenterVertically
                                 ) {
@@ -282,7 +293,11 @@ data class ChapterEditorScreenParams(val projectId: String, val chapterId: Strin
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun ChapterEditorScreenView(params: ChapterEditorScreenParams, projectViewModel: ProjectViewModel = ProjectViewModel() /* TODO: Review ViewModel instantiation */) {
+fun ChapterEditorScreenView(
+    params: ChapterEditorScreenParams,
+    projectViewModel: ProjectViewModel,
+    onNavigateBack: () -> Unit
+) {
     // val projectViewModel: ProjectViewModel = rememberScreenModel { ProjectViewModel() } // Removed: Voyager
     // val navigator = LocalNavigator.currentOrThrow // Removed: Voyager
 
@@ -324,7 +339,7 @@ fun ChapterEditorScreenView(params: ChapterEditorScreenParams, projectViewModel:
                 TopAppBar(
                     title = { Text(chapter?.title ?: "Edit Chapter") },
                     navigationIcon = {
-                        TextButton(onClick = { /* TODO: Navigate back */ /* navigator.pop() */ }) { // Removed: Voyager
+                        TextButton(onClick = onNavigateBack) {
                             Text("Back")
                         }
                     }
@@ -352,8 +367,7 @@ fun ChapterEditorScreenView(params: ChapterEditorScreenParams, projectViewModel:
                             Button(
                                 onClick = {
                                     projectViewModel.updateChapterSummary(project, chapter.id, summaryInput)
-                                    // TODO: Navigate back (optional)
-                                    // navigator.pop() // Optional: pop back after saving // Removed: Voyager
+                                    onNavigateBack()
                                 },
                                 modifier = Modifier.align(Alignment.End).padding(top = 8.dp)
                             ) {
