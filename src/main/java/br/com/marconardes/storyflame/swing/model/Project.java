@@ -3,12 +3,15 @@ package br.com.marconardes.storyflame.swing.model;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
+import java.util.Map;
+import java.util.HashMap;
 
 public class Project {
     private String id;
     private String name;
     private String creationDate;
     private List<Chapter> chapters;
+    private Map<String, Integer> dailyWordCounts = new HashMap<>();
 
     // Constructor
     public Project(String name, String creationDate) {
@@ -59,6 +62,14 @@ public class Project {
     // Helper method to remove a chapter
     public void removeChapter(Chapter chapter) {
         this.chapters.removeIf(c -> c.getId().equals(chapter.getId()));
+    }
+
+    public Map<String, Integer> getDailyWordCounts() {
+        return dailyWordCounts;
+    }
+
+    public void setDailyWordCounts(Map<String, Integer> dailyWordCounts) {
+        this.dailyWordCounts = dailyWordCounts;
     }
 
     @Override

@@ -11,6 +11,11 @@ import java.beans.PropertyChangeListener;
 import java.beans.PropertyChangeSupport;
 import java.io.IOException;
 import java.nio.file.Files;
+import java.time.LocalDate;
+// DateTimeFormatter is already imported
+// import java.time.format.DateTimeFormatter;
+import java.util.Map; // For Map type in method signature
+import br.com.marconardes.storyflame.swing.util.WordCounterUtil;
 import java.nio.file.Paths;
 import java.nio.file.Path;
 import java.nio.file.StandardOpenOption;
@@ -193,6 +198,7 @@ public class ProjectViewModel {
         if (this.selectedProject != null && this.selectedProject.getId().equals(targetProject.getId())) {
              support.firePropertyChange(SELECTED_PROJECT_PROPERTY, this.selectedProject, this.selectedProject); // To refresh views relying on project object itself for chapters
         }
+        updateDailyWordCountStats(targetProject); // Update stats before saving
         saveProjects();
         return newChapter;
     }
@@ -236,6 +242,7 @@ public class ProjectViewModel {
                 if (this.selectedProject != null && this.selectedProject.getId().equals(projectId)) {
                     support.firePropertyChange(SELECTED_PROJECT_PROPERTY, this.selectedProject, this.selectedProject);
                 }
+                updateDailyWordCountStats(project); // Update stats before saving
                 saveProjects();
             }
         }
@@ -260,6 +267,10 @@ public class ProjectViewModel {
             support.firePropertyChange(SELECTED_PROJECT_CHAPTERS_PROPERTY, oldChapters, getSelectedProjectChapters());
              if (this.selectedProject != null && this.selectedProject.getId().equals(projectId)) {
                  support.firePropertyChange(SELECTED_PROJECT_PROPERTY, this.selectedProject, this.selectedProject);
+            }
+            Project projectOfChapter = findProjectById(projectId);
+            if (projectOfChapter != null) {
+                 updateDailyWordCountStats(projectOfChapter); // Update stats before saving
             }
             saveProjects();
             System.out.println("Chapter " + chapterId + " content updated in ViewModel.");
@@ -310,7 +321,35 @@ public class ProjectViewModel {
         if (this.selectedProject != null && this.selectedProject.getId().equals(projectId)) {
             support.firePropertyChange(SELECTED_PROJECT_PROPERTY, this.selectedProject, this.selectedProject);
         }
+        // No need to update daily word count here as title/summary changes don't affect it.
+        // However, if we decide they should, then call updateDailyWordCountStats(project) here.
         saveProjects();
+    }
+
+    private void updateDailyWordCountStats(Project project) {
+        if (project == null) {
+            return;
+        }
+
+        int totalWordCount = 0;
+        for (Chapter chapter : project.getChapters()) {
+            totalWordCount += WordCounterUtil.countWords(chapter.getContent());
+            // Optionally include words from title and summary:
+            // totalWordCount += WordCounterUtil.countWords(chapter.getTitle());
+            // totalWordCount += WordCounterUtil.countWords(chapter.getSummary());
+        }
+
+        String todayDateString = LocalDate.now().format(DateTimeFormatter.ISO_LOCAL_DATE); // YYYY-MM-DD
+
+        Map<String, Integer> dailyCounts = project.getDailyWordCounts();
+        // The field is initialized in Project model, but a defensive check here is fine.
+        if (dailyCounts == null) {
+            dailyCounts = new java.util.HashMap<>();
+            project.setDailyWordCounts(dailyCounts);
+        }
+        dailyCounts.put(todayDateString, totalWordCount);
+
+        System.out.println("Updated daily word count for project '" + project.getName() + "' on " + todayDateString + ": " + totalWordCount + " words.");
     }
 
 
