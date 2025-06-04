@@ -1,6 +1,6 @@
 # Roadmap do Projeto StoryFlame
 
-**Nota Importante:** O código-fonte atual deste projeto é um placeholder inicial. Este roadmap descreve as funcionalidades planejadas para o futuro. No momento, nenhuma das funcionalidades listadas abaixo está implementada no código, exceto pela estrutura básica do projeto.
+**Nota Importante:** Este roadmap descreve as funcionalidades planejadas para o StoryFlame. As funcionalidades do "Núcleo Essencial e Gerenciamento" (como gerenciamento de projetos, capítulos e resumos) já possuem uma implementação base funcional. Outras funcionalidades listadas abaixo estão em diversos estágios de planejamento ou não implementadas.
 
 ## Legenda de Status
 - (V) Funcionalidade Implementada
