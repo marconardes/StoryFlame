@@ -1,18 +1,35 @@
+# IntelliJ IDEA
+.idea/
 *.iml
-.kotlin
-.gradle
-**/build/
-xcuserdata
-!src/**/build/
-local.properties
-.idea
+
+# macOS
 .DS_Store
-captures
-.externalNativeBuild
-.cxx
+
+# Maven
+target/
+*.jar
+*.war
+*.ear
+*.nar
+
+# Logs
+*.log
+**/hs_err_pid*.log
+**/replay_pid*.log
+
+# Build artifacts
+**/build/
+
+# Other
+xcuserdata/
+captures/
+.externalNativeBuild/
+.cxx/
 *.xcodeproj/*
 !*.xcodeproj/project.pbxproj
 !*.xcodeproj/xcshareddata/
 !*.xcodeproj/project.xcworkspace/
 !*.xcworkspace/contents.xcworkspacedata
 **/xcshareddata/WorkspaceSettings.xcsettings
+# Removed .gradle and .kotlin
+# local.properties was also there, might be Android specific, removing for now.
