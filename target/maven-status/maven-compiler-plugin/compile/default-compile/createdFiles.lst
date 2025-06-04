@@ -1,10 +1,13 @@
-br/com/marconardes/storyflame/swing/model/Project.class
+br/com/marconardes/storyflame/swing/view/ChapterEditorView$1.class
 br/com/marconardes/storyflame/swing/view/ProjectListView.class
 br/com/marconardes/storyflame/swing/view/ChapterEditorView.class
 br/com/marconardes/storyflame/swing/Main.class
 br/com/marconardes/storyflame/swing/viewmodel/ProjectViewModel.class
 br/com/marconardes/storyflame/swing/view/ChapterSectionView.class
 br/com/marconardes/storyflame/swing/view/ChapterEditorListener.class
-br/com/marconardes/storyflame/swing/viewmodel/ProjectViewModel$1.class
 br/com/marconardes/storyflame/swing/model/Chapter.class
+br/com/marconardes/storyflame/swing/util/MarkdownFormatter.class
 br/com/marconardes/storyflame/swing/view/ChapterSelectionListener.class
+br/com/marconardes/storyflame/swing/util/MarkdownFormatter$FormatResult.class
+br/com/marconardes/storyflame/swing/model/Project.class
+br/com/marconardes/storyflame/swing/viewmodel/ProjectViewModel$1.class

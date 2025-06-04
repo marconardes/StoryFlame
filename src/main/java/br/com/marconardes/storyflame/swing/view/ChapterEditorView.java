@@ -5,8 +5,16 @@ import br.com.marconardes.storyflame.swing.model.Project;
 import br.com.marconardes.storyflame.swing.viewmodel.ProjectViewModel;
 
 import javax.swing.*;
+import javax.swing.event.DocumentEvent;
+import javax.swing.event.DocumentListener;
+// javax.swing.text.Utilities is not needed here anymore as logic moved
 import java.awt.*;
 import java.awt.event.ActionEvent;
+import br.com.marconardes.storyflame.swing.util.MarkdownFormatter;
+// No Timer import needed if using lambda for ActionEvent, but good to have if complex.
+// For this case, lambda `this::performAutoSave` is fine.
+// import javax.swing.Timer; // Not strictly necessary due to lambda usage if performAutoSave matches ActionEvent handler signature
+
 
 public class ChapterEditorView extends JPanel {
     private final ProjectViewModel viewModel;
@@ -19,6 +27,9 @@ public class ChapterEditorView extends JPanel {
     private JTextArea summaryArea;
     private JTextArea contentArea;
     private JLabel editorTitleLabel;
+
+    private javax.swing.Timer autoSaveTimer; // Fully qualify to avoid import if preferred, or add import
+    private static final int AUTOSAVE_DELAY = 1500; // milliseconds (1.5 seconds)
 
 
     public ChapterEditorView(ProjectViewModel viewModel) {
@@ -53,11 +64,47 @@ public class ChapterEditorView extends JPanel {
 
         // Content
         fieldsPanel.add(new JLabel("Content:"));
+
+        // Create formatting toolbar
+        JToolBar formatToolbar = new JToolBar();
+        formatToolbar.setFloatable(false);
+        formatToolbar.setAlignmentX(Component.LEFT_ALIGNMENT); // Align toolbar to the left in BoxLayout
+
+        JButton boldButton = new JButton("Bold");
+        boldButton.addActionListener(e -> applyMarkdownFormat("**", false));
+        formatToolbar.add(boldButton);
+
+        JButton italicButton = new JButton("Italic");
+        italicButton.addActionListener(e -> applyMarkdownFormat("*", false));
+        formatToolbar.add(italicButton);
+
+        formatToolbar.addSeparator();
+
+        JButton h1Button = new JButton("H1");
+        h1Button.addActionListener(e -> applyMarkdownFormat("# ", true));
+        formatToolbar.add(h1Button);
+
+        JButton h2Button = new JButton("H2");
+        h2Button.addActionListener(e -> applyMarkdownFormat("## ", true));
+        formatToolbar.add(h2Button);
+
+        JButton h3Button = new JButton("H3");
+        h3Button.addActionListener(e -> applyMarkdownFormat("### ", true));
+        formatToolbar.add(h3Button);
+
+        // Panel to hold toolbar and contentArea
+        JPanel contentPanelWrapper = new JPanel(new BorderLayout());
+        contentPanelWrapper.add(formatToolbar, BorderLayout.NORTH);
+
         contentArea = new JTextArea(15, 20);
         contentArea.setLineWrap(true);
         contentArea.setWrapStyleWord(true);
         JScrollPane contentScrollPane = new JScrollPane(contentArea);
-        fieldsPanel.add(contentScrollPane);
+        contentPanelWrapper.add(contentScrollPane, BorderLayout.CENTER);
+        contentPanelWrapper.setAlignmentX(Component.LEFT_ALIGNMENT); // Align wrapper to the left
+
+        fieldsPanel.add(contentPanelWrapper);
+
 
         add(fieldsPanel, BorderLayout.CENTER);
 
@@ -72,6 +119,105 @@ public class ChapterEditorView extends JPanel {
         buttonPanel.add(saveButton);
         buttonPanel.add(cancelButton);
         add(buttonPanel, BorderLayout.SOUTH);
+
+        // Initialize auto-save timer
+        autoSaveTimer = new javax.swing.Timer(AUTOSAVE_DELAY, this::performAutoSave);
+        autoSaveTimer.setRepeats(false); // Only fire once
+
+        // Create and attach document listener for auto-save
+        DocumentListener autoSaveListener = new DocumentListener() {
+            @Override
+            public void insertUpdate(DocumentEvent e) {
+                restartAutoSaveTimer();
+            }
+            @Override
+            public void removeUpdate(DocumentEvent e) {
+                restartAutoSaveTimer();
+            }
+            @Override
+            public void changedUpdate(DocumentEvent e) {
+                // Plain text components do not typically fire this, but good practice
+                restartAutoSaveTimer();
+            }
+        };
+
+        titleField.getDocument().addDocumentListener(autoSaveListener);
+        summaryArea.getDocument().addDocumentListener(autoSaveListener);
+        contentArea.getDocument().addDocumentListener(autoSaveListener);
+    }
+
+    private void applyMarkdownFormat(String markdownSyntax, boolean isPrefix) {
+        String currentText = contentArea.getText();
+        int selectionStart = contentArea.getSelectionStart();
+        int selectionEnd = contentArea.getSelectionEnd();
+
+        // Handle case where JTextArea might be empty and getSelectionStart/End return 0
+        // but we want to ensure it's treated as a valid caret position.
+        if (currentText.isEmpty()) {
+            selectionStart = 0;
+            selectionEnd = 0;
+        }
+
+        MarkdownFormatter.FormatResult result = MarkdownFormatter.applyFormat(currentText, selectionStart, selectionEnd, markdownSyntax, isPrefix);
+
+        contentArea.setText(result.newText); // This triggers DocumentListener for auto-save
+
+        // Try to set selection, protect against invalid indices
+        try {
+            if (result.newSelectionStart >=0 && result.newSelectionEnd >= result.newSelectionStart && result.newSelectionEnd <= result.newText.length()) {
+                 contentArea.setSelectionStart(result.newSelectionStart);
+                 contentArea.setSelectionEnd(result.newSelectionEnd);
+            } else if (result.newSelectionStart >=0 && result.newSelectionStart <= result.newText.length()) { // Fallback for caret
+                 contentArea.setCaretPosition(result.newSelectionStart);
+            }
+        } catch (IllegalArgumentException iae) {
+            System.err.println("Error setting selection after format: " + iae.getMessage());
+            // Let caret be at the end or start if error
+        }
+        contentArea.requestFocusInWindow();
+    }
+
+    private void restartAutoSaveTimer() {
+        autoSaveTimer.restart();
+    }
+
+    private void performAutoSave(ActionEvent e) {
+        if (currentProject != null && currentChapter != null) {
+            // System.out.println("Auto-saving chapter: " + currentChapter.getTitle() + " for project " + currentProject.getName()); // For debugging
+
+            String newTitle = titleField.getText().trim();
+            String newSummary = summaryArea.getText().trim();
+            String newContent = contentArea.getText().trim();
+
+            if (newTitle.isEmpty()) {
+                // System.err.println("Auto-save: Title cannot be empty. Save skipped.");
+                // Optionally provide non-modal feedback (e.g., status bar update) if desired.
+                // For now, just skip saving if title is empty during auto-save.
+                return;
+            }
+
+            // Check if anything actually changed to avoid redundant updates
+            boolean titleChanged = !newTitle.equals(currentChapter.getTitle());
+            boolean summaryChanged = !newSummary.equals(currentChapter.getSummary());
+            boolean contentChanged = !newContent.equals(currentChapter.getContent());
+
+            if (titleChanged) {
+                viewModel.updateChapterTitle(currentProject.getId(), currentChapter.getId(), newTitle);
+                currentChapter.setTitle(newTitle); // Update local copy to prevent re-triggering save
+            }
+            if (summaryChanged) {
+                viewModel.updateChapterSummary(currentProject.getId(), currentChapter.getId(), newSummary);
+                currentChapter.setSummary(newSummary); // Update local copy
+            }
+            if (contentChanged) {
+                viewModel.updateChapterContent(currentProject.getId(), currentChapter.getId(), newContent);
+                currentChapter.setContent(newContent); // Update local copy
+            }
+
+            if (titleChanged || summaryChanged || contentChanged) {
+                 System.out.println("Auto-saved changes for chapter: " + currentChapter.getTitle());
+            }
+        }
     }
 
     public void setEditorListener(ChapterEditorListener listener) {
@@ -79,6 +225,7 @@ public class ChapterEditorView extends JPanel {
     }
 
     public void editChapter(Project project, Chapter chapter) {
+        autoSaveTimer.stop(); // Stop any pending auto-save from previously edited chapter
         this.currentProject = project;
         this.currentChapter = chapter;
 
@@ -97,6 +244,7 @@ public class ChapterEditorView extends JPanel {
     }
 
     private void saveChapter(ActionEvent e) {
+        autoSaveTimer.stop(); // Stop auto-save timer on manual save
         if (currentProject != null && currentChapter != null) {
             String newTitle = titleField.getText().trim();
             String newSummary = summaryArea.getText().trim();
