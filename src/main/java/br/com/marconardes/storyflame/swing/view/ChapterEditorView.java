@@ -11,6 +11,7 @@ import javax.swing.event.DocumentListener;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import br.com.marconardes.storyflame.swing.util.MarkdownFormatter;
+import br.com.marconardes.storyflame.swing.util.WordCounterUtil;
 // No Timer import needed if using lambda for ActionEvent, but good to have if complex.
 // For this case, lambda `this::performAutoSave` is fine.
 // import javax.swing.Timer; // Not strictly necessary due to lambda usage if performAutoSave matches ActionEvent handler signature
@@ -27,6 +28,7 @@ public class ChapterEditorView extends JPanel {
     private JTextArea summaryArea;
     private JTextArea contentArea;
     private JLabel editorTitleLabel;
+    private JLabel wordCountLabel; // Added for word count
 
     private javax.swing.Timer autoSaveTimer; // Fully qualify to avoid import if preferred, or add import
     private static final int AUTOSAVE_DELAY = 1500; // milliseconds (1.5 seconds)
@@ -109,6 +111,11 @@ public class ChapterEditorView extends JPanel {
 
         fieldsPanel.add(contentPanelWrapper);
 
+        // Word Count Label
+        fieldsPanel.add(Box.createRigidArea(new Dimension(0,5)));
+        wordCountLabel = new JLabel("Palavras: 0");
+        wordCountLabel.setAlignmentX(Component.LEFT_ALIGNMENT);
+        fieldsPanel.add(wordCountLabel);
 
         add(fieldsPanel, BorderLayout.CENTER);
 
@@ -132,22 +139,41 @@ public class ChapterEditorView extends JPanel {
         DocumentListener autoSaveListener = new DocumentListener() {
             @Override
             public void insertUpdate(DocumentEvent e) {
-                restartAutoSaveTimer();
+                handleTextChange(e);
             }
             @Override
             public void removeUpdate(DocumentEvent e) {
-                restartAutoSaveTimer();
+                handleTextChange(e);
             }
             @Override
             public void changedUpdate(DocumentEvent e) {
-                // Plain text components do not typically fire this, but good practice
+                // Plain text components do not typically fire this
+                handleTextChange(e);
+            }
+
+            private void handleTextChange(DocumentEvent e) {
                 restartAutoSaveTimer();
+                // Update word count only if the change is from contentArea
+                if (e.getDocument() == contentArea.getDocument()) {
+                    updateWordCount();
+                }
             }
         };
 
-        titleField.getDocument().addDocumentListener(autoSaveListener);
-        summaryArea.getDocument().addDocumentListener(autoSaveListener);
+        titleField.getDocument().addDocumentListener(autoSaveListener); // Might trigger word count if not handled
+        summaryArea.getDocument().addDocumentListener(autoSaveListener); // Might trigger word count if not handled
+
+        // Specific listener for contentArea to ensure word count updates correctly
+        // or modify the shared listener to check document source.
+        // For simplicity, the shared listener was modified above.
         contentArea.getDocument().addDocumentListener(autoSaveListener);
+    }
+
+    private void updateWordCount() {
+        if (contentArea == null || wordCountLabel == null) return;
+        String text = contentArea.getText();
+        int count = WordCounterUtil.countWords(text);
+        wordCountLabel.setText("Palavras: " + count);
     }
 
     private void applyMarkdownFormat(String syntaxOpen, String syntaxClose, boolean isPrefix) {
@@ -237,14 +263,21 @@ public class ChapterEditorView extends JPanel {
             editorTitleLabel.setText("Edit Chapter: " + chapter.getTitle());
             titleField.setText(chapter.getTitle());
             summaryArea.setText(chapter.getSummary());
-            contentArea.setText(chapter.getContent());
+            contentArea.setText(chapter.getContent()); // This will trigger DocumentListener, so updateWordCount() is called
         } else {
             // Should not happen if called correctly, but good to handle
             editorTitleLabel.setText("Error: Chapter not provided");
             titleField.setText("");
             summaryArea.setText("");
             contentArea.setText("");
+            updateWordCount(); // Also update for empty/error state
         }
+        // Explicit call to update word count when chapter is first loaded,
+        // as setText might not fire listener immediately or before component is fully realized.
+        // However, the listener on contentArea.setText() should handle this.
+        // To be safe, an explicit call after setting text ensures it.
+        // updateWordCount(); // This is now handled by the DocumentListener if setText fires it.
+        // Let's rely on the listener for now, if problematic, can add explicit call here.
     }
 
     private void saveChapter(ActionEvent e) {
