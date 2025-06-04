@@ -92,10 +92,10 @@ data class ChapterActionChoiceScreen(val projectId: String, val chapterId: Strin
         Scaffold(
             topBar = {
                 TopAppBar(
-                    title = { Text("Ações para ${currentChapter?.title ?: "Capítulo"}") },
+                    title = { Text("Actions for: ${currentChapter?.title ?: "Chapter"}") },
                     navigationIcon = {
                         TextButton(onClick = { navigator.pop() }) {
-                            Text("Voltar")
+                            Text("Back") // Already "Back" from previous step, but ensuring it is.
                         }
                     }
                 )
@@ -110,24 +110,24 @@ data class ChapterActionChoiceScreen(val projectId: String, val chapterId: Strin
                 verticalArrangement = Arrangement.Center
             ) {
                 if (currentProject != null && currentChapter != null) {
-                    Text("Projeto: ${currentProject.name}", style = MaterialTheme.typography.titleMedium)
-                    Text("Capítulo: ${currentChapter.title}", style = MaterialTheme.typography.titleSmall)
+                    Text("Project: ${currentProject.name}", style = MaterialTheme.typography.titleMedium) // Translated
+                    Text("Chapter: ${currentChapter.title}", style = MaterialTheme.typography.titleSmall) // Translated
                     Spacer(modifier = Modifier.height(32.dp))
                     Button(
                         onClick = { navigator.replace(ChapterEditorScreen(projectId, chapterId, initialFocus = "summary")) },
                         modifier = Modifier.fillMaxWidth(0.8f)
                     ) {
-                        Text("Editar Sumário")
+                        Text("Edit Summary") // Translated
                     }
                     Spacer(modifier = Modifier.height(16.dp))
                     Button(
                         onClick = { navigator.replace(ChapterEditorScreen(projectId, chapterId, initialFocus = "content")) },
                         modifier = Modifier.fillMaxWidth(0.8f)
                     ) {
-                        Text("Editar Conteúdo (Markdown)")
+                        Text("Edit Content (Markdown)") // Translated
                     }
                 } else {
-                    Text("Carregando detalhes...")
+                    Text("Loading details...") // Translated
                 }
             }
         }
@@ -160,8 +160,12 @@ data class ChapterListScreen(val projectId: String) : Screen {
         Scaffold(
             topBar = {
                 TopAppBar(
-                    title = { Text(selectedProjectDetails?.name ?: "Chapters") }
-                    // Removed navigationIcon
+                    title = { Text(selectedProjectDetails?.name ?: "Chapters") },
+                    navigationIcon = {
+                        TextButton(onClick = { navigator.pop() }) {
+                            Text("Back")
+                        }
+                    }
                 )
             }
         ) { paddingValues ->
@@ -221,7 +225,7 @@ data class ChapterListScreen(val projectId: String) : Screen {
                                             projectViewModel.deleteChapter(proj, chapter.id)
                                         }
                                     }) {
-                                        Text("Del")
+                                        Text("Delete") // Translated
                                     }
                                     TextButton(
                                         onClick = { projectViewModel.moveChapter(selectedProjectDetails!!, chapter.id, true) },
@@ -233,7 +237,7 @@ data class ChapterListScreen(val projectId: String) : Screen {
                                         onClick = { projectViewModel.moveChapter(selectedProjectDetails!!, chapter.id, false) },
                                         enabled = chapter.order < chapters.size - 1
                                     ) {
-                                        Text("Dn")
+                                        Text("Down") // Translated
                                     }
                                 }
                                 HorizontalDivider()
@@ -308,8 +312,12 @@ data class ChapterEditorScreen(val projectId: String, val chapterId: String, val
         Scaffold(
             topBar = {
                 TopAppBar(
-                    title = { Text(chapter?.title ?: "Edit Chapter") }
-                    // Removed navigationIcon
+                    title = { Text(chapter?.title ?: "Edit Chapter") },
+                    navigationIcon = {
+                        TextButton(onClick = { navigator.pop() }) {
+                            Text("Back")
+                        }
+                    }
                 )
             }
         ) { paddingValues ->
@@ -354,7 +362,7 @@ data class ChapterEditorScreen(val projectId: String, val chapterId: String, val
                         }
                         else -> {
                             // Default case if initialFocus is null or unexpected
-                            Text("Selecione uma ação na tela anterior (sumário ou conteúdo).",
+                            Text("Please select an action from the previous screen (summary or content).", // Translated
                                  modifier = Modifier.align(Alignment.CenterHorizontally).padding(16.dp))
                         }
                     }
@@ -365,7 +373,7 @@ data class ChapterEditorScreen(val projectId: String, val chapterId: String, val
                     verticalArrangement = Arrangement.Center,
                     horizontalAlignment = Alignment.CenterHorizontally
                 ) {
-                    Text("Loading chapter details...")
+                    Text("Loading chapter details...") // This was already English, fine.
                 }
             }
         }
