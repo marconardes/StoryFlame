@@ -68,6 +68,72 @@ object ProjectListScreen : Screen {
     }
 }
 
+data class ChapterActionChoiceScreen(val projectId: String, val chapterId: String) : Screen {
+    @OptIn(ExperimentalMaterial3Api::class)
+    @Composable
+    override fun Content() {
+        val projectViewModel: ProjectViewModel = rememberScreenModel { ProjectViewModel() }
+        val navigator = LocalNavigator.currentOrThrow
+
+        val projects by projectViewModel.projects.collectAsState()
+        val currentProject = remember(projects, projectId) {
+            projects.find { it.id == projectId }
+        }
+
+        LaunchedEffect(currentProject) {
+            currentProject?.let { projectViewModel.selectProject(it) }
+        }
+
+        val selectedProjectDetails by projectViewModel.selectedProject.collectAsState()
+        val currentChapter = remember(selectedProjectDetails, chapterId) {
+            selectedProjectDetails?.chapters?.find { it.id == chapterId }
+        }
+
+        Scaffold(
+            topBar = {
+                TopAppBar(
+                    title = { Text("Ações para ${currentChapter?.title ?: "Capítulo"}") },
+                    navigationIcon = {
+                        TextButton(onClick = { navigator.pop() }) {
+                            Text("Voltar")
+                        }
+                    }
+                )
+            }
+        ) { paddingValues ->
+            Column(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(paddingValues)
+                    .padding(16.dp),
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.Center
+            ) {
+                if (currentProject != null && currentChapter != null) {
+                    Text("Projeto: ${currentProject.name}", style = MaterialTheme.typography.titleMedium)
+                    Text("Capítulo: ${currentChapter.title}", style = MaterialTheme.typography.titleSmall)
+                    Spacer(modifier = Modifier.height(32.dp))
+                    Button(
+                        onClick = { navigator.replace(ChapterEditorScreen(projectId, chapterId, initialFocus = "summary")) },
+                        modifier = Modifier.fillMaxWidth(0.8f)
+                    ) {
+                        Text("Editar Sumário")
+                    }
+                    Spacer(modifier = Modifier.height(16.dp))
+                    Button(
+                        onClick = { navigator.replace(ChapterEditorScreen(projectId, chapterId, initialFocus = "content")) },
+                        modifier = Modifier.fillMaxWidth(0.8f)
+                    ) {
+                        Text("Editar Conteúdo (Markdown)")
+                    }
+                } else {
+                    Text("Carregando detalhes...")
+                }
+            }
+        }
+    }
+}
+
 data class ChapterListScreen(val projectId: String) : Screen {
     @OptIn(ExperimentalMaterial3Api::class) // For Scaffold, TopAppBar
     @Composable
@@ -138,7 +204,7 @@ data class ChapterListScreen(val projectId: String) : Screen {
                                         .fillMaxWidth()
                                         .padding(vertical = 4.dp)
                                         .clickable {
-                                            navigator.push(ChapterEditorScreen(projectId = projectId, chapterId = chapter.id))
+                                            navigator.push(ChapterActionChoiceScreen(projectId = projectId, chapterId = chapter.id))
                                         },
                                     verticalAlignment = Alignment.CenterVertically
                                 ) {
@@ -199,7 +265,7 @@ data class ChapterListScreen(val projectId: String) : Screen {
     }
 }
 
-data class ChapterEditorScreen(val projectId: String, val chapterId: String) : Screen {
+data class ChapterEditorScreen(val projectId: String, val chapterId: String, val initialFocus: String? = null) : Screen {
     @OptIn(ExperimentalMaterial3Api::class)
     @Composable
     override fun Content() {
@@ -253,35 +319,45 @@ data class ChapterEditorScreen(val projectId: String, val chapterId: String) : S
                         .fillMaxSize()
                         .padding(paddingValues)
                         .padding(16.dp)
-                        .verticalScroll(rememberScrollState())
+                    // .verticalScroll(rememberScrollState()) // Scroll will be handled by individual editors if needed or by weight
                 ) {
-                    Text("Summary:", style = MaterialTheme.typography.titleMedium)
-                    OutlinedTextField(
-                        value = summaryInput,
-                        onValueChange = { summaryInput = it },
-                        label = { Text("Chapter Summary") },
-                        modifier = Modifier.fillMaxWidth().height(150.dp),
-                        maxLines = 5
-                    )
-                    Button(
-                        onClick = {
-                            projectViewModel.updateChapterSummary(project, chapter.id, summaryInput)
-                        },
-                        modifier = Modifier.align(Alignment.End).padding(top = 8.dp)
-                    ) {
-                        Text("Save Summary")
+                    when (initialFocus) {
+                        "summary" -> {
+                            Text("Summary:", style = MaterialTheme.typography.titleMedium)
+                            OutlinedTextField(
+                                value = summaryInput,
+                                onValueChange = { summaryInput = it },
+                                label = { Text("Chapter Summary") },
+                                modifier = Modifier.fillMaxWidth().weight(1f), // Use weight
+                                maxLines = 10
+                            )
+                            Button(
+                                onClick = {
+                                    projectViewModel.updateChapterSummary(project, chapter.id, summaryInput)
+                                    // navigator.pop() // Optional: pop back after saving
+                                },
+                                modifier = Modifier.align(Alignment.End).padding(top = 8.dp)
+                            ) {
+                                Text("Save Summary")
+                            }
+                        }
+                        "content" -> {
+                            Text("Content (Markdown):", style = MaterialTheme.typography.titleMedium)
+                            OutlinedTextField(
+                                value = markdownInput,
+                                onValueChange = { markdownInput = it },
+                                label = { Text("Markdown Content") },
+                                modifier = Modifier.fillMaxWidth().weight(1f), // Use weight
+                                singleLine = false
+                            )
+                            // Auto-save for markdownInput is already handled by a LaunchedEffect
+                        }
+                        else -> {
+                            // Default case if initialFocus is null or unexpected
+                            Text("Selecione uma ação na tela anterior (sumário ou conteúdo).",
+                                 modifier = Modifier.align(Alignment.CenterHorizontally).padding(16.dp))
+                        }
                     }
-
-                    Spacer(modifier = Modifier.height(16.dp))
-
-                    Text("Content:", style = MaterialTheme.typography.titleMedium)
-                    OutlinedTextField(
-                        value = markdownInput,
-                        onValueChange = { markdownInput = it },
-                        label = { Text("Markdown Content") },
-                        modifier = Modifier.fillMaxWidth().heightIn(min = 400.dp),
-                        singleLine = false
-                    )
                 }
             } else {
                 Column(
