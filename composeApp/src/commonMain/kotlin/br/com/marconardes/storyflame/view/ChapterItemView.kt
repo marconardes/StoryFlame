@@ -17,17 +17,28 @@ import androidx.compose.runtime.snapshotFlow // Corrected import
 fun ChapterItemView(
     project: Project,
     chapter: Chapter,
-    chaptersListSize: Int, // Added to help with 'move down' button enablement
+    chaptersListSize: Int,
     projectViewModel: ProjectViewModel,
-    onShowEditChapterDialog: (Chapter) -> Unit,
+    onShowEditChapterDialog: (chapter: Chapter) -> Unit,
+    onShowChapterActionsDialog: (chapter: Chapter) -> Unit, // New callback
     modifier: Modifier = Modifier
 ) {
-    Column(modifier = modifier.fillMaxWidth().padding(vertical = 8.dp)) {
+    Column(
+        modifier = modifier
+            .fillMaxWidth()
+            .padding(vertical = 8.dp)
+            // Make the whole item clickable for actions, alternative to a dedicated "Actions" button
+            // .clickable { onShowChapterActionsDialog(chapter) } // This might be too broad if there are text fields
+    ) {
         Row(
-            modifier = Modifier.fillMaxWidth(),
+            modifier = Modifier
+                .fillMaxWidth()
+                // If the whole column is clickable, this specific click might be redundant or for a different action.
+                // For now, let's make the Row clickable for actions as it's less likely to interfere with text fields.
+                .clickable { onShowChapterActionsDialog(chapter) },
             verticalAlignment = Alignment.CenterVertically
         ) {
-            Column(modifier = Modifier.weight(1f)) {
+            Column(modifier = Modifier.weight(1f).padding(end = 8.dp)) { // Added padding to prevent text touching buttons
                 Text(chapter.title, style = MaterialTheme.typography.bodyLarge)
                 Text("Order: ${chapter.order}", style = MaterialTheme.typography.bodySmall)
             }
@@ -44,13 +55,13 @@ fun ChapterItemView(
                 ) {
                     Text("Dn") // Down abbreviated
                 }
-                Spacer(modifier = Modifier.width(4.dp))
+                Spacer(modifier = Modifier.width(8.dp)) // Increased spacer
                 TextButton(onClick = {
                     onShowEditChapterDialog(chapter)
                 }) {
                     Text("Edit Title")
                 }
-                Spacer(modifier = Modifier.width(4.dp))
+                Spacer(modifier = Modifier.width(8.dp)) // Increased spacer
                 Button(onClick = {
                     projectViewModel.deleteChapter(project, chapter.id)
                 }) {
@@ -58,14 +69,14 @@ fun ChapterItemView(
                 }
             }
         }
-        Spacer(modifier = Modifier.height(8.dp)) // Space between title/buttons and summary field
+        Spacer(modifier = Modifier.height(12.dp)) // Increased space between title/buttons and summary field
 
         var summaryInput by remember(chapter.id, chapter.summary) { mutableStateOf(chapter.summary) }
         OutlinedTextField(
             value = summaryInput,
             onValueChange = { summaryInput = it },
             label = { Text("Summary") },
-            modifier = Modifier.height(100.dp).fillMaxWidth(),
+            modifier = Modifier.fillMaxWidth().heightIn(min = 75.dp, max = 250.dp), // Adjusted height
             singleLine = false
         )
         TextButton(

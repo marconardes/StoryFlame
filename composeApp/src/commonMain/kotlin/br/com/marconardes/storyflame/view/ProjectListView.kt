@@ -20,14 +20,14 @@ fun ProjectListView(
 ) {
     LazyColumn(
         modifier = modifier
-            .padding(horizontal = 16.dp, vertical = 8.dp)
+            .padding(horizontal = 24.dp, vertical = 16.dp) // Adjusted padding
             .fillMaxWidth()
-            .heightIn(max = 200.dp) // Limit height of project list
+            .fillMaxHeight() // Fill available height
     ) {
         items(projects) { project ->
             Column(
                 modifier = Modifier
-                    .padding(vertical = 8.dp)
+                    .padding(vertical = 12.dp) // Adjusted padding
                     .fillMaxWidth()
                     .clickable { onProjectSelected(project) }
             ) {

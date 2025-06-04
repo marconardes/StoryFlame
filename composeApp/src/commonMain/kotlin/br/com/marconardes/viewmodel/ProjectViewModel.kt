@@ -87,7 +87,7 @@ class ProjectViewModel { // Removed : ScreenModel
 
     // Add functions to add, remove, or update chapters for the selected project here later
 
-    fun addChapter(project: Project, chapterTitle: String) {
+    fun addChapter(project: Project, chapterTitle: String): Chapter {
         val newOrder = project.chapters.size // Simple order based on current count
         val newChapter = Chapter(title = chapterTitle, order = newOrder)
 
@@ -96,7 +96,20 @@ class ProjectViewModel { // Removed : ScreenModel
 
         updateProjectInList(updatedProject)
         saveProjects()
+        return newChapter
     }
+
+    // This was used in MainDesktopScreen, let's ensure it's here.
+    // It finds the project by ID and then calls the other addChapter.
+    fun addNewChapterToProject(projectId: String, chapterTitle: String): Chapter? {
+        val project = _projects.value.find { it.id == projectId }
+        return if (project != null) {
+            addChapter(project, chapterTitle)
+        } else {
+            null
+        }
+    }
+
 
     fun updateChapterSummary(project: Project, chapterId: String, newSummary: String) {
         val updatedChapters = project.chapters.map {
@@ -178,5 +191,19 @@ class ProjectViewModel { // Removed : ScreenModel
         if (_selectedProject.value?.id == updatedProject.id) {
             _selectedProject.value = updatedProject
         }
+    }
+
+    // Add functions that were assumed in previous steps for ProjectListView via MainDesktopScreen
+    fun addNewProject() {
+        val defaultProjectName = "New Project ${_projects.value.size + 1}"
+        createProject(defaultProjectName) // createProject already handles adding to list and saving
+    }
+
+    fun deleteProject(projectId: String) {
+        _projects.value = _projects.value.filterNot { it.id == projectId }
+        if (_selectedProject.value?.id == projectId) {
+            _selectedProject.value = _projects.value.firstOrNull() // Select first or null
+        }
+        saveProjects()
     }
 }
