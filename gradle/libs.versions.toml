@@ -18,6 +18,7 @@ kotlinx-coroutines = "1.10.2"
 kotlinx-coroutines-test-version = "1.8.1-Beta" # kotlinx-coroutines-test version
 kotlinx-serialization = "1.6.3"
 voyager = "1.1.0-beta02"
+androidxComposeBom = "2024.04.00"
 
 [libraries]
 kotlin-test = { module = "org.jetbrains.kotlin:kotlin-test", version.ref = "kotlin" }
@@ -37,6 +38,7 @@ kotlinx-serialization-json = { module = "org.jetbrains.kotlinx:kotlinx-serializa
 voyager-navigator = { module = "cafe.adriel.voyager:voyager-navigator", version.ref = "voyager" }
 voyager-screenmodel = { module = "cafe.adriel.voyager:voyager-screenmodel", version.ref = "voyager" }
 voyager-transitions = { module = "cafe.adriel.voyager:voyager-transitions", version.ref = "voyager" }
+androidx-compose-bom = { group = "androidx.compose", name = "compose-bom", version.ref = "androidxComposeBom" }
 
 [plugins]
 androidApplication = { id = "com.android.application", version.ref = "agp" }
