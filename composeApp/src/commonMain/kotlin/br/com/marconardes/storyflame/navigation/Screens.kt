@@ -27,7 +27,7 @@ import cafe.adriel.voyager.core.model.rememberScreenModel // Added for ScreenMod
 import cafe.adriel.voyager.core.screen.Screen
 import cafe.adriel.voyager.navigator.LocalNavigator
 import cafe.adriel.voyager.navigator.currentOrThrow
-import com.mohamedrejeb.richeditor.model.rememberRichTextState
+// import com.mohamedrejeb.richeditor.model.rememberRichTextState // Commented out
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.debounce
 // Keep br.com.marconardes.storyflame.view.EditChapterTitleDialog fully qualified in usage or add import here
@@ -224,31 +224,31 @@ data class ChapterEditorScreen(val projectId: String, val chapterId: String) : S
             chapter?.let { summaryInput = it.summary }
         }
 
-        val editorState = com.mohamedrejeb.richeditor.model.rememberRichTextState() // Correct way to get the state
+        // val editorState = com.mohamedrejeb.richeditor.model.rememberRichTextState() // Correct way to get the state
 
-        LaunchedEffect(chapter?.content) {
-            // Ensure not to reset if editor already has user's untrimmed input or if content is same
-            val currentEditorHtml = editorState.toHtml()
-            if (chapter?.content != null && chapter.content != currentEditorHtml) {
-                 editorState.setHtml(chapter.content!!)
-            } else if (chapter?.content == null && currentEditorHtml.isNotEmpty() && currentEditorHtml != "<p></p>") {
-                // If chapter content becomes null (e.g. error), but editor had content, clear it.
-                // editorState.setHtml("") // Or decide if you want to keep stale content
-            }
-        }
+        // LaunchedEffect(chapter?.content) {
+        //     // Ensure not to reset if editor already has user's untrimmed input or if content is same
+        //     val currentEditorHtml = editorState.toHtml()
+        //     if (chapter?.content != null && chapter.content != currentEditorHtml) {
+        //          editorState.setHtml(chapter.content!!)
+        //     } else if (chapter?.content == null && currentEditorHtml.isNotEmpty() && currentEditorHtml != "<p></p>") {
+        //         // If chapter content becomes null (e.g. error), but editor had content, clear it.
+        //         // editorState.setHtml("") // Or decide if you want to keep stale content
+        //     }
+        // }
 
-        LaunchedEffect(editorState, project, chapter) {
-            snapshotFlow { editorState.toHtml() }
-                .debounce(1000L)
-                .collectLatest { contentHtml ->
-                    if (project != null && chapter != null && chapter.content != contentHtml) {
-                         // Avoid saving if contentHtml is just the default empty state from the editor
-                        if (contentHtml.isNotBlank() && contentHtml != "<p></p>" || chapter.content?.isNotEmpty() == true) {
-                            projectViewModel.updateChapterContent(project, chapter.id, contentHtml)
-                        }
-                    }
-                }
-        }
+        // LaunchedEffect(editorState, project, chapter) {
+        //     snapshotFlow { editorState.toHtml() }
+        //         .debounce(1000L)
+        //         .collectLatest { contentHtml ->
+        //             if (project != null && chapter != null && chapter.content != contentHtml) {
+        //                  // Avoid saving if contentHtml is just the default empty state from the editor
+        //                 if (contentHtml.isNotBlank() && contentHtml != "<p></p>" || chapter.content?.isNotEmpty() == true) {
+        //                     projectViewModel.updateChapterContent(project, chapter.id, contentHtml)
+        //                 }
+        //             }
+        //         }
+        // }
 
         Scaffold(
             topBar = {
@@ -286,10 +286,11 @@ data class ChapterEditorScreen(val projectId: String, val chapterId: String) : S
                     Spacer(modifier = Modifier.height(16.dp))
 
                     Text("Content:", style = MaterialTheme.typography.titleMedium)
-                    br.com.marconardes.storyflame.view.RichTextEditorView( // Using FQN for clarity
-                        state = editorState,
-                        modifier = Modifier.fillMaxWidth().heightIn(min = 400.dp) // Use heightIn for min height
-                    )
+                    // br.com.marconardes.storyflame.view.RichTextEditorView( // Using FQN for clarity
+                    //     state = editorState,
+                    //     modifier = Modifier.fillMaxWidth().heightIn(min = 400.dp) // Use heightIn for min height
+                    // )
+                    Text("Editor de texto rico temporariamente desabilitado")
                 }
             } else {
                 Column(

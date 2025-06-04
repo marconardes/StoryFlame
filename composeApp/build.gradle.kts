@@ -40,13 +40,13 @@ kotlin {
             implementation("com.benasher44:uuid:0.8.2")
             implementation("org.jetbrains.kotlinx:kotlinx-datetime:0.6.0")
             implementation(libs.kotlinx.serialization.json)
-            implementation("com.mohamedrejeb.richeditor:richeditor-compose:1.0.0-rc12") {
-                exclude(group = "androidx.compose.ui", module = "ui")
-                exclude(group = "androidx.compose.ui", module = "ui-graphics")
-                exclude(group = "androidx.compose.foundation", module = "foundation")
-                exclude(group = "androidx.compose.runtime", module = "runtime")
-                exclude(group = "androidx.compose.material3", module = "material3") // Also exclude M3 if it brings its own specific version
-            }
+            // implementation("com.mohamedrejeb.richeditor:richeditor-compose:1.0.0-rc12") {
+            //     exclude(group = "androidx.compose.ui", module = "ui")
+            //     exclude(group = "androidx.compose.ui", module = "ui-graphics")
+            //     exclude(group = "androidx.compose.foundation", module = "foundation")
+            //     exclude(group = "androidx.compose.runtime", module = "runtime")
+            //     exclude(group = "androidx.compose.material3", module = "material3") // Also exclude M3 if it brings its own specific version
+            // }
             implementation(libs.voyager.navigator)
             implementation(libs.voyager.screenmodel)
             implementation(libs.voyager.transitions)
