@@ -40,9 +40,6 @@ kotlin {
             implementation("com.benasher44:uuid:0.8.2")
             implementation("org.jetbrains.kotlinx:kotlinx-datetime:0.6.0")
             implementation(libs.kotlinx.serialization.json)
-            implementation(libs.voyager.navigator)
-            implementation(libs.voyager.screenmodel)
-            implementation(libs.voyager.transitions)
             implementation("androidx.compose.material:material-icons-core:1.6.0") {
                 exclude(group = "androidx.compose.ui", module = "ui")
                 exclude(group = "androidx.compose.ui", module = "ui-graphics")
