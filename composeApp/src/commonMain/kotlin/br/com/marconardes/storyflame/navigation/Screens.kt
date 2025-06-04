@@ -23,78 +23,83 @@ import br.com.marconardes.storyflame.view.ProjectCreationView
 import br.com.marconardes.storyflame.view.ProjectListView
 // import br.com.marconardes.storyflame.view.RichTextEditorView // Used FQN below
 import br.com.marconardes.viewmodel.ProjectViewModel
-import cafe.adriel.voyager.core.model.rememberScreenModel // Added for ScreenModel
-import cafe.adriel.voyager.core.screen.Screen
-import cafe.adriel.voyager.navigator.LocalNavigator
-import cafe.adriel.voyager.navigator.currentOrThrow
+// import cafe.adriel.voyager.core.model.rememberScreenModel // Removed: Voyager
+// import cafe.adriel.voyager.core.screen.Screen // Removed: Voyager
+// import cafe.adriel.voyager.navigator.LocalNavigator // Removed: Voyager
+// import cafe.adriel.voyager.navigator.currentOrThrow // Removed: Voyager
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.debounce
 import androidx.compose.runtime.snapshotFlow // Added for Markdown auto-save
 // Keep br.com.marconardes.storyflame.view.EditChapterTitleDialog fully qualified in usage or add import here
 
-object ProjectListScreen : Screen {
-    @OptIn(ExperimentalMaterial3Api::class) // For Scaffold and TopAppBar
-    @Composable
-    override fun Content() {
-        val projectViewModel: ProjectViewModel = rememberScreenModel { ProjectViewModel() }
-        val projects by projectViewModel.projects.collectAsState()
-        val selectedProject by projectViewModel.selectedProject.collectAsState()
-        val navigator = LocalNavigator.currentOrThrow
+// Removed object ProjectListScreen as its Content is now ProjectListScreenView
+// object ProjectListScreen // Removed : Screen
+// No longer an override
 
-        Scaffold(
-            topBar = { TopAppBar(title = { Text("StoryFlame Projects") }) }
-        ) { paddingValues ->
-            Column(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(paddingValues)
-                    .padding(16.dp)
-            ) {
-                ProjectCreationView(
-                    projectViewModel = projectViewModel,
-                    modifier = Modifier.fillMaxWidth()
-                )
-                Spacer(modifier = Modifier.height(16.dp))
-                ProjectListView(
-                    projects = projects,
-                    selectedProject = selectedProject,
-                    onProjectSelected = { project ->
-                        navigator.push(ChapterListScreen(projectId = project.id))
-                    },
-                    modifier = Modifier.fillMaxWidth()
-                )
-            }
+@OptIn(ExperimentalMaterial3Api::class) // For Scaffold and TopAppBar
+@Composable
+fun ProjectListScreenView(projectViewModel: ProjectViewModel = ProjectViewModel() /* TODO: Review ViewModel instantiation */) {
+    val projects by projectViewModel.projects.collectAsState()
+    val selectedProject by projectViewModel.selectedProject.collectAsState()
+    // val navigator = LocalNavigator.currentOrThrow // Removed: Voyager
+
+    Scaffold(
+        topBar = { TopAppBar(title = { Text("StoryFlame Projects") }) }
+    ) { paddingValues ->
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(paddingValues)
+                .padding(16.dp)
+        ) {
+            ProjectCreationView(
+                projectViewModel = projectViewModel,
+                modifier = Modifier.fillMaxWidth()
+            )
+            Spacer(modifier = Modifier.height(16.dp))
+            ProjectListView(
+                projects = projects,
+                selectedProject = selectedProject,
+                onProjectSelected = { project ->
+                    // TODO: Navigate to ChapterListScreen(projectId = project.id)
+                    // navigator.push(ChapterListScreen(projectId = project.id)) // Removed: Voyager
+                },
+                modifier = Modifier.fillMaxWidth()
+            )
         }
     }
+    // Removed one extra closing brace that was here for ProjectListScreenView
 }
 
-data class ChapterActionChoiceScreen(val projectId: String, val chapterId: String) : Screen {
-    @OptIn(ExperimentalMaterial3Api::class)
-    @Composable
-    override fun Content() {
-        val projectViewModel: ProjectViewModel = rememberScreenModel { ProjectViewModel() }
-        val navigator = LocalNavigator.currentOrThrow
+data class ChapterActionChoiceScreenParams(val projectId: String, val chapterId: String) // Renamed from ChapterActionChoiceScreen, removed : Screen
+// No longer an override
 
-        val projects by projectViewModel.projects.collectAsState()
-        val currentProject = remember(projects, projectId) {
-            projects.find { it.id == projectId }
-        }
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun ChapterActionChoiceScreenView(params: ChapterActionChoiceScreenParams, projectViewModel: ProjectViewModel = ProjectViewModel() /* TODO: Review ViewModel instantiation */) {
+    // val projectViewModel: ProjectViewModel = rememberScreenModel { ProjectViewModel() } // Removed: Voyager
+    // val navigator = LocalNavigator.currentOrThrow // Removed: Voyager
 
-        LaunchedEffect(currentProject) {
-            currentProject?.let { projectViewModel.selectProject(it) }
-        }
+    val projects by projectViewModel.projects.collectAsState()
+    val currentProject = remember(projects, params.projectId) { // Used params
+        projects.find { it.id == params.projectId }
+    }
 
-        val selectedProjectDetails by projectViewModel.selectedProject.collectAsState()
-        val currentChapter = remember(selectedProjectDetails, chapterId) {
-            selectedProjectDetails?.chapters?.find { it.id == chapterId }
-        }
+    LaunchedEffect(currentProject) {
+        currentProject?.let { projectViewModel.selectProject(it) }
+    }
 
-        Scaffold(
-            topBar = {
+    val selectedProjectDetails by projectViewModel.selectedProject.collectAsState()
+    val currentChapter = remember(selectedProjectDetails, params.chapterId) { // Used params
+        selectedProjectDetails?.chapters?.find { it.id == params.chapterId }
+    } // This curly brace is for 'remember'.
+
+    Scaffold( // This Scaffold should be outside the remember block's lambda.
+        topBar = {
                 TopAppBar(
                     title = { Text("Actions for: ${currentChapter?.title ?: "Chapter"}") },
                     navigationIcon = {
-                        TextButton(onClick = { navigator.pop() }) {
+                        TextButton(onClick = { /* TODO: Navigate back */ /* navigator.pop() */ }) { // Removed: Voyager
                             Text("Back") // Already "Back" from previous step, but ensuring it is.
                         }
                     }
@@ -114,14 +119,14 @@ data class ChapterActionChoiceScreen(val projectId: String, val chapterId: Strin
                     Text("Chapter: ${currentChapter.title}", style = MaterialTheme.typography.titleSmall) // Translated
                     Spacer(modifier = Modifier.height(32.dp))
                     Button(
-                        onClick = { navigator.replace(ChapterEditorScreen(projectId, chapterId, initialFocus = "summary")) },
+                        onClick = { /* TODO: Navigate to ChapterEditorScreen(params.projectId, params.chapterId, initialFocus = "summary") */ /* navigator.replace(ChapterEditorScreen(projectId, chapterId, initialFocus = "summary")) */ }, // Removed: Voyager
                         modifier = Modifier.fillMaxWidth(0.8f)
                     ) {
                         Text("Edit Summary") // Translated
                     }
                     Spacer(modifier = Modifier.height(16.dp))
                     Button(
-                        onClick = { navigator.replace(ChapterEditorScreen(projectId, chapterId, initialFocus = "content")) },
+                        onClick = { /* TODO: Navigate to ChapterEditorScreen(params.projectId, params.chapterId, initialFocus = "content") */ /* navigator.replace(ChapterEditorScreen(projectId, chapterId, initialFocus = "content")) */ }, // Removed: Voyager
                         modifier = Modifier.fillMaxWidth(0.8f)
                     ) {
                         Text("Edit Content (Markdown)") // Translated
@@ -131,38 +136,40 @@ data class ChapterActionChoiceScreen(val projectId: String, val chapterId: Strin
                 }
             }
         }
-    }
+    // Removed one extra closing brace that was here for ChapterActionChoiceScreenView
 }
 
-data class ChapterListScreen(val projectId: String) : Screen {
-    @OptIn(ExperimentalMaterial3Api::class) // For Scaffold, TopAppBar
-    @Composable
-    override fun Content() {
-        val projectViewModel: ProjectViewModel = rememberScreenModel { ProjectViewModel() }
-        val navigator = LocalNavigator.currentOrThrow
+data class ChapterListScreenParams(val projectId: String) // Renamed from ChapterListScreen, removed : Screen
+// No longer an override
 
-        var showEditChapterDialog by remember { mutableStateOf(false) }
-        var editingChapter by remember { mutableStateOf<Chapter?>(null) } // Corrected type
-        var editChapterTitleInput by remember { mutableStateOf("") }
+@OptIn(ExperimentalMaterial3Api::class) // For Scaffold, TopAppBar
+@Composable
+fun ChapterListScreenView(params: ChapterListScreenParams, projectViewModel: ProjectViewModel = ProjectViewModel() /* TODO: Review ViewModel instantiation */) {
+    // val projectViewModel: ProjectViewModel = rememberScreenModel { ProjectViewModel() } // Removed: Voyager
+    // val navigator = LocalNavigator.currentOrThrow // Removed: Voyager
 
-        val projects by projectViewModel.projects.collectAsState()
-        val currentProject = remember(projects, projectId) {
-            projects.find { it.id == projectId }
-        }
+    var showEditChapterDialog by remember { mutableStateOf(false) }
+    var editingChapter by remember { mutableStateOf<Chapter?>(null) } // Corrected type
+    var editChapterTitleInput by remember { mutableStateOf("") }
 
-        LaunchedEffect(currentProject) {
-            currentProject?.let { projectViewModel.selectProject(it) }
-        }
+    val projects by projectViewModel.projects.collectAsState()
+    val currentProject = remember(projects, params.projectId) { // Used params
+        projects.find { it.id == params.projectId }
+    }
 
-        val selectedProjectDetails by projectViewModel.selectedProject.collectAsState()
-        val chapters by projectViewModel.selectedProjectChapters.collectAsState()
+    LaunchedEffect(currentProject) {
+        currentProject?.let { projectViewModel.selectProject(it) }
+    }
 
-        Scaffold(
-            topBar = {
+    val selectedProjectDetails by projectViewModel.selectedProject.collectAsState()
+    val chapters by projectViewModel.selectedProjectChapters.collectAsState() // Corrected indentation
+
+    Scaffold(
+        topBar = {
                 TopAppBar(
                     title = { Text(selectedProjectDetails?.name ?: "Chapters") },
                     navigationIcon = {
-                        TextButton(onClick = { navigator.pop() }) {
+                        TextButton(onClick = { /* TODO: Navigate back */ /* navigator.pop() */ }) { // Removed: Voyager
                             Text("Back")
                         }
                     }
@@ -208,7 +215,8 @@ data class ChapterListScreen(val projectId: String) : Screen {
                                         .fillMaxWidth()
                                         .padding(vertical = 4.dp)
                                         .clickable {
-                                            navigator.push(ChapterActionChoiceScreen(projectId = projectId, chapterId = chapter.id))
+                                            // TODO: Navigate to ChapterActionChoiceScreen(projectId = params.projectId, chapterId = chapter.id)
+                                            // navigator.push(ChapterActionChoiceScreen(projectId = projectId, chapterId = chapter.id)) // Removed: Voyager
                                         },
                                     verticalAlignment = Alignment.CenterVertically
                                 ) {
@@ -266,39 +274,41 @@ data class ChapterListScreen(val projectId: String) : Screen {
                 }
             )
         }
-    }
+    // Removed one extra closing brace that was here for ChapterListScreenView
 }
 
-data class ChapterEditorScreen(val projectId: String, val chapterId: String, val initialFocus: String? = null) : Screen {
-    @OptIn(ExperimentalMaterial3Api::class)
-    @Composable
-    override fun Content() {
-        val projectViewModel: ProjectViewModel = rememberScreenModel { ProjectViewModel() }
-        val navigator = LocalNavigator.currentOrThrow
+data class ChapterEditorScreenParams(val projectId: String, val chapterId: String, val initialFocus: String? = null) // Renamed from ChapterEditorScreen, removed : Screen
+// No longer an override
 
-        var summaryInput by remember { mutableStateOf("") }
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun ChapterEditorScreenView(params: ChapterEditorScreenParams, projectViewModel: ProjectViewModel = ProjectViewModel() /* TODO: Review ViewModel instantiation */) {
+    // val projectViewModel: ProjectViewModel = rememberScreenModel { ProjectViewModel() } // Removed: Voyager
+    // val navigator = LocalNavigator.currentOrThrow // Removed: Voyager
 
-        val projects by projectViewModel.projects.collectAsState()
-        val project = remember(projects, projectId) { projects.find { it.id == projectId } }
+    var summaryInput by remember { mutableStateOf("") }
 
-        LaunchedEffect(project) {
-            project?.let { projectViewModel.selectProject(it) }
-        }
+    val projects by projectViewModel.projects.collectAsState()
+    val project = remember(projects, params.projectId) { projects.find { it.id == params.projectId } } // Used params
 
-        val selectedProject by projectViewModel.selectedProject.collectAsState()
-        val chapter = remember(selectedProject, chapterId) {
-            selectedProject?.chapters?.find { it.id == chapterId }
-        }
+    LaunchedEffect(project) {
+        project?.let { projectViewModel.selectProject(it) }
+    }
 
-        LaunchedEffect(chapter) {
-            chapter?.let { summaryInput = it.summary }
-        }
+    val selectedProject by projectViewModel.selectedProject.collectAsState()
+    val chapter = remember(selectedProject, params.chapterId) { // Used params
+        selectedProject?.chapters?.find { it.id == params.chapterId }
+    }
 
-        var markdownInput by remember(chapter?.content) { mutableStateOf(chapter?.content ?: "") }
+    LaunchedEffect(chapter) {
+        chapter?.let { summaryInput = it.summary }
+    }
 
-        // Auto-save for Markdown editor
-        LaunchedEffect(Unit) { // Runs once, snapshotFlow handles recomposition
-            snapshotFlow { markdownInput }
+    var markdownInput by remember(chapter?.content) { mutableStateOf(chapter?.content ?: "") }
+
+    // Auto-save for Markdown editor
+    LaunchedEffect(Unit) { // Runs once, snapshotFlow handles recomposition
+        snapshotFlow { markdownInput }
                 .debounce(1000L) // 1-second debounce
                 .collectLatest { newContent ->
                     if (project != null && chapter != null) {
@@ -307,14 +317,14 @@ data class ChapterEditorScreen(val projectId: String, val chapterId: String, val
                         }
                     }
                 }
-        }
+    } // Closing brace for LaunchedEffect(Unit)
 
-        Scaffold(
-            topBar = {
+    Scaffold(
+        topBar = {
                 TopAppBar(
                     title = { Text(chapter?.title ?: "Edit Chapter") },
                     navigationIcon = {
-                        TextButton(onClick = { navigator.pop() }) {
+                        TextButton(onClick = { /* TODO: Navigate back */ /* navigator.pop() */ }) { // Removed: Voyager
                             Text("Back")
                         }
                     }
@@ -329,7 +339,7 @@ data class ChapterEditorScreen(val projectId: String, val chapterId: String, val
                         .padding(16.dp)
                     // .verticalScroll(rememberScrollState()) // Scroll will be handled by individual editors if needed or by weight
                 ) {
-                    when (initialFocus) {
+                    when (params.initialFocus) { // Used params
                         "summary" -> {
                             Text("Summary:", style = MaterialTheme.typography.titleMedium)
                             OutlinedTextField(
@@ -342,7 +352,8 @@ data class ChapterEditorScreen(val projectId: String, val chapterId: String, val
                             Button(
                                 onClick = {
                                     projectViewModel.updateChapterSummary(project, chapter.id, summaryInput)
-                                    // navigator.pop() // Optional: pop back after saving
+                                    // TODO: Navigate back (optional)
+                                    // navigator.pop() // Optional: pop back after saving // Removed: Voyager
                                 },
                                 modifier = Modifier.align(Alignment.End).padding(top = 8.dp)
                             ) {
@@ -377,5 +388,4 @@ data class ChapterEditorScreen(val projectId: String, val chapterId: String, val
                 }
             }
         }
-    }
-}
+} // Added missing closing brace for ChapterEditorScreenView
