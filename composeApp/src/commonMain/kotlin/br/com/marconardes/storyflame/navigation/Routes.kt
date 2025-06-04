@@ -26,7 +26,12 @@ object Routes {
     }
     const val CHAPTER_EDITOR_ARG_PROJECT_ID = "projectId"
     const val CHAPTER_EDITOR_ARG_CHAPTER_ID = "chapterId"
-    const val CHAPTER_EDITOR_ARG_INITIAL_FOCUS = "initialFocus" // Query parameter
+    const val CHAPTER_EDITOR_ARG_INITIAL_FOCUS = "initialFocus" // Query parameter key
+    // Specific values for initialFocus
+    const val CHAPTER_EDITOR_ARG_FOCUS_TITLE = "title"
+    const val CHAPTER_EDITOR_ARG_FOCUS_SUMMARY = "summary"
+    const val CHAPTER_EDITOR_ARG_FOCUS_CONTENT = "content"
+
     // Pattern for Jetpack Navigation (path arguments)
     val CHAPTER_EDITOR_ROUTE_PATTERN = "${CHAPTER_EDITOR_PREFIX}/{${CHAPTER_EDITOR_ARG_PROJECT_ID}}/{${CHAPTER_EDITOR_ARG_CHAPTER_ID}}"
     // Query parameter for initialFocus will be handled separately by Jetpack Navigation
