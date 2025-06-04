@@ -18,7 +18,7 @@ public class ChapterSectionView extends JPanel {
     private final DefaultListModel<Chapter> chapterListModel;
     private final JLabel titleLabel;
     private final JButton addChapterButton;
-    private final JButton editChapterButton = null; // Placeholder for now
+    private final JButton editChapterButton; // Placeholder for now
     private final JButton deleteChapterButton; // Placeholder for now
     private ChapterSelectionListener chapterSelectionListener; // Add listener reference
 
