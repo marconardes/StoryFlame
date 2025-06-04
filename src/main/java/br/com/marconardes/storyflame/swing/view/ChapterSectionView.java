@@ -18,8 +18,8 @@ public class ChapterSectionView extends JPanel {
     private final DefaultListModel<Chapter> chapterListModel;
     private final JLabel titleLabel;
     private final JButton addChapterButton;
-    private final JButton editChapterButton; // Placeholder for now
-    private final JButton deleteChapterButton; // Placeholder for now
+    private final JButton editChapterButton;
+    private final JButton deleteChapterButton;
     private ChapterSelectionListener chapterSelectionListener; // Add listener reference
 
     public ChapterSectionView(ProjectViewModel viewModel) {
@@ -34,6 +34,11 @@ public class ChapterSectionView extends JPanel {
         chapterJList = new JList<>(chapterListModel);
         chapterJList.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
 
+        // Initialize buttons before adding listener
+        addChapterButton = new JButton("Add Chapter");
+        editChapterButton = new JButton("Edit Chapter");
+        deleteChapterButton = new JButton("Delete Chapter");
+
         chapterJList.addListSelectionListener(listSelectionEvent -> {
             boolean hasSelection = chapterJList.getSelectedIndex() != -1;
             boolean projectSelected = viewModel.getSelectedProject() != null;
@@ -47,9 +52,7 @@ public class ChapterSectionView extends JPanel {
 
         // Panel for buttons
         JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.CENTER));
-        addChapterButton = new JButton("Add Chapter");
-        editChapterButton = new JButton("Edit Chapter"); // Will be more specific later
-        deleteChapterButton = new JButton("Delete Chapter");
+        // Buttons are already initialized
 
         addChapterButton.addActionListener(this::addChapter);
         editChapterButton.addActionListener(this::editChapter);
