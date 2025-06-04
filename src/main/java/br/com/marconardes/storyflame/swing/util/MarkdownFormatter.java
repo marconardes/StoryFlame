@@ -20,11 +20,12 @@ public class MarkdownFormatter {
      * @param originalText The original text from the JTextArea.
      * @param selectionStart The start index of the selected text.
      * @param selectionEnd The end index of the selected text.
-     * @param syntax The Markdown syntax string (e.g., "**", "*", "# ").
+     * @param syntaxOpen The opening Markdown syntax string (e.g., "**", "*", "# ", "<u>").
+     * @param syntaxClose The closing Markdown syntax string (e.g., "**", "*", "", "</u>"). Can be null or empty if not applicable (e.g. for prefixes or symmetrical wrappers).
      * @param isPrefix True if the syntax is a prefix (for headers), false to wrap.
      * @return FormatResult containing the new full text and new selection indices.
      */
-    public static FormatResult applyFormat(String originalText, int selectionStart, int selectionEnd, String syntax, boolean isPrefix) {
+    public static FormatResult applyFormat(String originalText, int selectionStart, int selectionEnd, String syntaxOpen, String syntaxClose, boolean isPrefix) {
         if (originalText == null) {
             originalText = "";
         }
@@ -45,25 +46,27 @@ public class MarkdownFormatter {
         int newSelEnd = selectionEnd;
 
         if (isPrefix) {
+            // syntaxClose is ignored for prefixes
             if (selectedText.isEmpty()) { // Inserting prefix at a caret position
-                newText = originalText.substring(0, selectionStart) + syntax + originalText.substring(selectionStart); // Apply to rest of string from caret
+                newText = originalText.substring(0, selectionStart) + syntaxOpen + originalText.substring(selectionStart); // Apply to rest of string from caret
                 newSelStart = selectionStart;
                 // The selection should cover the inserted syntax and the part of the original text that followed the caret
-                newSelEnd = selectionStart + syntax.length() + (originalText.length() - selectionStart);
+                newSelEnd = selectionStart + syntaxOpen.length() + (originalText.length() - selectionStart);
             } else { // Prefixing an existing selection
-                newText = originalText.substring(0, selectionStart) + syntax + selectedText + originalText.substring(selectionEnd);
+                newText = originalText.substring(0, selectionStart) + syntaxOpen + selectedText + originalText.substring(selectionEnd);
                 newSelStart = selectionStart;
-                newSelEnd = selectionStart + syntax.length() + selectedText.length();
+                newSelEnd = selectionStart + syntaxOpen.length() + selectedText.length();
             }
         } else { // Wrap
+            String actualSyntaxClose = (syntaxClose == null || syntaxClose.isEmpty()) ? syntaxOpen : syntaxClose;
             if (selectedText.isEmpty()) { // No selection, just insert syntax pair for user to fill
-                newText = originalText.substring(0, selectionStart) + syntax + syntax + originalText.substring(selectionEnd);
-                newSelStart = selectionStart + syntax.length(); // Place cursor in the middle
+                newText = originalText.substring(0, selectionStart) + syntaxOpen + actualSyntaxClose + originalText.substring(selectionEnd);
+                newSelStart = selectionStart + syntaxOpen.length(); // Place cursor in the middle (after open tag)
                 newSelEnd = newSelStart;
             } else {
-                newText = originalText.substring(0, selectionStart) + syntax + selectedText + syntax + originalText.substring(selectionEnd);
+                newText = originalText.substring(0, selectionStart) + syntaxOpen + selectedText + actualSyntaxClose + originalText.substring(selectionEnd);
                 newSelStart = selectionStart; // Selection starts at the beginning of the first syntax
-                newSelEnd = selectionStart + syntax.length() * 2 + selectedText.length(); // Selection encompasses syntax and text
+                newSelEnd = selectionStart + syntaxOpen.length() + selectedText.length() + actualSyntaxClose.length(); // Selection encompasses syntax and text
             }
         }
         return new FormatResult(newText, newSelStart, newSelEnd);

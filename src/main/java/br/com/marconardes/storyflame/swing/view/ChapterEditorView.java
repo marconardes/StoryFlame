@@ -71,25 +71,29 @@ public class ChapterEditorView extends JPanel {
         formatToolbar.setAlignmentX(Component.LEFT_ALIGNMENT); // Align toolbar to the left in BoxLayout
 
         JButton boldButton = new JButton("Bold");
-        boldButton.addActionListener(e -> applyMarkdownFormat("**", false));
+        boldButton.addActionListener(e -> applyMarkdownFormat("**", "**", false));
         formatToolbar.add(boldButton);
 
         JButton italicButton = new JButton("Italic");
-        italicButton.addActionListener(e -> applyMarkdownFormat("*", false));
+        italicButton.addActionListener(e -> applyMarkdownFormat("*", "*", false));
         formatToolbar.add(italicButton);
+
+        JButton underlineButton = new JButton("U"); // Underline button
+        underlineButton.addActionListener(e -> applyMarkdownFormat("<u>", "</u>", false));
+        formatToolbar.add(underlineButton);
 
         formatToolbar.addSeparator();
 
         JButton h1Button = new JButton("H1");
-        h1Button.addActionListener(e -> applyMarkdownFormat("# ", true));
+        h1Button.addActionListener(e -> applyMarkdownFormat("# ", null, true));
         formatToolbar.add(h1Button);
 
         JButton h2Button = new JButton("H2");
-        h2Button.addActionListener(e -> applyMarkdownFormat("## ", true));
+        h2Button.addActionListener(e -> applyMarkdownFormat("## ", null, true));
         formatToolbar.add(h2Button);
 
         JButton h3Button = new JButton("H3");
-        h3Button.addActionListener(e -> applyMarkdownFormat("### ", true));
+        h3Button.addActionListener(e -> applyMarkdownFormat("### ", null, true));
         formatToolbar.add(h3Button);
 
         // Panel to hold toolbar and contentArea
@@ -146,7 +150,7 @@ public class ChapterEditorView extends JPanel {
         contentArea.getDocument().addDocumentListener(autoSaveListener);
     }
 
-    private void applyMarkdownFormat(String markdownSyntax, boolean isPrefix) {
+    private void applyMarkdownFormat(String syntaxOpen, String syntaxClose, boolean isPrefix) {
         String currentText = contentArea.getText();
         int selectionStart = contentArea.getSelectionStart();
         int selectionEnd = contentArea.getSelectionEnd();
@@ -158,7 +162,7 @@ public class ChapterEditorView extends JPanel {
             selectionEnd = 0;
         }
 
-        MarkdownFormatter.FormatResult result = MarkdownFormatter.applyFormat(currentText, selectionStart, selectionEnd, markdownSyntax, isPrefix);
+        MarkdownFormatter.FormatResult result = MarkdownFormatter.applyFormat(currentText, selectionStart, selectionEnd, syntaxOpen, syntaxClose, isPrefix);
 
         contentArea.setText(result.newText); // This triggers DocumentListener for auto-save
 
