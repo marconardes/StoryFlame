@@ -18,24 +18,12 @@ kotlin {
         
         commonMain.dependencies {
             implementation(compose.runtime)
-            implementation(compose.foundation)
             implementation(compose.material3)
-            implementation(compose.ui)
             implementation(compose.components.resources)
             implementation(compose.components.uiToolingPreview)
-            implementation(libs.androidx.lifecycle.viewmodel)
-            implementation(libs.androidx.lifecycle.runtimeCompose)
             implementation("com.benasher44:uuid:0.8.2")
             implementation("org.jetbrains.kotlinx:kotlinx-datetime:0.6.0")
             implementation(libs.kotlinx.serialization.json)
-            implementation("androidx.compose.material:material-icons-core:1.6.0") {
-                exclude(group = "androidx.compose.ui", module = "ui")
-                exclude(group = "androidx.compose.ui", module = "ui-graphics")
-            }
-            implementation("androidx.compose.material:material-icons-extended:1.6.0") {
-                exclude(group = "androidx.compose.ui", module = "ui")
-                exclude(group = "androidx.compose.ui", module = "ui-graphics")
-            }
         }
         commonTest.dependencies {
             implementation(libs.kotlin.test)
