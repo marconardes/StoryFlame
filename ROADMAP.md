@@ -1,6 +1,6 @@
 # Roadmap do Projeto StoryFlame
 
-**Nota Importante:** O código-fonte atual deste projeto é um placeholder inicial. Este roadmap descreve as funcionalidades planejadas para o futuro. No momento, nenhuma das funcionalidades listadas abaixo está implementada no código, exceto pela estrutura básica do projeto.
+**Nota Importante:** Este roadmap descreve as funcionalidades planejadas para o StoryFlame. As funcionalidades do "Núcleo Essencial e Gerenciamento" (como gerenciamento de projetos, capítulos e resumos) já possuem uma implementação base funcional. Outras funcionalidades listadas abaixo estão em diversos estágios de planejamento ou não implementadas.
 
 ## Legenda de Status
 - (V) Funcionalidade Implementada
@@ -23,9 +23,9 @@ A seguir estão as funcionalidades planejadas para o StoryFlame, atualmente em e
     (V) Resumo por Capítulo/Cena: (Prioridade: 9/10)
         (V) Adição e edição de resumos textuais para cada capítulo/cena. (Prioridade: 9/10)
     (X) Editor de Simples: (Prioridade: 10/10)
-        (x) Integração de editor de Markdown simples (TextField). (Prioridade: 10/10)
-        (X) Funcionalidades de formatação básica (negrito, itálico, sublinhado, cabeçalhos H1-H3) via toolbar ou assistentes. (Prioridade: 9/10)
-        (X) Salvamento automático com debounce do conteúdo Markdown do capítulo ativo. (Prioridade: 9/10)
+        (V) Integração de editor de Markdown simples (JTextArea). (Prioridade: 10/10)
+        (V) Funcionalidades de formatação básica (negrito, itálico, sublinhado HTML <u>, cabeçalhos H1-H3) via toolbar. (Prioridade: 9/10)
+        (V) Salvamento automático com debounce do conteúdo Markdown do capítulo ativo. (Prioridade: 9/10)
     (X) Acompanhamento de Progresso: (Prioridade: 9/10)
         (X) Contador de palavras em tempo real no editor para o capítulo atual. (Prioridade: 9/10)
         (X) Estatísticas diárias da contagem total de palavras do projeto. (Prioridade: 9/10)

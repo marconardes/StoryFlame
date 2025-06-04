@@ -32,14 +32,19 @@ public class ProjectViewModel {
     private final PropertyChangeSupport support;
     private final Gson gson;
 
-    private static final String FILENAME = "projects.json";
-    private static final Path APP_DIR_PATH = Paths.get(System.getProperty("user.home"), ".storyflame");
-    private static final Path PROJECTS_FILE_PATH = APP_DIR_PATH.resolve(FILENAME);
+    // private static final String FILENAME = "projects.json"; // Keep for reference or default behavior
+    // private static final Path APP_DIR_PATH = Paths.get(System.getProperty("user.home"), ".storyflame"); // Keep for reference
+    private final Path projectsFilePathInstance; // Instance-specific path
 
     public ProjectViewModel() {
+        this(Paths.get(System.getProperty("user.home"), ".storyflame", "projects.json").toString());
+    }
+
+    public ProjectViewModel(String customProjectsPath) {
         this.projects = new ArrayList<>();
         this.support = new PropertyChangeSupport(this);
         this.gson = new GsonBuilder().setPrettyPrinting().create();
+        this.projectsFilePathInstance = Paths.get(customProjectsPath);
         loadProjects();
     }
 
@@ -65,15 +70,15 @@ public class ProjectViewModel {
 
     private void loadProjects() {
         try {
-            if (Files.exists(PROJECTS_FILE_PATH)) {
-                String jsonString = Files.readString(PROJECTS_FILE_PATH);
+            if (Files.exists(this.projectsFilePathInstance)) {
+                String jsonString = Files.readString(this.projectsFilePathInstance);
                 if (jsonString != null && !jsonString.isBlank()) {
                     Type projectListType = new TypeToken<ArrayList<Project>>() {}.getType();
                     List<Project> loadedProjects = gson.fromJson(jsonString, projectListType);
                     if (loadedProjects != null) {
                         this.projects = loadedProjects;
                         support.firePropertyChange(PROJECTS_PROPERTY, null, new ArrayList<>(this.projects));
-                        System.out.println("Successfully loaded projects from file: " + PROJECTS_FILE_PATH);
+                        System.out.println("Successfully loaded projects from file: " + this.projectsFilePathInstance);
                         if (!this.projects.isEmpty()) {
                             selectProject(this.projects.get(0)); // Auto-select first project
                         }
@@ -88,7 +93,7 @@ public class ProjectViewModel {
                 support.firePropertyChange(PROJECTS_PROPERTY, null, new ArrayList<>(this.projects));
             }
         } catch (IOException e) {
-            System.err.println("Error loading projects from file: " + e.getMessage());
+            System.err.println("Error loading projects from file (" + this.projectsFilePathInstance + "): " + e.getMessage());
             this.projects = new ArrayList<>(); // Start with empty list on error
             support.firePropertyChange(PROJECTS_PROPERTY, null, new ArrayList<>(this.projects));
         }
@@ -101,14 +106,15 @@ public class ProjectViewModel {
 
     private void saveProjects() {
         try {
-            if (Files.notExists(APP_DIR_PATH)) {
-                Files.createDirectories(APP_DIR_PATH);
+            Path parentDir = this.projectsFilePathInstance.getParent();
+            if (parentDir != null && Files.notExists(parentDir)) {
+                Files.createDirectories(parentDir);
             }
             String jsonString = gson.toJson(this.projects);
-            Files.writeString(PROJECTS_FILE_PATH, jsonString, StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING);
-            System.out.println("Projects saved to: " + PROJECTS_FILE_PATH);
+            Files.writeString(this.projectsFilePathInstance, jsonString, StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING);
+            System.out.println("Projects saved to: " + this.projectsFilePathInstance);
         } catch (IOException e) {
-            System.err.println("Error saving projects to file: " + e.getMessage());
+            System.err.println("Error saving projects to file (" + this.projectsFilePathInstance + "): " + e.getMessage());
         }
     }
 
