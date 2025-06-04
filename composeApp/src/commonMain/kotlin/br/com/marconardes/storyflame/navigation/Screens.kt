@@ -27,9 +27,9 @@ import cafe.adriel.voyager.core.model.rememberScreenModel // Added for ScreenMod
 import cafe.adriel.voyager.core.screen.Screen
 import cafe.adriel.voyager.navigator.LocalNavigator
 import cafe.adriel.voyager.navigator.currentOrThrow
-// import com.mohamedrejeb.richeditor.model.rememberRichTextState // Commented out
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.debounce
+import androidx.compose.runtime.snapshotFlow // Added for Markdown auto-save
 // Keep br.com.marconardes.storyflame.view.EditChapterTitleDialog fully qualified in usage or add import here
 
 object ProjectListScreen : Screen {
@@ -224,31 +224,20 @@ data class ChapterEditorScreen(val projectId: String, val chapterId: String) : S
             chapter?.let { summaryInput = it.summary }
         }
 
-        // val editorState = com.mohamedrejeb.richeditor.model.rememberRichTextState() // Correct way to get the state
+        var markdownInput by remember(chapter?.content) { mutableStateOf(chapter?.content ?: "") }
 
-        // LaunchedEffect(chapter?.content) {
-        //     // Ensure not to reset if editor already has user's untrimmed input or if content is same
-        //     val currentEditorHtml = editorState.toHtml()
-        //     if (chapter?.content != null && chapter.content != currentEditorHtml) {
-        //          editorState.setHtml(chapter.content!!)
-        //     } else if (chapter?.content == null && currentEditorHtml.isNotEmpty() && currentEditorHtml != "<p></p>") {
-        //         // If chapter content becomes null (e.g. error), but editor had content, clear it.
-        //         // editorState.setHtml("") // Or decide if you want to keep stale content
-        //     }
-        // }
-
-        // LaunchedEffect(editorState, project, chapter) {
-        //     snapshotFlow { editorState.toHtml() }
-        //         .debounce(1000L)
-        //         .collectLatest { contentHtml ->
-        //             if (project != null && chapter != null && chapter.content != contentHtml) {
-        //                  // Avoid saving if contentHtml is just the default empty state from the editor
-        //                 if (contentHtml.isNotBlank() && contentHtml != "<p></p>" || chapter.content?.isNotEmpty() == true) {
-        //                     projectViewModel.updateChapterContent(project, chapter.id, contentHtml)
-        //                 }
-        //             }
-        //         }
-        // }
+        // Auto-save for Markdown editor
+        LaunchedEffect(Unit) { // Runs once, snapshotFlow handles recomposition
+            snapshotFlow { markdownInput }
+                .debounce(1000L) // 1-second debounce
+                .collectLatest { newContent ->
+                    if (project != null && chapter != null) {
+                        if (newContent != chapter.content) { // Only save if different
+                            projectViewModel.updateChapterContent(project, chapter.id, newContent)
+                        }
+                    }
+                }
+        }
 
         Scaffold(
             topBar = {
@@ -286,11 +275,13 @@ data class ChapterEditorScreen(val projectId: String, val chapterId: String) : S
                     Spacer(modifier = Modifier.height(16.dp))
 
                     Text("Content:", style = MaterialTheme.typography.titleMedium)
-                    // br.com.marconardes.storyflame.view.RichTextEditorView( // Using FQN for clarity
-                    //     state = editorState,
-                    //     modifier = Modifier.fillMaxWidth().heightIn(min = 400.dp) // Use heightIn for min height
-                    // )
-                    Text("Editor de texto rico temporariamente desabilitado")
+                    OutlinedTextField(
+                        value = markdownInput,
+                        onValueChange = { markdownInput = it },
+                        label = { Text("Markdown Content") },
+                        modifier = Modifier.fillMaxWidth().heightIn(min = 400.dp),
+                        singleLine = false
+                    )
                 }
             } else {
                 Column(
