@@ -1,22 +1,64 @@
 # StoryFlame Swing
 
-StoryFlame Swing is a desktop application for managing writing projects and their chapters. It allows users to create projects, add chapters, and edit chapter content including titles, summaries, and the main text.
+## Legenda de Status
+- (V) Implementado e Verificado
+- (P) Parcialmente Implementado
+- (X) Não Implementado
+- (🟡) Planejado (Backlog ou Próxima Sprint)
+- (❗) Impedimento ou Problema Encontrado
+- (R) Removido ou Descontinuado
 
-The application is built using Java Swing for the graphical user interface and persists project data locally in a JSON file (`projects.json` located in `~/.storyflame/`).
+## Funcionalidades Implementadas (Core)
+(V) Gerenciamento de Projetos:
+    (V) Criação, abertura (implícito ao carregar/selecionar) e listagem de múltiplos projetos de escrita. (ProjectViewModel: `createProject`, `loadProjects`; ProjectListView: exibe lista)
+    (V) Persistência local dos dados do projeto em formato JSON. (ProjectViewModel: `saveProjects`, `loadProjects` usando GSON)
+(V) Organização por Capítulos/Cenas:
+    (V) Estruturação de projetos em capítulos ou cenas ordenáveis. (Project model tem `List<Chapter>`; Chapter model tem `order`; ProjectViewModel `moveChapter` atualiza a ordem)
+    (V) CRUD completo para capítulos (adicionar, editar título, excluir, reordenar). (ProjectViewModel: `addChapter`, `updateChapterTitle`, `deleteChapter`, `moveChapter`)
+(V) Resumo por Capítulo/Cena:
+    (V) Adição (implícito na criação do capítulo) e edição de resumos textuais para cada capítulo/cena. (Chapter model tem `summary`; ChapterEditorView tem `summaryArea`; ProjectViewModel `updateChapterSummary`)
+(P) Editor de Texto Simples (para conteúdo do capítulo):
+    (V) Integração de editor de texto simples (JTextArea). (ChapterEditorView usa `JTextArea` para `contentArea`)
+    (X) Funcionalidades de formatação básica (negrito, itálico, sublinhado, cabeçalhos H1-H3) via toolbar ou assistentes. (Não há evidência de JTextPane/JEditorPane com StyledDocument ou bibliotecas Markdown)
+    (X) Salvamento automático com debounce do conteúdo do capítulo ativo. (Salvamento é manual via botão "Save" em ChapterEditorView, que chama `ProjectViewModel.updateChapterContent` e depois `saveProjects`)
 
-## Features
+## Funcionalidades Planejadas (Visão Geral)
+(🟡) Melhorias no Editor de Texto/Markdown:
+    (🟡) Adicionar uma toolbar de formatação rápida (negrito, itálico, listas, etc.).
+    (🟡) Implementar um preview de Markdown em tempo real ou alternável (requer biblioteca Markdown).
+    (🟡) Suporte para tabelas e blocos de código (requer biblioteca Markdown).
+(🟡) Gerenciamento Avançado de Capítulos:
+    (🟡) Visualização em Kanban/Painel dos capítulos (Ex: backlog, em progresso, concluído).
+    (🟡) Metadados customizáveis para capítulos (personagens, locais, notas).
+(🟡) Exportação e Backup:
+    (🟡) Exportar projetos/capítulos para formatos comuns (PDF, DOCX, TXT, Markdown).
+    (🟡) Opções de backup automático e manual.
+(🟡) Ferramentas de Escrita Criativa:
+    (🟡) Gerador de nomes/ideias.
+    (🟡) Ferramenta de anotações e referências.
+(🟡) UI/UX Melhorias:
+    (🟡) Modo Escuro.
+    (🟡) Interface personalizável (fontes, cores).
 
-*   Project creation and deletion.
-*   Chapter creation, deletion, and editing within projects.
-*   Basic text editing capabilities for chapter titles, summaries, and content.
-*   Local persistence of project data.
+## Próximos Passos e Funcionalidades Futuras (Planejado 🟡)
 
-## Roadmap
+### Sprint Atual/Próxima (Exemplo Fictício)
+- (🟡) **Foco Principal:** Melhorar a experiência de edição.
+    - (🟡) Tarefa 1: Implementar editor de Rich Text básico (JTextPane) em vez de JTextArea para o conteúdo do capítulo.
+    - (🟡) Tarefa 2: Adicionar botões de formatação básica (negrito, itálico) ao editor de capítulo.
+- (🟡) **Secundário:**
+    - (🟡) Tarefa 3: Investigar bibliotecas Java para exportação para TXT simples.
+    - (🟡) Tarefa 4: Implementar a exportação de um capítulo para TXT.
 
-- Feature 1: Implement cloud synchronization.
-- Feature 2: Add support for different export formats (e.g., PDF, DOCX, TXT).
-- Feature 3: Develop a web-based version of StoryFlame.
-- Feature 4: Implement rich text editing for chapter content.
-- Feature 5: Add character and location management tools.
-- Feature 6: Word count and writing statistics.
-- Feature 7: Version history for chapters.
+### Backlog de Médio Prazo
+- (🟡) Sincronização com Cloud (Dropbox, Google Drive).
+- (🟡) Ferramentas de World-Building (personagens, locais, itens).
+- (🟡) Visualização de linha do tempo/cronologia dos capítulos.
+- (🟡) Suporte a múltiplos idiomas para a UI.
+- (🟡) Implementar salvamento automático (debounce) para o editor de capítulos.
+
+### Visão de Longo Prazo
+- (🟡) Versão Web do StoryFlame.
+- (🟡) Funcionalidades colaborativas.
+- (🟡) API para integrações externas.
+- (🟡) Suporte completo a Markdown no editor, incluindo preview.
