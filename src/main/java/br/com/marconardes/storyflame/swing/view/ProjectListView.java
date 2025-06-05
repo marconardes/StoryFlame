@@ -6,6 +6,7 @@ import br.com.marconardes.storyflame.swing.viewmodel.ProjectViewModel;
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
+import java.time.LocalDate;
 import java.util.List;
 import javax.swing.SpinnerNumberModel;
 import javax.swing.BorderFactory;
@@ -21,6 +22,12 @@ public class ProjectListView extends JPanel {
     private JSpinner totalGoalSpinner;
     private JButton saveGoalsButton;
     private JPanel goalsPanel;
+
+    // UI Components for Progress Display
+    private JLabel dailyProgressLabel;
+    private JProgressBar dailyProgressBar;
+    private JLabel totalProgressLabel;
+    private JProgressBar totalProgressBar;
 
     public ProjectListView(ProjectViewModel viewModel) {
         this.viewModel = viewModel;
@@ -52,9 +59,32 @@ public class ProjectListView extends JPanel {
                     saveGoalsButton.setEnabled(true);
                     dailyGoalSpinner.setValue(selectedProject.getDailyWritingGoal());
                     totalGoalSpinner.setValue(selectedProject.getTotalWritingGoal());
+                    updateProgressDisplay(selectedProject); // Call to update progress display
                 } else {
                     goalsPanel.setVisible(false);
                     saveGoalsButton.setEnabled(false);
+                    updateProgressDisplay(null); // Call to update progress display
+                }
+            } else if (ProjectViewModel.PROJECTS_PROPERTY.equals(evt.getPropertyName())) {
+                // Type safety: Ensure the new value is a List<Project>
+                if (evt.getNewValue() instanceof List) {
+                    @SuppressWarnings("unchecked") // Checked by instanceof
+                    List<Project> newProjects = (List<Project>) evt.getNewValue();
+                    updateProjectList(newProjects); // This will update JList & may change selection
+
+                    // After project list updates, re-evaluate selected project for progress display
+                    Project currentSelectedInVM = viewModel.getSelectedProject();
+                    if (currentSelectedInVM != null) { // If a project remains selected or is newly selected
+                        goalsPanel.setVisible(true);
+                        saveGoalsButton.setEnabled(true);
+                        dailyGoalSpinner.setValue(currentSelectedInVM.getDailyWritingGoal());
+                        totalGoalSpinner.setValue(currentSelectedInVM.getTotalWritingGoal());
+                        updateProgressDisplay(currentSelectedInVM);
+                    } else { // If no project is selected after list update
+                        goalsPanel.setVisible(false);
+                        saveGoalsButton.setEnabled(false);
+                        updateProgressDisplay(null);
+                    }
                 }
             }
         });
@@ -109,10 +139,46 @@ public class ProjectListView extends JPanel {
         totalGoalSpinner.setPreferredSize(spinnerSize);
         goalsPanel.add(totalGoalSpinner, gbc);
 
-        gbc.gridx = 0; gbc.gridy = 2; gbc.gridwidth = 2; gbc.anchor = GridBagConstraints.CENTER;
+        gbc.gridx = 0; gbc.gridy = 2; gbc.gridwidth = 2; gbc.anchor = GridBagConstraints.CENTER; // Keep save button centered
         saveGoalsButton = new JButton("Salvar Metas");
-        saveGoalsButton.addActionListener(e -> saveProjectGoals()); // Changed to lambda
+        saveGoalsButton.addActionListener(e -> saveProjectGoals());
         goalsPanel.add(saveGoalsButton, gbc);
+
+        // Reset gridwidth for subsequent components if it was changed
+        gbc.gridwidth = 1;
+        gbc.anchor = GridBagConstraints.LINE_START; // Reset anchor for labels
+
+        // Daily Progress Label
+        gbc.gridx = 0; gbc.gridy = 3; // Next row
+        goalsPanel.add(new JLabel("Progresso Diário:"), gbc);
+        gbc.gridx = 1; gbc.gridy = 3;
+        dailyProgressLabel = new JLabel("N/A");
+        goalsPanel.add(dailyProgressLabel, gbc);
+
+        // Daily Progress Bar
+        gbc.gridx = 0; gbc.gridy = 4;
+        gbc.gridwidth = 2; gbc.fill = GridBagConstraints.HORIZONTAL;
+        dailyProgressBar = new JProgressBar(0, 100);
+        dailyProgressBar.setStringPainted(true);
+        dailyProgressBar.setPreferredSize(new Dimension(150, dailyProgressBar.getPreferredSize().height));
+        goalsPanel.add(dailyProgressBar, gbc);
+        gbc.gridwidth = 1; gbc.fill = GridBagConstraints.NONE; // Reset
+
+        // Total Progress Label
+        gbc.gridx = 0; gbc.gridy = 5;
+        gbc.anchor = GridBagConstraints.LINE_START;
+        goalsPanel.add(new JLabel("Progresso Total:"), gbc);
+        gbc.gridx = 1; gbc.gridy = 5;
+        totalProgressLabel = new JLabel("N/A");
+        goalsPanel.add(totalProgressLabel, gbc);
+
+        // Total Progress Bar
+        gbc.gridx = 0; gbc.gridy = 6;
+        gbc.gridwidth = 2; gbc.fill = GridBagConstraints.HORIZONTAL;
+        totalProgressBar = new JProgressBar(0, 100);
+        totalProgressBar.setStringPainted(true);
+        totalProgressBar.setPreferredSize(new Dimension(150, totalProgressBar.getPreferredSize().height));
+        goalsPanel.add(totalProgressBar, gbc);
 
         goalsPanel.setVisible(false); // Initially hidden
         saveGoalsButton.setEnabled(false); // Initially disabled
@@ -187,8 +253,53 @@ public class ProjectListView extends JPanel {
             // This method will be implemented in ProjectViewModel in a subsequent step.
             // For now, this call assumes it exists or will exist.
             viewModel.updateProjectGoals(selectedProject.getId(), dailyGoal, totalGoal);
+            updateProgressDisplay(selectedProject); // Update progress after saving goals
 
             JOptionPane.showMessageDialog(this, "Metas salvas para o projeto: " + selectedProject.getName(), "Metas Salvas", JOptionPane.INFORMATION_MESSAGE);
+        }
+    }
+
+    private void updateProgressDisplay(Project project) {
+        if (project == null) {
+            dailyProgressLabel.setText("N/A");
+            dailyProgressBar.setValue(0);
+            dailyProgressBar.setMaximum(100); // Reset max to a default
+            dailyProgressBar.setString("N/A");
+
+            totalProgressLabel.setText("N/A");
+            totalProgressBar.setValue(0);
+            totalProgressBar.setMaximum(100); // Reset max
+            totalProgressBar.setString("N/A");
+            return;
+        }
+
+        // Metas
+        int dailyGoal = project.getDailyWritingGoal();
+        int totalGoal = project.getTotalWritingGoal();
+
+        // Contagens Atuais
+        int currentDailyWords = viewModel.getWordCountForDate(project, LocalDate.now());
+        int currentTotalWords = viewModel.calculateTotalWordCount(project);
+
+        // Atualizar UI para Progresso Diário
+        dailyProgressLabel.setText(String.format("%d / %d palavras", currentDailyWords, dailyGoal));
+        dailyProgressBar.setMaximum(dailyGoal > 0 ? dailyGoal : 1);
+        dailyProgressBar.setValue(Math.min(currentDailyWords, dailyGoal > 0 ? dailyGoal : currentDailyWords));
+        if (dailyGoal > 0) {
+            dailyProgressBar.setString(String.format("%.0f%%", (Math.min(1.0, (double)currentDailyWords / dailyGoal)) * 100.0));
+        } else {
+            dailyProgressBar.setString(currentDailyWords > 0 ? "Meta não definida" : "0/0");
+        }
+
+
+        // Atualizar UI para Progresso Total
+        totalProgressLabel.setText(String.format("%d / %d palavras", currentTotalWords, totalGoal));
+        totalProgressBar.setMaximum(totalGoal > 0 ? totalGoal : 1);
+        totalProgressBar.setValue(Math.min(currentTotalWords, totalGoal > 0 ? totalGoal : currentTotalWords));
+        if (totalGoal > 0) {
+            totalProgressBar.setString(String.format("%.0f%%", (Math.min(1.0, (double)currentTotalWords / totalGoal)) * 100.0));
+        } else {
+            totalProgressBar.setString(currentTotalWords > 0 ? "Meta não definida" : "0/0");
         }
     }
 }

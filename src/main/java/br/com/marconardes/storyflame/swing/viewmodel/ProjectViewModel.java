@@ -403,4 +403,27 @@ public class ProjectViewModel {
             System.err.println("Attempted to update goals for a non-existent project ID: " + projectId);
         }
     }
+
+    // Helper method to get word count for a specific date
+    public int getWordCountForDate(Project project, LocalDate date) {
+        if (project == null || project.getDailyWordCounts() == null || date == null) {
+            return 0;
+        }
+        String dateString = date.format(DateTimeFormatter.ISO_LOCAL_DATE);
+        return project.getDailyWordCounts().getOrDefault(dateString, 0);
+    }
+
+    // Helper method to calculate the current total word count of a project
+    public int calculateTotalWordCount(Project project) {
+        if (project == null || project.getChapters() == null) {
+            return 0;
+        }
+        int total = 0;
+        for (Chapter chapter : project.getChapters()) {
+            if (chapter.getContent() != null) { // Check for null content
+                total += WordCounterUtil.countWords(chapter.getContent());
+            }
+        }
+        return total;
+    }
 }
