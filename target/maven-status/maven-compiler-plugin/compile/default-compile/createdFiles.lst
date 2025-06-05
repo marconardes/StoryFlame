@@ -1,5 +1,6 @@
 br/com/marconardes/storyflame/swing/util/WordCounterUtil.class
 br/com/marconardes/storyflame/swing/view/ChapterEditorView$1.class
+br/com/marconardes/storyflame/swing/util/TxtProjectExporter.class
 br/com/marconardes/storyflame/swing/view/ProjectListView.class
 br/com/marconardes/storyflame/swing/view/ChapterEditorView.class
 br/com/marconardes/storyflame/swing/Main.class
@@ -12,4 +13,5 @@ br/com/marconardes/storyflame/swing/util/MarkdownFormatter.class
 br/com/marconardes/storyflame/swing/view/ChapterSelectionListener.class
 br/com/marconardes/storyflame/swing/util/MarkdownFormatter$FormatResult.class
 br/com/marconardes/storyflame/swing/model/Project.class
+br/com/marconardes/storyflame/swing/util/PdfProjectExporter.class
 br/com/marconardes/storyflame/swing/viewmodel/ProjectViewModel$1.class
