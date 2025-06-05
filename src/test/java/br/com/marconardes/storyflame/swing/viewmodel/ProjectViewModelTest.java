@@ -193,4 +193,60 @@ class ProjectViewModelTest {
         assertNotNull(projectAfterDelete.getDailyWordCounts().get(today), "Daily count for today should exist");
         assertEquals(2, projectAfterDelete.getDailyWordCounts().get(today), "Word count after delete should be 2");
     }
+
+    @Test
+    void testProjectGoals_InitialValues() {
+        String projectName = "Test Project Goals";
+        viewModel.createProject(projectName);
+        Project project = viewModel.getProjects().stream()
+                            .filter(p -> p.getName().equals(projectName))
+                            .findFirst()
+                            .orElse(null);
+
+        assertNotNull(project, "Project should be created");
+        assertEquals(0, project.getDailyWritingGoal(), "Initial daily writing goal should be 0");
+        assertEquals(0, project.getTotalWritingGoal(), "Initial total writing goal should be 0");
+    }
+
+    @Test
+    void testUpdateProjectGoals_UpdatesAndPersists() throws IOException {
+        String projectName = "Project For Goal Update";
+        viewModel.createProject(projectName);
+        Project project = viewModel.getProjects().stream()
+                            .filter(p -> p.getName().equals(projectName))
+                            .findFirst()
+                            .orElse(null);
+        assertNotNull(project, "Project should be created for goal update test");
+        String projectId = project.getId();
+
+        int newDailyGoal = 100;
+        int newTotalGoal = 5000;
+
+        viewModel.updateProjectGoals(projectId, newDailyGoal, newTotalGoal);
+
+        // Verify in memory
+        Project updatedProjectInMemory = viewModel.getProjects().stream()
+                                            .filter(p -> p.getId().equals(projectId))
+                                            .findFirst()
+                                            .orElse(null);
+        assertNotNull(updatedProjectInMemory, "Updated project should exist in memory");
+        assertEquals(newDailyGoal, updatedProjectInMemory.getDailyWritingGoal(), "Daily goal in memory should be updated");
+        assertEquals(newTotalGoal, updatedProjectInMemory.getTotalWritingGoal(), "Total goal in memory should be updated");
+
+        // Verify persistence by reloading
+        ProjectViewModel newViewModelInstance = new ProjectViewModel(tempProjectsFilePath.toString());
+        assertEquals(1, newViewModelInstance.getProjects().size(), "Should have one project after reloading");
+
+        Project reloadedProject = newViewModelInstance.getProjects().get(0); // Assuming only one project
+        // Or find by ID if more robust:
+        // Project reloadedProject = newViewModelInstance.getProjects().stream()
+        //                             .filter(p -> p.getId().equals(projectId))
+        //                             .findFirst()
+        //                             .orElse(null);
+
+        assertNotNull(reloadedProject, "Reloaded project should not be null");
+        assertEquals(projectId, reloadedProject.getId(), "Reloaded project ID should match");
+        assertEquals(newDailyGoal, reloadedProject.getDailyWritingGoal(), "Daily goal after reload should be persisted");
+        assertEquals(newTotalGoal, reloadedProject.getTotalWritingGoal(), "Total goal after reload should be persisted");
+    }
 }

@@ -369,4 +369,38 @@ public class ProjectViewModel {
                             .findFirst()
                             .orElse(null);
     }
+
+    public void updateProjectGoals(String projectId, int dailyGoal, int totalGoal) {
+        Project projectToUpdate = findProjectById(projectId);
+        if (projectToUpdate != null) {
+            boolean changed = false;
+            if (projectToUpdate.getDailyWritingGoal() != dailyGoal) {
+                projectToUpdate.setDailyWritingGoal(dailyGoal);
+                changed = true;
+            }
+            if (projectToUpdate.getTotalWritingGoal() != totalGoal) {
+                projectToUpdate.setTotalWritingGoal(totalGoal);
+                changed = true;
+            }
+
+            if (changed) {
+                // If the updated project is the currently selected one,
+                // we can fire a property change to notify UI components
+                // that might need to refresh based on the selected project's properties.
+                if (this.selectedProject != null && this.selectedProject.getId().equals(projectId)) {
+                    // Firing with the same object but it forces bound components to re-evaluate.
+                    // Or, one could create a shallow copy if direct object mutation isn't picked up.
+                    // For this specific case, ProjectListView re-reads from selectedProject on selection event,
+                    // but this can be useful for other potential listeners.
+                    support.firePropertyChange(SELECTED_PROJECT_PROPERTY, this.selectedProject, this.selectedProject);
+                }
+
+                System.out.println("Updating goals for project: " + projectToUpdate.getName() +
+                                   " - Daily: " + dailyGoal + ", Total: " + totalGoal);
+                saveProjects(); // Persist changes
+            }
+        } else {
+            System.err.println("Attempted to update goals for a non-existent project ID: " + projectId);
+        }
+    }
 }

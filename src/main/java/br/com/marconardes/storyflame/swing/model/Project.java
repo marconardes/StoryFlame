@@ -12,6 +12,8 @@ public class Project {
     private String creationDate;
     private List<Chapter> chapters;
     private Map<String, Integer> dailyWordCounts = new HashMap<>();
+    private int dailyWritingGoal = 0;
+    private int totalWritingGoal = 0;
 
     // Constructor
     public Project(String name, String creationDate) {
@@ -70,6 +72,22 @@ public class Project {
 
     public void setDailyWordCounts(Map<String, Integer> dailyWordCounts) {
         this.dailyWordCounts = dailyWordCounts;
+    }
+
+    public int getDailyWritingGoal() {
+        return dailyWritingGoal;
+    }
+
+    public void setDailyWritingGoal(int dailyWritingGoal) {
+        this.dailyWritingGoal = dailyWritingGoal;
+    }
+
+    public int getTotalWritingGoal() {
+        return totalWritingGoal;
+    }
+
+    public void setTotalWritingGoal(int totalWritingGoal) {
+        this.totalWritingGoal = totalWritingGoal;
     }
 
     @Override

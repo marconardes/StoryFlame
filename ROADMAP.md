@@ -29,7 +29,7 @@ A seguir estão as funcionalidades planejadas para o StoryFlame, atualmente em e
     (X) Acompanhamento de Progresso: (Prioridade: 9/10)
         (V) Contador de palavras em tempo real no editor para o capítulo atual. (Prioridade: 9/10)
         (P) Estatísticas diárias da contagem total de palavras do projeto (coleta de dados implementada). (Prioridade: 9/10)
-        (X) Definição de metas de escrita diárias e totais por projeto. (Prioridade: 9/10)
+        (V) Definição de metas de escrita diárias e totais por projeto (armazenamento e UI para definir implementados). (Prioridade: 9/10)
         (X) Visualização do progresso em relação às metas. (Prioridade: 9/10)
     (X) Modo Escuro: (Prioridade: 9/10)
         (X) Alternância entre tema claro e escuro com persistência da preferência do usuário. (Prioridade: 9/10)
