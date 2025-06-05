@@ -9,11 +9,17 @@ import br.com.marconardes.storyflame.swing.view.ChapterSelectionListener;
 import br.com.marconardes.storyflame.swing.view.ProjectListView;
 import br.com.marconardes.storyflame.swing.viewmodel.ProjectViewModel;
 
+import br.com.marconardes.storyflame.swing.util.ThemeManager;
+import com.formdev.flatlaf.FlatDarkLaf;
+import com.formdev.flatlaf.FlatLightLaf;
+
 import javax.swing.*;
 import java.awt.*;
+import java.beans.PropertyChangeListener;
 
 public class Main implements ChapterEditorListener, ChapterSelectionListener {
 
+    private ThemeManager themeManager;
     private ProjectViewModel projectViewModel;
     private ProjectListView projectListView;
     private ChapterSectionView chapterSectionView;
@@ -21,17 +27,19 @@ public class Main implements ChapterEditorListener, ChapterSelectionListener {
 
     private JPanel centerPanel; // Panel that will use CardLayout
     private CardLayout cardLayout;
+    private JFrame frame; // Made JFrame a field
 
     private static final String CHAPTER_SECTION_PANEL = "CHAPTER_SECTION_PANEL";
     private static final String CHAPTER_EDITOR_PANEL = "CHAPTER_EDITOR_PANEL";
 
 
     public Main() {
+        themeManager = new ThemeManager();
         projectViewModel = new ProjectViewModel();
     }
 
     private void createAndShowGUI() {
-        JFrame frame = new JFrame("StoryFlame Swing");
+        frame = new JFrame("StoryFlame Swing"); // Use the field
         frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         frame.setMinimumSize(new Dimension(800, 600));
         frame.setLocationRelativeTo(null);
@@ -60,7 +68,14 @@ public class Main implements ChapterEditorListener, ChapterSelectionListener {
         mainPanel.add(centerPanel, BorderLayout.CENTER); // Add CardLayout panel to center
 
         frame.getContentPane().add(mainPanel);
+        setupMenuBar(); // Call setupMenuBar
         frame.setVisible(true);
+
+        UIManager.addPropertyChangeListener(evt -> {
+            if ("lookAndFeel".equals(evt.getPropertyName())) {
+                SwingUtilities.updateComponentTreeUI(frame);
+            }
+        });
 
         // Show ChapterSectionView initially
         cardLayout.show(centerPanel, CHAPTER_SECTION_PANEL);
@@ -85,15 +100,28 @@ public class Main implements ChapterEditorListener, ChapterSelectionListener {
         // to update itself if necessary.
     }
 
+    private void setupMenuBar() {
+        JMenuBar menuBar = new JMenuBar();
+        JMenu fileMenu = new JMenu("File");
+        // Add file menu items if any exist or are planned
+
+        JMenu viewMenu = new JMenu("View");
+        JMenuItem toggleThemeItem = new JMenuItem("Toggle Theme");
+        toggleThemeItem.addActionListener(e -> {
+            themeManager.toggleTheme();
+            // The UIManager property change listener should handle the UI update for the frame.
+        });
+        viewMenu.add(toggleThemeItem);
+
+        menuBar.add(fileMenu);
+        menuBar.add(viewMenu);
+        frame.setJMenuBar(menuBar); // Set the menuBar to the frame
+    }
 
     public static void main(String[] args) {
-        try {
-            UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-
         Main app = new Main();
+        app.themeManager.applyCurrentTheme();
+
         SwingUtilities.invokeLater(app::createAndShowGUI);
     }
 }
