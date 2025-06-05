@@ -14,6 +14,7 @@ public class Project {
     private Map<String, Integer> dailyWordCounts = new HashMap<>();
     private int dailyWritingGoal = 0;
     private int totalWritingGoal = 0;
+    private String passwordHash;
 
     // Constructor
     public Project(String name, String creationDate) {
@@ -88,6 +89,14 @@ public class Project {
 
     public void setTotalWritingGoal(int totalWritingGoal) {
         this.totalWritingGoal = totalWritingGoal;
+    }
+
+    public String getPasswordHash() {
+        return passwordHash;
+    }
+
+    public void setPasswordHash(String passwordHash) {
+        this.passwordHash = passwordHash;
     }
 
     @Override

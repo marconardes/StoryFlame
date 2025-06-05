@@ -10,6 +10,17 @@ import java.time.LocalDate;
 import java.util.List;
 import javax.swing.SpinnerNumberModel;
 import javax.swing.BorderFactory;
+import javax.swing.JPopupMenu;
+import javax.swing.JMenuItem;
+import javax.swing.JOptionPane;
+import javax.swing.SwingUtilities;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
+import java.awt.Frame; // For casting parent window
+
+// Custom Dialogs
+import br.com.marconardes.storyflame.swing.view.PasswordEntryDialog;
+import br.com.marconardes.storyflame.swing.view.ManagePasswordDialog;
 // GridBagConstraints and GridBagLayout will be used for goalsPanel
 
 public class ProjectListView extends JPanel {
@@ -40,6 +51,39 @@ public class ProjectListView extends JPanel {
 
         // Populate initial list
         updateProjectList(viewModel.getProjects());
+
+        // Add MouseListener for double-click and right-click context menu
+        projectJList.addMouseListener(new MouseAdapter() {
+            @Override
+            public void mouseClicked(MouseEvent e) {
+                if (e.getClickCount() == 2 && SwingUtilities.isLeftMouseButton(e)) {
+                    int index = projectJList.locationToIndex(e.getPoint());
+                    if (index >= 0) {
+                        Project selectedProject = projectJList.getModel().getElementAt(index);
+                        if (selectedProject != null) { // Ensure project is not null
+                           openProject(selectedProject);
+                        }
+                    }
+                }
+            }
+
+            @Override
+            public void mousePressed(MouseEvent e) {
+                if (SwingUtilities.isRightMouseButton(e)) {
+                    int index = projectJList.locationToIndex(e.getPoint());
+                    if (index >= 0) {
+                        // Ensure the item under the cursor is selected before showing the context menu
+                        if (projectJList.getSelectedIndex() != index) {
+                            projectJList.setSelectedIndex(index);
+                        }
+                        Project selectedProject = projectJList.getModel().getElementAt(index);
+                        if (selectedProject != null) { // Ensure project is not null
+                            showContextMenu(e, selectedProject);
+                        }
+                    }
+                }
+            }
+        });
 
         // Listen for ViewModel changes
         viewModel.addPropertyChangeListener(evt -> {
@@ -301,5 +345,116 @@ public class ProjectListView extends JPanel {
         } else {
             totalProgressBar.setString(currentTotalWords > 0 ? "Meta não definida" : "0/0");
         }
+    }
+
+    private void openProject(Project project) {
+        if (project == null) return;
+
+        Frame parentFrame = (Frame) SwingUtilities.getWindowAncestor(this);
+        // It's good practice to handle parentFrame being null, though for a visible component it's unlikely.
+        // JDialog can accept a null parent, but it might not behave as ideally (e.g., regarding modality or positioning).
+
+        if (project.getPasswordHash() != null && !project.getPasswordHash().isEmpty()) {
+            PasswordEntryDialog entryDialog = new PasswordEntryDialog(parentFrame,
+                    "Enter Password", "Project '" + project.getName() + "' is password protected:");
+            String passwordAttempt = entryDialog.getPassword(); // This makes the dialog visible and blocks.
+
+            if (passwordAttempt != null) { // User clicked OK (not Cancel)
+                boolean success = viewModel.attemptLoadProtectedProject(project, passwordAttempt);
+                if (success) {
+                    // Project successfully loaded into ViewModel.
+                    // UI should update based on ViewModel's property changes (e.g., SELECTED_PROJECT_PROPERTY).
+                    System.out.println("Password correct for project: " + project.getName() + ". ViewModel updated.");
+                    // Any navigation or view change is typically handled by a main controller listening to ViewModel.
+                } else {
+                    JOptionPane.showMessageDialog(parentFrame,
+                            "Incorrect password for project '" + project.getName() + "'.",
+                            "Access Denied", JOptionPane.ERROR_MESSAGE);
+                }
+            }
+            // If passwordAttempt is null, user canceled the dialog; do nothing further.
+        } else {
+            // Not password protected, so select it directly in the ViewModel.
+            // This should trigger the SELECTED_PROJECT_PROPERTY change, and other parts of the UI will react.
+            viewModel.selectProject(project);
+            System.out.println("Opening project (no password): " + project.getName() + ". ViewModel updated.");
+        }
+    }
+
+    private void showContextMenu(MouseEvent e, Project selectedProject) {
+        if (selectedProject == null) return;
+
+        JPopupMenu contextMenu = new JPopupMenu();
+        Frame parentFrame = (Frame) SwingUtilities.getWindowAncestor(this);
+
+        // --- Set/Change Password ---
+        JMenuItem setChangePasswordItem = new JMenuItem("Set/Change Password...");
+        setChangePasswordItem.addActionListener(ae -> {
+            boolean isPasswordSet = selectedProject.getPasswordHash() != null && !selectedProject.getPasswordHash().isEmpty();
+            ManagePasswordDialog.Action action = isPasswordSet ? ManagePasswordDialog.Action.CHANGE : ManagePasswordDialog.Action.SET;
+
+            ManagePasswordDialog dialog = new ManagePasswordDialog(parentFrame, action, isPasswordSet);
+            dialog.setVisible(true);
+
+            String currentPassword = dialog.getCurrentPassword();
+            String newPassword = dialog.getNewPassword();
+
+            if (newPassword != null) {
+                boolean success = false;
+                String message;
+                if (action == ManagePasswordDialog.Action.SET) {
+                    success = viewModel.setProjectPassword(selectedProject, newPassword);
+                    message = success ? "Password set successfully for '" + selectedProject.getName() + "'."
+                                      : "Failed to set password for '" + selectedProject.getName() + "'.";
+                } else { // CHANGE
+                    if (currentPassword == null) { // Should not happen if dialog logic is correct for CHANGE
+                         JOptionPane.showMessageDialog(parentFrame, "Current password was not provided.", "Error", JOptionPane.ERROR_MESSAGE);
+                         return;
+                    }
+                    success = viewModel.changeProjectPassword(selectedProject, currentPassword, newPassword);
+                    message = success ? "Password changed successfully for '" + selectedProject.getName() + "'."
+                                      : "Failed to change password for '" + selectedProject.getName() + "'. (Check current password?)";
+                }
+                JOptionPane.showMessageDialog(parentFrame, message,
+                        "Password Management", success ? JOptionPane.INFORMATION_MESSAGE : JOptionPane.ERROR_MESSAGE);
+                if (success) projectJList.repaint();
+            }
+        });
+        contextMenu.add(setChangePasswordItem);
+
+        // --- Remove Password ---
+        JMenuItem removePasswordItem = new JMenuItem("Remove Password...");
+        removePasswordItem.setEnabled(selectedProject.getPasswordHash() != null && !selectedProject.getPasswordHash().isEmpty()); // Enable only if password is set
+        removePasswordItem.addActionListener(ae -> {
+            // Re-check, as state might change, though setEnabled should cover typical cases
+            if (selectedProject.getPasswordHash() == null || selectedProject.getPasswordHash().isEmpty()) {
+                JOptionPane.showMessageDialog(parentFrame, "This project is not password protected.",
+                        "Remove Password", JOptionPane.INFORMATION_MESSAGE);
+                return;
+            }
+
+            ManagePasswordDialog dialog = new ManagePasswordDialog(parentFrame, ManagePasswordDialog.Action.REMOVE, true);
+            dialog.setVisible(true);
+
+            String passwordToConfirm = dialog.getCurrentPassword();
+
+            if (passwordToConfirm != null) {
+                boolean success = viewModel.removeProjectPassword(selectedProject, passwordToConfirm);
+                String message = success ? "Password removed successfully from '" + selectedProject.getName() + "'."
+                                         : "Failed to remove password for '" + selectedProject.getName() + "'. (Check password?)";
+                JOptionPane.showMessageDialog(parentFrame, message,
+                        "Password Management", success ? JOptionPane.INFORMATION_MESSAGE : JOptionPane.ERROR_MESSAGE);
+                if (success) projectJList.repaint();
+            }
+        });
+        contextMenu.add(removePasswordItem);
+
+        contextMenu.addSeparator();
+        JMenuItem openItemMenu = new JMenuItem("Open Project");
+        openItemMenu.setFont(openItemMenu.getFont().deriveFont(Font.BOLD));
+        openItemMenu.addActionListener(ae -> openProject(selectedProject));
+        contextMenu.add(openItemMenu);
+
+        contextMenu.show(projectJList, e.getX(), e.getY());
     }
 }

@@ -37,9 +37,9 @@ A seguir estão as funcionalidades planejadas para o StoryFlame, atualmente em e
     (V) Exportação de Conteúdo: (Prioridade: 9/10) // Changed to Implemented
         (V) Exportação do projeto completo para formato .txt (incluindo títulos de projeto/capítulo, resumos e conteúdo). (Prioridade: 9/10)
         (V) Exportação do projeto completo para formato .pdf (conteúdo principal dos capítulos como texto puro, mas estrutura de títulos e resumos preservada). (Prioridade: 8/10) // Changed to Implemented
-    (X) Segurança Básica: (Prioridade: 9/10)
-        (X) Proteção de projetos individuais por senha simples (hash SHA-256 da senha é armazenado). (Prioridade: 9/10)
-        (X) Interface para definir, alterar, remover e verificar senhas. (Prioridade: 9/10)
+    (V) Segurança Básica: (Prioridade: 9/10)
+        (V) Proteção de projetos individuais por senha simples (hash SHA-256 da senha é armazenado). (Prioridade: 9/10)
+        (V) Interface para definir, alterar, remover e verificar senhas. (Prioridade: 9/10)
 
 ### Organização Narrativa
 
