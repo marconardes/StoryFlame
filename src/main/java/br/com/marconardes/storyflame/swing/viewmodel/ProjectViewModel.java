@@ -16,6 +16,8 @@ import java.time.LocalDate;
 // import java.time.format.DateTimeFormatter;
 import java.util.Map; // For Map type in method signature
 import br.com.marconardes.storyflame.swing.util.WordCounterUtil;
+import br.com.marconardes.storyflame.swing.util.SecurityUtils;
+import java.security.NoSuchAlgorithmException;
 import java.nio.file.Paths;
 import java.nio.file.Path;
 import java.nio.file.StandardOpenOption;
@@ -123,10 +125,25 @@ public class ProjectViewModel {
         }
     }
 
-    public void createProject(String projectName) {
+    public Project createProject(String projectName) {
+        return createProject(projectName, null);
+    }
+
+    public Project createProject(String projectName, String password) {
         LocalDateTime currentDateTime = LocalDateTime.now();
         DateTimeFormatter formatter = DateTimeFormatter.ISO_DATE_TIME;
         Project newProject = new Project(projectName, currentDateTime.format(formatter));
+
+        if (password != null && !password.isEmpty()) {
+            try {
+                String hashedPassword = SecurityUtils.hashPassword(password);
+                newProject.setPasswordHash(hashedPassword);
+            } catch (NoSuchAlgorithmException e) {
+                System.err.println("Error hashing password during project creation: " + e.getMessage());
+                // Optionally, rethrow as a runtime exception or handle as a failed project creation
+                // For now, project is created without password
+            }
+        }
 
         List<Project> oldProjects = new ArrayList<>(this.projects);
         this.projects.add(newProject);
@@ -136,6 +153,7 @@ public class ProjectViewModel {
             selectProject(newProject);
         }
         saveProjects();
+        return newProject;
     }
 
     public void selectProject(Project project) {
@@ -425,5 +443,108 @@ public class ProjectViewModel {
             }
         }
         return total;
+    }
+
+    public boolean attemptLoadProtectedProject(Project projectToLoad, String passwordAttempt) {
+        if (projectToLoad == null) return false; // Added null check for projectToLoad
+
+        if (projectToLoad.getPasswordHash() == null || projectToLoad.getPasswordHash().isEmpty()) {
+            this.selectedProject = projectToLoad; // Changed from this.currentProject to this.selectedProject
+            // fireProjectSelected(this.selectedProject); // Example: notify listeners
+            // Assuming selectProject handles the necessary notifications:
+            selectProject(projectToLoad);
+            return true;
+        }
+        try {
+            if (SecurityUtils.verifyPassword(passwordAttempt, projectToLoad.getPasswordHash())) {
+                this.selectedProject = projectToLoad; // Changed from this.currentProject to this.selectedProject
+                // fireProjectSelected(this.selectedProject); // Example: notify listeners
+                selectProject(projectToLoad);
+                return true;
+            } else {
+                return false; // Password incorrect
+            }
+        } catch (NoSuchAlgorithmException e) {
+            System.err.println("Error verifying password: " + e.getMessage());
+            return false; // Error during verification
+        }
+    }
+
+    public boolean setProjectPassword(Project project, String newPassword) {
+        if (project == null || newPassword == null || newPassword.isEmpty()) {
+            return false; // Invalid input
+        }
+        Project projectInList = findProjectById(project.getId());
+        if (projectInList == null) return false; // Project not managed by this view model
+
+        try {
+            String hashedPassword = SecurityUtils.hashPassword(newPassword);
+            projectInList.setPasswordHash(hashedPassword);
+            // projectInList.setLastUpdatedAt(LocalDateTime.now()); // Assuming Project model does not have this
+            saveProjects(); // Save changes
+            // If the project is currently selected, fire a property change to update UI.
+            if (this.selectedProject != null && this.selectedProject.getId().equals(projectInList.getId())) {
+                support.firePropertyChange(SELECTED_PROJECT_PROPERTY, this.selectedProject, this.selectedProject);
+            }
+            return true;
+        } catch (NoSuchAlgorithmException e) {
+            System.err.println("Error setting project password: " + e.getMessage());
+            return false;
+        }
+    }
+
+    public boolean changeProjectPassword(Project project, String oldPassword, String newPassword) {
+        if (project == null || oldPassword == null || newPassword == null || newPassword.isEmpty()) {
+            return false; // Invalid input
+        }
+        Project projectInList = findProjectById(project.getId());
+        if (projectInList == null) return false; // Project not managed
+
+        try {
+            if (projectInList.getPasswordHash() == null || projectInList.getPasswordHash().isEmpty() || SecurityUtils.verifyPassword(oldPassword, projectInList.getPasswordHash())) {
+                // Allow changing if no password was set or old password matches
+                String newHashedPassword = SecurityUtils.hashPassword(newPassword);
+                projectInList.setPasswordHash(newHashedPassword);
+                // projectInList.setLastUpdatedAt(LocalDateTime.now()); // Assuming Project model does not have this
+                saveProjects();
+                if (this.selectedProject != null && this.selectedProject.getId().equals(projectInList.getId())) {
+                    support.firePropertyChange(SELECTED_PROJECT_PROPERTY, this.selectedProject, this.selectedProject);
+                }
+                return true;
+            } else {
+                return false; // Old password incorrect
+            }
+        } catch (NoSuchAlgorithmException e) {
+            System.err.println("Error changing project password: " + e.getMessage());
+            return false;
+        }
+    }
+
+    public boolean removeProjectPassword(Project project, String currentPassword) {
+        if (project == null || currentPassword == null) {
+            return false;
+        }
+        Project projectInList = findProjectById(project.getId());
+        if (projectInList == null) return false; // Project not managed
+
+        if (projectInList.getPasswordHash() == null || projectInList.getPasswordHash().isEmpty()) {
+            return true; // Already no password
+        }
+        try {
+            if (SecurityUtils.verifyPassword(currentPassword, projectInList.getPasswordHash())) {
+                projectInList.setPasswordHash(null); // Remove password
+                // projectInList.setLastUpdatedAt(LocalDateTime.now()); // Assuming Project model does not have this
+                saveProjects();
+                if (this.selectedProject != null && this.selectedProject.getId().equals(projectInList.getId())) {
+                    support.firePropertyChange(SELECTED_PROJECT_PROPERTY, this.selectedProject, this.selectedProject);
+                }
+                return true;
+            } else {
+                return false; // Current password incorrect
+            }
+        } catch (NoSuchAlgorithmException e) {
+            System.err.println("Error removing project password: " + e.getMessage());
+            return false;
+        }
     }
 }

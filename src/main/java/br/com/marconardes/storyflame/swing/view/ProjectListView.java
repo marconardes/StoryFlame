@@ -10,7 +10,16 @@ import java.time.LocalDate;
 import java.util.List;
 import javax.swing.SpinnerNumberModel;
 import javax.swing.BorderFactory;
+import javax.swing.JPopupMenu;
+import javax.swing.JMenuItem;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
+import java.awt.Frame; // For casting parent window
 // GridBagConstraints and GridBagLayout will be used for goalsPanel
+
+// Custom Dialogs
+import br.com.marconardes.storyflame.swing.view.PasswordEntryDialog;
+import br.com.marconardes.storyflame.swing.view.ManagePasswordDialog;
 
 public class ProjectListView extends JPanel {
     private final ProjectViewModel viewModel;
@@ -41,76 +50,221 @@ public class ProjectListView extends JPanel {
         // Populate initial list
         updateProjectList(viewModel.getProjects());
 
-        // Listen for ViewModel changes
+        // Listen for ViewModel changes (property change listeners remain the same)
         viewModel.addPropertyChangeListener(evt -> {
             if (ProjectViewModel.PROJECTS_PROPERTY.equals(evt.getPropertyName())) {
-                // Type safety: Ensure the new value is a List<Project>
                 if (evt.getNewValue() instanceof List) {
-                    @SuppressWarnings("unchecked") // Checked by instanceof
+                    @SuppressWarnings("unchecked")
                     List<Project> newProjects = (List<Project>) evt.getNewValue();
                     updateProjectList(newProjects);
                 }
             } else if (ProjectViewModel.SELECTED_PROJECT_PROPERTY.equals(evt.getPropertyName())) {
                 Project selectedProject = (Project) evt.getNewValue();
                 projectJList.setSelectedValue(selectedProject, true);
-                // Update goals panel when ViewModel's selected project changes externally
                 if (selectedProject != null) {
                     goalsPanel.setVisible(true);
                     saveGoalsButton.setEnabled(true);
                     dailyGoalSpinner.setValue(selectedProject.getDailyWritingGoal());
                     totalGoalSpinner.setValue(selectedProject.getTotalWritingGoal());
-                    updateProgressDisplay(selectedProject); // Call to update progress display
+                    updateProgressDisplay(selectedProject);
                 } else {
                     goalsPanel.setVisible(false);
                     saveGoalsButton.setEnabled(false);
-                    updateProgressDisplay(null); // Call to update progress display
-                }
-            } else if (ProjectViewModel.PROJECTS_PROPERTY.equals(evt.getPropertyName())) {
-                // Type safety: Ensure the new value is a List<Project>
-                if (evt.getNewValue() instanceof List) {
-                    @SuppressWarnings("unchecked") // Checked by instanceof
-                    List<Project> newProjects = (List<Project>) evt.getNewValue();
-                    updateProjectList(newProjects); // This will update JList & may change selection
-
-                    // After project list updates, re-evaluate selected project for progress display
-                    Project currentSelectedInVM = viewModel.getSelectedProject();
-                    if (currentSelectedInVM != null) { // If a project remains selected or is newly selected
-                        goalsPanel.setVisible(true);
-                        saveGoalsButton.setEnabled(true);
-                        dailyGoalSpinner.setValue(currentSelectedInVM.getDailyWritingGoal());
-                        totalGoalSpinner.setValue(currentSelectedInVM.getTotalWritingGoal());
-                        updateProgressDisplay(currentSelectedInVM);
-                    } else { // If no project is selected after list update
-                        goalsPanel.setVisible(false);
-                        saveGoalsButton.setEnabled(false);
-                        updateProgressDisplay(null);
-                    }
+                    updateProgressDisplay(null);
                 }
             }
+            // Removed redundant PROJECTS_PROPERTY listener block as it was similar to the first one.
+            // Ensure the first one covers all necessary updates for PROJECTS_PROPERTY.
         });
 
         projectJList.addListSelectionListener(e -> {
             if (!e.getValueIsAdjusting()) {
-                Project selectedProject = projectJList.getSelectedValue();
-                if (selectedProject != null) {
-                    if (selectedProject != viewModel.getSelectedProject()) {
-                        viewModel.selectProject(selectedProject);
+                Project selectedProjectFromList = projectJList.getSelectedValue();
+                // This listener primarily updates the ViewModel if the selection changes *in the JList first*.
+                // If the project is selected due to ViewModel change, this might be redundant or could
+                // potentially cause loops if not handled carefully. The current logic seems to be:
+                // JList selection -> viewModel.selectProject() -> viewModel fires SELECTED_PROJECT_PROPERTY
+                // -> this updates JList.setSelectedValue and goals panel. This is okay.
+                if (selectedProjectFromList != null && selectedProjectFromList != viewModel.getSelectedProject()) {
+                    // Do not attempt to open or ask for password here. This is just selection.
+                    // The opening action will be via double-click or context menu.
+                    viewModel.selectProject(selectedProjectFromList);
+                } else if (selectedProjectFromList == null && viewModel.getSelectedProject() != null) {
+                    // If JList selection is cleared, and ViewModel still has a selected project,
+                    // tell the ViewModel that no project is selected.
+                    // However, this might not be desired if the clearing is temporary.
+                    // For now, let the viewModel handle this.
+                    // viewModel.selectProject(null);
+                }
+            }
+        });
+
+        // Add MouseListener for double-click and right-click context menu
+        projectJList.addMouseListener(new MouseAdapter() {
+            @Override
+            public void mouseClicked(MouseEvent e) {
+                if (e.getClickCount() == 2 && SwingUtilities.isLeftMouseButton(e)) {
+                    int index = projectJList.locationToIndex(e.getPoint());
+                    if (index >= 0) {
+                        Project selectedProject = projectJList.getModel().getElementAt(index);
+                        openProject(selectedProject);
                     }
-                    // This part is now handled by the property change listener above
-                    // goalsPanel.setVisible(true);
-                    // saveGoalsButton.setEnabled(true);
-                    // dailyGoalSpinner.setValue(selectedProject.getDailyWritingGoal());
-                    // totalGoalSpinner.setValue(selectedProject.getTotalWritingGoal());
-                } else {
-                    // goalsPanel.setVisible(false);
-                    // saveGoalsButton.setEnabled(false);
-                    if (viewModel.getSelectedProject() != null) {
-                         // This case might occur if the list is cleared and JList deselects.
-                         // viewModel.selectProject(null); // Or let ViewModel handle this via project list changes.
+                }
+            }
+
+            @Override
+            public void mousePressed(MouseEvent e) {
+                if (SwingUtilities.isRightMouseButton(e)) {
+                    int index = projectJList.locationToIndex(e.getPoint());
+                    if (index >= 0) {
+                        projectJList.setSelectedIndex(index); // Select the item under cursor for context menu
+                        Project selectedProject = projectJList.getModel().getElementAt(index);
+                        showContextMenu(e, selectedProject);
                     }
                 }
             }
         });
+
+        // Initialize context menu (it will be populated on demand)
+        // final JPopupMenu contextMenu = new JPopupMenu(); // Not needed here, created in showContextMenu
+
+        // (The rest of the JList selection listener and UI setup remains similar)
+        // ...
+    }
+
+    private void openProject(Project project) {
+        if (project == null) return;
+
+        Frame parentFrame = (Frame) SwingUtilities.getWindowAncestor(this);
+
+        if (project.getPasswordHash() != null && !project.getPasswordHash().isEmpty()) {
+            PasswordEntryDialog entryDialog = new PasswordEntryDialog(parentFrame,
+                    "Enter Password", "Project '" + project.getName() + "' is password protected:");
+            // entryDialog.setVisible(true); // PasswordEntryDialog's getPassword() makes it visible
+            String passwordAttempt = entryDialog.getPassword();
+
+            if (passwordAttempt != null) { // User clicked OK
+                boolean success = viewModel.attemptLoadProtectedProject(project, passwordAttempt);
+                if (success) {
+                    // Project loaded successfully, MainWindow should react to SELECT_PROJECT_PROPERTY change
+                    // (or whatever signal indicates project is fully open for editing)
+                    System.out.println("Password correct. Project " + project.getName() + " should be opened.");
+                } else {
+                    JOptionPane.showMessageDialog(parentFrame,
+                            "Incorrect password.", "Access Denied", JOptionPane.ERROR_MESSAGE);
+                }
+            }
+            // If passwordAttempt is null, user canceled, do nothing.
+        } else {
+            // Not password protected, select it (which should trigger main view update)
+            viewModel.selectProject(project);
+            System.out.println("Project " + project.getName() + " (no password) should be opened.");
+        }
+    }
+
+    private void showContextMenu(MouseEvent e, Project selectedProject) {
+        JPopupMenu contextMenu = new JPopupMenu();
+        Frame parentFrame = (Frame) SwingUtilities.getWindowAncestor(this);
+
+        // --- Set/Change Password ---
+        JMenuItem setChangePasswordItem = new JMenuItem("Set/Change Password...");
+        setChangePasswordItem.addActionListener(ae -> {
+            boolean isPasswordSet = selectedProject.getPasswordHash() != null && !selectedProject.getPasswordHash().isEmpty();
+            ManagePasswordDialog.Action action = isPasswordSet ? ManagePasswordDialog.Action.CHANGE : ManagePasswordDialog.Action.SET;
+
+            ManagePasswordDialog dialog = new ManagePasswordDialog(parentFrame, action, isPasswordSet);
+            dialog.setVisible(true); // Show the dialog
+
+            String currentPassword = dialog.getCurrentPassword(); // Will be null if action is SET
+            String newPassword = dialog.getNewPassword();       // Will be null if dialog was cancelled
+
+            if (newPassword != null) { // User clicked OK and new password is provided (or cleared for removal if dialog supported it)
+                boolean success = false;
+                String message;
+                if (action == ManagePasswordDialog.Action.SET) {
+                    success = viewModel.setProjectPassword(selectedProject, newPassword);
+                    message = success ? "Password set successfully." : "Failed to set password.";
+                } else { // CHANGE
+                    success = viewModel.changeProjectPassword(selectedProject, currentPassword, newPassword);
+                    message = success ? "Password changed successfully." : "Failed to change password (check current password?).";
+                }
+                JOptionPane.showMessageDialog(parentFrame, message,
+                        "Password Management", success ? JOptionPane.INFORMATION_MESSAGE : JOptionPane.ERROR_MESSAGE);
+                if (success) projectJList.repaint(); // Repaint to reflect potential changes (e.g. an icon)
+            }
+        });
+        contextMenu.add(setChangePasswordItem);
+
+        // --- Remove Password ---
+        JMenuItem removePasswordItem = new JMenuItem("Remove Password...");
+        removePasswordItem.addActionListener(ae -> {
+            boolean isPasswordSet = selectedProject.getPasswordHash() != null && !selectedProject.getPasswordHash().isEmpty();
+            if (!isPasswordSet) {
+                JOptionPane.showMessageDialog(parentFrame, "This project is not password protected.",
+                        "Remove Password", JOptionPane.INFORMATION_MESSAGE);
+                return;
+            }
+
+            ManagePasswordDialog dialog = new ManagePasswordDialog(parentFrame, ManagePasswordDialog.Action.REMOVE, true);
+            dialog.setVisible(true); // Show the dialog
+
+            String passwordToConfirm = dialog.getCurrentPassword(); // For REMOVE, this field is used for confirmation
+
+            if (passwordToConfirm != null) { // User clicked OK
+                boolean success = viewModel.removeProjectPassword(selectedProject, passwordToConfirm);
+                String message = success ? "Password removed successfully." : "Failed to remove password (check password?).";
+                JOptionPane.showMessageDialog(parentFrame, message,
+                        "Password Management", success ? JOptionPane.INFORMATION_MESSAGE : JOptionPane.ERROR_MESSAGE);
+                if (success) projectJList.repaint();
+            }
+        });
+        contextMenu.add(removePasswordItem);
+
+        // --- Option to Open Project (can be useful if double click is not obvious) ---
+        contextMenu.addSeparator();
+        JMenuItem openItem = new JMenuItem("Open Project");
+        openItem.setFont(openItem.getFont().deriveFont(Font.BOLD)); // Make it bold
+        openItem.addActionListener(ae -> openProject(selectedProject));
+        contextMenu.add(openItem);
+
+
+        contextMenu.show(projectJList, e.getX(), e.getY());
+    }
+
+    // Original ListSelectionListener - keep for single-click selection updates
+    // The selection change itself doesn't trigger password dialogs, only explicit open actions.
+    projectJList.addListSelectionListener(e -> {
+        if (!e.getValueIsAdjusting()) {
+            Project selectedProject = projectJList.getSelectedValue();
+            if (selectedProject != null) {
+                if (selectedProject != viewModel.getSelectedProject()) {
+                    viewModel.selectProject(selectedProject); // This updates ViewModel and triggers property change
+                }
+                // Update goals panel based on the selection from JList
+                goalsPanel.setVisible(true);
+                saveGoalsButton.setEnabled(true);
+                dailyGoalSpinner.setValue(selectedProject.getDailyWritingGoal());
+                totalGoalSpinner.setValue(selectedProject.getTotalWritingGoal());
+                updateProgressDisplay(selectedProject);
+            } else {
+                // No project selected in JList
+                goalsPanel.setVisible(false);
+                saveGoalsButton.setEnabled(false);
+                updateProgressDisplay(null);
+                if (viewModel.getSelectedProject() != null) {
+                    // If JList is cleared but ViewModel has a project, tell ViewModel.
+                    // This might happen if the list is entirely new.
+                    // viewModel.selectProject(null);
+                }
+                    }
+                }
+            }
+        });
+        // The above ListSelectionListener might be partially redundant if the PropertyChangeListener
+        // for SELECTED_PROJECT_PROPERTY already handles updating the goals panel.
+        // It's crucial that viewModel.selectProject() is called when JList selection changes,
+        // and that the PropertyChangeListener correctly updates UI elements like the goalsPanel
+        // when the ViewModel's selectedProject changes.
 
         JScrollPane scrollPane = new JScrollPane(projectJList);
         add(scrollPane, BorderLayout.CENTER);
