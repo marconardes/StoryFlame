@@ -10,12 +10,19 @@ import br.com.marconardes.storyflame.swing.view.ProjectListView;
 import br.com.marconardes.storyflame.swing.viewmodel.ProjectViewModel;
 
 import br.com.marconardes.storyflame.swing.util.ThemeManager;
+import br.com.marconardes.storyflame.swing.util.TxtProjectExporter;
+import br.com.marconardes.storyflame.swing.util.PdfProjectExporter; // Add this
 import com.formdev.flatlaf.FlatDarkLaf;
 import com.formdev.flatlaf.FlatLightLaf;
 
 import javax.swing.*;
 import java.awt.*;
 import java.beans.PropertyChangeListener;
+import javax.swing.JFileChooser; // Added
+import javax.swing.JOptionPane; // Added
+import java.io.File; // Added
+import java.nio.file.Paths; // Added
+// JMenu, JMenuBar, JMenuItem are already covered by javax.swing.*
 
 public class Main implements ChapterEditorListener, ChapterSelectionListener {
 
@@ -24,6 +31,8 @@ public class Main implements ChapterEditorListener, ChapterSelectionListener {
     private ProjectListView projectListView;
     private ChapterSectionView chapterSectionView;
     private ChapterEditorView chapterEditorView; // New editor view
+    private TxtProjectExporter txtProjectExporter;
+    private PdfProjectExporter pdfProjectExporter; // Added
 
     private JPanel centerPanel; // Panel that will use CardLayout
     private CardLayout cardLayout;
@@ -36,6 +45,8 @@ public class Main implements ChapterEditorListener, ChapterSelectionListener {
     public Main() {
         themeManager = new ThemeManager();
         projectViewModel = new ProjectViewModel();
+        txtProjectExporter = new TxtProjectExporter();
+        pdfProjectExporter = new PdfProjectExporter(); // Added
     }
 
     private void createAndShowGUI() {
@@ -102,9 +113,19 @@ public class Main implements ChapterEditorListener, ChapterSelectionListener {
 
     private void setupMenuBar() {
         JMenuBar menuBar = new JMenuBar();
-        JMenu fileMenu = new JMenu("File");
-        // Add file menu items if any exist or are planned
 
+        // --- File Menu (New/Updated) ---
+        JMenu fileMenu = new JMenu("File");
+        JMenuItem exportToTxtItem = new JMenuItem("Export Project to .txt");
+        exportToTxtItem.addActionListener(e -> handleExportToTxt());
+        fileMenu.add(exportToTxtItem);
+
+        JMenuItem exportToPdfItem = new JMenuItem("Export Project to .pdf"); // New item
+        exportToPdfItem.addActionListener(e -> handleExportToPdf());    // New handler method
+        fileMenu.add(exportToPdfItem); // Add to existing fileMenu
+        menuBar.add(fileMenu);
+
+        // --- View Menu (existing) ---
         JMenu viewMenu = new JMenu("View");
         JMenuItem toggleThemeItem = new JMenuItem("Toggle Theme");
         toggleThemeItem.addActionListener(e -> {
@@ -112,10 +133,47 @@ public class Main implements ChapterEditorListener, ChapterSelectionListener {
             // The UIManager property change listener should handle the UI update for the frame.
         });
         viewMenu.add(toggleThemeItem);
+        menuBar.add(viewMenu); // Add View menu to menubar
 
-        menuBar.add(fileMenu);
-        menuBar.add(viewMenu);
+        // menuBar.add(fileMenu); // Already added above
+        // menuBar.add(viewMenu); // Already added above
         frame.setJMenuBar(menuBar); // Set the menuBar to the frame
+    }
+
+    private void handleExportToTxt() {
+        Project selectedProject = projectViewModel.getSelectedProject();
+        if (selectedProject == null) {
+            JOptionPane.showMessageDialog(frame,
+                    "Please select a project to export.",
+                    "No Project Selected",
+                    JOptionPane.WARNING_MESSAGE);
+            return;
+        }
+
+        JFileChooser fileChooser = new JFileChooser();
+        fileChooser.setDialogTitle("Export Project to .txt");
+        // Suggest a filename
+        String suggestedFileName = selectedProject.getName().replaceAll("[^a-zA-Z0-9.-]", "_") + ".txt";
+        fileChooser.setSelectedFile(new File(suggestedFileName));
+
+        int userSelection = fileChooser.showSaveDialog(frame);
+
+        if (userSelection == JFileChooser.APPROVE_OPTION) {
+            File fileToSave = fileChooser.getSelectedFile();
+            try {
+                txtProjectExporter.exportProject(selectedProject, fileToSave.toPath());
+                JOptionPane.showMessageDialog(frame,
+                        "Project exported successfully to " + fileToSave.getAbsolutePath(),
+                        "Export Successful",
+                        JOptionPane.INFORMATION_MESSAGE);
+            } catch (Exception ex) {
+                JOptionPane.showMessageDialog(frame,
+                        "Error exporting project: " + ex.getMessage(),
+                        "Export Error",
+                        JOptionPane.ERROR_MESSAGE);
+                ex.printStackTrace(); // For developer console
+            }
+        }
     }
 
     public static void main(String[] args) {
@@ -123,5 +181,50 @@ public class Main implements ChapterEditorListener, ChapterSelectionListener {
         app.themeManager.applyCurrentTheme();
 
         SwingUtilities.invokeLater(app::createAndShowGUI);
+    }
+
+    private void handleExportToPdf() {
+        Project selectedProject = projectViewModel.getSelectedProject();
+        if (selectedProject == null) {
+            JOptionPane.showMessageDialog(frame,
+                    "Please select a project to export.",
+                    "No Project Selected",
+                    JOptionPane.WARNING_MESSAGE);
+            return;
+        }
+
+        JFileChooser fileChooser = new JFileChooser();
+        fileChooser.setDialogTitle("Export Project to .pdf");
+        // Suggest a filename
+        String suggestedFileName = selectedProject.getName().replaceAll("[^a-zA-Z0-9.-]", "_") + ".pdf";
+        fileChooser.setSelectedFile(new File(suggestedFileName));
+        // Add a file filter for PDF files
+        javax.swing.filechooser.FileNameExtensionFilter filter = new javax.swing.filechooser.FileNameExtensionFilter("PDF Documents (*.pdf)", "pdf");
+        fileChooser.setFileFilter(filter);
+
+        int userSelection = fileChooser.showSaveDialog(frame);
+
+        if (userSelection == JFileChooser.APPROVE_OPTION) {
+            File fileToSave = fileChooser.getSelectedFile();
+            // Ensure the file has a .pdf extension if the user didn't type it
+            String filePath = fileToSave.getAbsolutePath();
+            if (!filePath.toLowerCase().endsWith(".pdf")) {
+                fileToSave = new File(filePath + ".pdf");
+            }
+
+            try {
+                pdfProjectExporter.exportProject(selectedProject, fileToSave.toPath());
+                JOptionPane.showMessageDialog(frame,
+                        "Project exported successfully to " + fileToSave.getAbsolutePath(),
+                        "Export Successful",
+                        JOptionPane.INFORMATION_MESSAGE);
+            } catch (Exception ex) {
+                JOptionPane.showMessageDialog(frame,
+                        "Error exporting project to PDF: " + ex.getMessage(),
+                        "Export Error",
+                        JOptionPane.ERROR_MESSAGE);
+                ex.printStackTrace(); // For developer console
+            }
+        }
     }
 }
