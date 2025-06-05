@@ -22,7 +22,7 @@ A seguir estão as funcionalidades planejadas para o StoryFlame, atualmente em e
         (V) CRUD completo para capítulos (adicionar, editar título, excluir, reordenar). (Prioridade: 10/10)
     (V) Resumo por Capítulo/Cena: (Prioridade: 9/10)
         (V) Adição e edição de resumos textuais para cada capítulo/cena. (Prioridade: 9/10)
-    (X) Editor de Simples: (Prioridade: 10/10)
+    (V) Editor de Simples: (Prioridade: 10/10)
         (V) Integração de editor de Markdown simples (JTextArea). (Prioridade: 10/10)
         (V) Funcionalidades de formatação básica (negrito, itálico, sublinhado HTML <u>, cabeçalhos H1-H3) via toolbar. (Prioridade: 9/10)
         (V) Salvamento automático com debounce do conteúdo Markdown do capítulo ativo. (Prioridade: 9/10)
