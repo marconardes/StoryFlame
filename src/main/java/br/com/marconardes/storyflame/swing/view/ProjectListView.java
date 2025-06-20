@@ -34,7 +34,7 @@ public class ProjectListView extends JPanel {
     private JSpinner totalGoalSpinner;
     private JButton saveGoalsButton;
     private JPanel goalsPanel;
-    private JButton manageCharactersButton; // Added field for the button
+    // private JButton manageCharactersButton; // Removed field
 
     // UI Components for Progress Display
     private JLabel dailyProgressLabel;
@@ -42,7 +42,7 @@ public class ProjectListView extends JPanel {
     private JLabel totalProgressLabel;
     private JProgressBar totalProgressBar;
 
-    public ProjectListView(ProjectViewModel viewModel) {
+    public ProjectListView(ProjectViewModel viewModel) { // Reverted constructor
         this.viewModel = viewModel;
         setLayout(new BorderLayout(5,5)); // Added some gaps
         setPreferredSize(new Dimension(250, 0)); // Give it a preferred width
@@ -103,14 +103,14 @@ public class ProjectListView extends JPanel {
                 if (selectedProject != null) {
                     goalsPanel.setVisible(true);
                     saveGoalsButton.setEnabled(true);
-                    manageCharactersButton.setEnabled(true); // Enable here
+                    // manageCharactersButton.setEnabled(true); // Removed logic
                     dailyGoalSpinner.setValue(selectedProject.getDailyWritingGoal());
                     totalGoalSpinner.setValue(selectedProject.getTotalWritingGoal());
                     updateProgressDisplay(selectedProject); // Call to update progress display
                 } else {
                     goalsPanel.setVisible(false);
                     saveGoalsButton.setEnabled(false);
-                    manageCharactersButton.setEnabled(false); // Disable here
+                    // manageCharactersButton.setEnabled(false); // Removed logic
                     updateProgressDisplay(null); // Call to update progress display
                 }
             } else if (ProjectViewModel.PROJECTS_PROPERTY.equals(evt.getPropertyName())) {
@@ -125,14 +125,14 @@ public class ProjectListView extends JPanel {
                     if (currentSelectedInVM != null) { // If a project remains selected or is newly selected
                         goalsPanel.setVisible(true);
                         saveGoalsButton.setEnabled(true);
-                        manageCharactersButton.setEnabled(true); // Enable here
+                        // manageCharactersButton.setEnabled(true); // Removed logic
                         dailyGoalSpinner.setValue(currentSelectedInVM.getDailyWritingGoal());
                         totalGoalSpinner.setValue(currentSelectedInVM.getTotalWritingGoal());
                         updateProgressDisplay(currentSelectedInVM);
                     } else { // If no project is selected after list update
                         goalsPanel.setVisible(false);
                         saveGoalsButton.setEnabled(false);
-                        manageCharactersButton.setEnabled(false); // Disable here
+                        // manageCharactersButton.setEnabled(false); // Removed logic
                         updateProgressDisplay(null);
                     }
                 }
@@ -237,23 +237,18 @@ public class ProjectListView extends JPanel {
         JPanel projectActionsPanel = new JPanel(new FlowLayout(FlowLayout.CENTER));
         JButton addButton = new JButton("Add Project");
         JButton deleteButton = new JButton("Delete Project");
-        manageCharactersButton = new JButton("Manage Characters"); // Initialize field
+        // manageCharactersButton = new JButton("Manage Characters"); // Removed initialization
 
         addButton.addActionListener(this::addProject);
         deleteButton.addActionListener(this::deleteProject);
-        manageCharactersButton.addActionListener(e -> {
-            Project selectedProject = projectJList.getSelectedValue();
-            if (selectedProject != null) {
-                CharacterListView.showDialog((Frame) SwingUtilities.getWindowAncestor(this), viewModel, selectedProject);
-            } else {
-                JOptionPane.showMessageDialog(this, "Please select a project first.", "No Project Selected", JOptionPane.INFORMATION_MESSAGE);
-            }
-        });
+        // manageCharactersButton.addActionListener(e -> { // Removed ActionListener
+        // ...
+        // });
 
         projectActionsPanel.add(addButton);
         projectActionsPanel.add(deleteButton);
-        projectActionsPanel.add(manageCharactersButton); // Add button to panel
-        manageCharactersButton.setEnabled(false); // Initially disabled
+        // projectActionsPanel.add(manageCharactersButton); // Removed button from panel
+        // manageCharactersButton.setEnabled(false); // Removed logic
 
 
         // --- South Panel to hold Goals and Project Actions ---

@@ -7,6 +7,7 @@ import br.com.marconardes.storyflame.swing.view.ChapterEditorView;
 import br.com.marconardes.storyflame.swing.view.ChapterSectionView;
 import br.com.marconardes.storyflame.swing.view.ChapterSelectionListener;
 import br.com.marconardes.storyflame.swing.view.ProjectListView;
+import br.com.marconardes.storyflame.swing.view.CharacterListView; // Added import
 import br.com.marconardes.storyflame.swing.viewmodel.ProjectViewModel;
 
 import br.com.marconardes.storyflame.swing.util.ThemeManager;
@@ -31,15 +32,20 @@ public class Main implements ChapterEditorListener, ChapterSelectionListener {
     private ProjectListView projectListView;
     private ChapterSectionView chapterSectionView;
     private ChapterEditorView chapterEditorView; // New editor view
+    private CharacterListView characterListView; // Added field
     private TxtProjectExporter txtProjectExporter;
     private PdfProjectExporter pdfProjectExporter; // Added
 
-    private JPanel centerPanel; // Panel that will use CardLayout
-    private CardLayout cardLayout;
+    // private JPanel centerPanel; // Panel that will use CardLayout // Replaced by mainTabbedPane
+    // private CardLayout cardLayout; // Replaced by JTabbedPane logic
+    private JTabbedPane mainTabbedPane; // Added JTabbedPane field
+    private JPanel chaptersTabPanel; // Added panel for chapters tab
+    private CardLayout chaptersCardLayout; // Added CardLayout for chapters tab
     private JFrame frame; // Made JFrame a field
 
     private static final String CHAPTER_SECTION_PANEL = "CHAPTER_SECTION_PANEL";
     private static final String CHAPTER_EDITOR_PANEL = "CHAPTER_EDITOR_PANEL";
+    // private static final String CHARACTER_LIST_PANEL = "CHARACTER_LIST_PANEL"; // Reverted: Removed constant
 
 
     public Main() {
@@ -55,7 +61,7 @@ public class Main implements ChapterEditorListener, ChapterSelectionListener {
         frame.setMinimumSize(new Dimension(800, 600));
         frame.setLocationRelativeTo(null);
 
-        projectListView = new ProjectListView(projectViewModel);
+        projectListView = new ProjectListView(projectViewModel); // Reverted constructor call
 
         // Setup ChapterSectionView and set its listener
         chapterSectionView = new ChapterSectionView(projectViewModel);
@@ -66,17 +72,30 @@ public class Main implements ChapterEditorListener, ChapterSelectionListener {
         chapterEditorView = new ChapterEditorView(projectViewModel);
         chapterEditorView.setEditorListener(this);
 
-        // Setup center panel with CardLayout
-        cardLayout = new CardLayout();
-        centerPanel = new JPanel(cardLayout);
-        centerPanel.add(chapterSectionView, CHAPTER_SECTION_PANEL);
-        centerPanel.add(chapterEditorView, CHAPTER_EDITOR_PANEL);
+        // Instantiate CharacterListView
+        characterListView = new CharacterListView(projectViewModel);
+
+        // Setup JTabbedPane
+        mainTabbedPane = new JTabbedPane();
+
+        // Setup CardLayout for Chapters Tab
+        chaptersCardLayout = new CardLayout();
+        chaptersTabPanel = new JPanel(chaptersCardLayout);
+
+        // Add ChapterSectionView and ChapterEditorView to the chaptersTabPanel
+        // Ensure chapterSectionView and chapterEditorView are already instantiated
+        chaptersTabPanel.add(chapterSectionView, CHAPTER_SECTION_PANEL);
+        chaptersTabPanel.add(chapterEditorView, CHAPTER_EDITOR_PANEL);
+
+        // Add tabs to mainTabbedPane
+        mainTabbedPane.addTab("Capítulos", chaptersTabPanel);
+        mainTabbedPane.addTab("Personagens", characterListView); // Added CharacterListView tab
 
         JPanel mainPanel = new JPanel(new BorderLayout(5, 5));
         mainPanel.setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5));
 
         mainPanel.add(projectListView, BorderLayout.WEST);
-        mainPanel.add(centerPanel, BorderLayout.CENTER); // Add CardLayout panel to center
+        mainPanel.add(mainTabbedPane, BorderLayout.CENTER); // Add JTabbedPane to center
 
         frame.getContentPane().add(mainPanel);
         setupMenuBar(); // Call setupMenuBar
@@ -88,8 +107,8 @@ public class Main implements ChapterEditorListener, ChapterSelectionListener {
             }
         });
 
-        // Show ChapterSectionView initially
-        cardLayout.show(centerPanel, CHAPTER_SECTION_PANEL);
+        // Show ChapterSectionView initially within the chapters tab
+        chaptersCardLayout.show(chaptersTabPanel, CHAPTER_SECTION_PANEL);
     }
 
     // Implementation for ChapterSelectionListener (from ChapterSectionView)
@@ -98,7 +117,7 @@ public class Main implements ChapterEditorListener, ChapterSelectionListener {
         Project selectedProject = projectViewModel.getSelectedProject();
         if (selectedProject != null && chapter != null) {
             chapterEditorView.editChapter(selectedProject, chapter);
-            cardLayout.show(centerPanel, CHAPTER_EDITOR_PANEL);
+            chaptersCardLayout.show(chaptersTabPanel, CHAPTER_EDITOR_PANEL); // Use chaptersCardLayout
         }
     }
 
@@ -106,10 +125,18 @@ public class Main implements ChapterEditorListener, ChapterSelectionListener {
     @Override
     public void onEditorClosed(boolean saved) {
         // Regardless of save, switch back to chapter list view
-        cardLayout.show(centerPanel, CHAPTER_SECTION_PANEL);
+        chaptersCardLayout.show(chaptersTabPanel, CHAPTER_SECTION_PANEL); // Use chaptersCardLayout
         // If saved, ProjectViewModel would have already notified ChapterSectionView
         // to update itself if necessary.
     }
+
+    // public void showCharacterList() { // Reverted: Removed method
+    // ...
+    // }
+
+    // public void showChapterSection() { // Reverted: Removed method
+    // ...
+    // }
 
     private void setupMenuBar() {
         JMenuBar menuBar = new JMenuBar();
