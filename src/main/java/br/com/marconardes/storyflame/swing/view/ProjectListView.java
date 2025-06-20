@@ -17,6 +17,7 @@ import javax.swing.SwingUtilities;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.awt.Frame; // For casting parent window
+import br.com.marconardes.storyflame.swing.view.CharacterListView; // Added import
 
 // Custom Dialogs
 import br.com.marconardes.storyflame.swing.view.PasswordEntryDialog;
@@ -33,6 +34,7 @@ public class ProjectListView extends JPanel {
     private JSpinner totalGoalSpinner;
     private JButton saveGoalsButton;
     private JPanel goalsPanel;
+    private JButton manageCharactersButton; // Added field for the button
 
     // UI Components for Progress Display
     private JLabel dailyProgressLabel;
@@ -101,12 +103,14 @@ public class ProjectListView extends JPanel {
                 if (selectedProject != null) {
                     goalsPanel.setVisible(true);
                     saveGoalsButton.setEnabled(true);
+                    manageCharactersButton.setEnabled(true); // Enable here
                     dailyGoalSpinner.setValue(selectedProject.getDailyWritingGoal());
                     totalGoalSpinner.setValue(selectedProject.getTotalWritingGoal());
                     updateProgressDisplay(selectedProject); // Call to update progress display
                 } else {
                     goalsPanel.setVisible(false);
                     saveGoalsButton.setEnabled(false);
+                    manageCharactersButton.setEnabled(false); // Disable here
                     updateProgressDisplay(null); // Call to update progress display
                 }
             } else if (ProjectViewModel.PROJECTS_PROPERTY.equals(evt.getPropertyName())) {
@@ -121,12 +125,14 @@ public class ProjectListView extends JPanel {
                     if (currentSelectedInVM != null) { // If a project remains selected or is newly selected
                         goalsPanel.setVisible(true);
                         saveGoalsButton.setEnabled(true);
+                        manageCharactersButton.setEnabled(true); // Enable here
                         dailyGoalSpinner.setValue(currentSelectedInVM.getDailyWritingGoal());
                         totalGoalSpinner.setValue(currentSelectedInVM.getTotalWritingGoal());
                         updateProgressDisplay(currentSelectedInVM);
                     } else { // If no project is selected after list update
                         goalsPanel.setVisible(false);
                         saveGoalsButton.setEnabled(false);
+                        manageCharactersButton.setEnabled(false); // Disable here
                         updateProgressDisplay(null);
                     }
                 }
@@ -231,10 +237,24 @@ public class ProjectListView extends JPanel {
         JPanel projectActionsPanel = new JPanel(new FlowLayout(FlowLayout.CENTER));
         JButton addButton = new JButton("Add Project");
         JButton deleteButton = new JButton("Delete Project");
+        manageCharactersButton = new JButton("Manage Characters"); // Initialize field
+
         addButton.addActionListener(this::addProject);
         deleteButton.addActionListener(this::deleteProject);
+        manageCharactersButton.addActionListener(e -> {
+            Project selectedProject = projectJList.getSelectedValue();
+            if (selectedProject != null) {
+                CharacterListView.showDialog((Frame) SwingUtilities.getWindowAncestor(this), viewModel, selectedProject);
+            } else {
+                JOptionPane.showMessageDialog(this, "Please select a project first.", "No Project Selected", JOptionPane.INFORMATION_MESSAGE);
+            }
+        });
+
         projectActionsPanel.add(addButton);
         projectActionsPanel.add(deleteButton);
+        projectActionsPanel.add(manageCharactersButton); // Add button to panel
+        manageCharactersButton.setEnabled(false); // Initially disabled
+
 
         // --- South Panel to hold Goals and Project Actions ---
         JPanel southPanel = new JPanel();

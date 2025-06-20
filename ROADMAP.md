@@ -41,11 +41,12 @@ A seguir estão as funcionalidades planejadas para o StoryFlame, atualmente em e
         (V) Proteção de projetos individuais por senha simples (hash SHA-256 da senha é armazenado). (Prioridade: 9/10)
         (V) Interface para definir, alterar, remover e verificar senhas. (Prioridade: 9/10)
 
-### Organização Narrativa
+### Organização Narrativa (🟡)
+Esta seção detalha as funcionalidades planejadas para a organização dos elementos narrativos do seu projeto. O desenvolvimento desta etapa está iniciando.
 
-    (X) Fichas de Personagem: (Prioridade: 10/10)
-        (X) Criação, edição e exclusão de fichas de personagem detalhadas (nome, apelido, descrições, história, traços, relacionamentos, notas). (Prioridade: 10/10)
-        (X) Listagem e acesso às fichas dentro de cada projeto. (Prioridade: 10/10)
+    (P) Fichas de Personagem: (Prioridade: 10/10)
+        (P) Criação, edição e exclusão de fichas de personagem detalhadas (nome, apelido, descrições, história, traços, relacionamentos, notas). (Prioridade: 10/10)
+        (P) Listagem e acesso às fichas dentro de cada projeto. (Prioridade: 10/10)
     (X) Glossário Interno: (Prioridade: 9/10)
         (X) Criação, edição e exclusão de termos e suas definições, categorização e notas. (Prioridade: 9/10)
         (X) Listagem e acesso aos termos do glossário dentro de cada projeto. (Prioridade: 9/10)

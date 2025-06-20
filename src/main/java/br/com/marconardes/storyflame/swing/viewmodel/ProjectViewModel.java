@@ -2,6 +2,7 @@ package br.com.marconardes.storyflame.swing.viewmodel;
 
 import br.com.marconardes.storyflame.swing.model.Chapter;
 import br.com.marconardes.storyflame.swing.model.Project;
+import br.com.marconardes.storyflame.swing.model.Character; // Added import
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
@@ -369,6 +370,59 @@ public class ProjectViewModel {
         System.out.println("Updated daily word count for project '" + project.getName() + "' on " + todayDateString + ": " + totalWordCount + " words.");
     }
 
+    // --- Character Management Methods ---
+
+    public List<Character> getProjectCharacters(String projectId) {
+        Project project = findProjectById(projectId);
+        if (project != null) {
+            // Return a copy to prevent external modification of the internal list
+            return new ArrayList<>(project.getCharacters());
+        }
+        return new ArrayList<>(); // Return empty list if project not found or has no characters
+    }
+
+    public Character addCharacterToProject(String projectId, Character character) {
+        Project project = findProjectById(projectId);
+        if (project != null && character != null) {
+            project.addCharacter(character); // Assumes Project.addCharacter handles null list initialization
+            // Consider firing a specific property change if views observe character lists directly
+            // support.firePropertyChange("projectCharactersUpdated", null, project.getCharacters());
+            saveProjects();
+            return character;
+        }
+        return null;
+    }
+
+    public boolean updateCharacterInProject(String projectId, Character character) {
+        Project project = findProjectById(projectId);
+        if (project != null && character != null) {
+            project.updateCharacter(character); // Assumes Project.updateCharacter finds by ID and updates
+            // Consider firing a specific property change
+            saveProjects();
+            return true;
+        }
+        return false;
+    }
+
+    public boolean deleteCharacterFromProject(String projectId, String characterId) {
+        Project project = findProjectById(projectId);
+        if (project != null && characterId != null) {
+            Character charToRemove = null;
+            for (Character c : project.getCharacters()) {
+                if (c.getId().equals(characterId)) {
+                    charToRemove = c;
+                    break;
+                }
+            }
+            if (charToRemove != null) {
+                project.removeCharacter(charToRemove); // Assumes Project.removeCharacter handles removal
+                // Consider firing a specific property change
+                saveProjects();
+                return true;
+            }
+        }
+        return false;
+    }
 
     private Optional<Chapter> findChapter(String projectId, String chapterId) {
         Project project = findProjectById(projectId);

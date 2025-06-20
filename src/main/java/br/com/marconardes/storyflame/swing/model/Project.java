@@ -5,12 +5,14 @@ import java.util.List;
 import java.util.UUID;
 import java.util.Map;
 import java.util.HashMap;
+import br.com.marconardes.storyflame.swing.model.Character;
 
 public class Project {
     private String id;
     private String name;
     private String creationDate;
     private List<Chapter> chapters;
+    private List<Character> characters;
     private Map<String, Integer> dailyWordCounts = new HashMap<>();
     private int dailyWritingGoal = 0;
     private int totalWritingGoal = 0;
@@ -22,6 +24,7 @@ public class Project {
         this.name = name;
         this.creationDate = creationDate;
         this.chapters = new ArrayList<>();
+        this.characters = new ArrayList<>();
     }
 
     // Getters and Setters
@@ -57,6 +60,14 @@ public class Project {
         this.chapters = chapters;
     }
 
+    public List<Character> getCharacters() {
+        return characters;
+    }
+
+    public void setCharacters(List<Character> characters) {
+        this.characters = characters;
+    }
+
     // Helper method to add a chapter
     public void addChapter(Chapter chapter) {
         this.chapters.add(chapter);
@@ -65,6 +76,30 @@ public class Project {
     // Helper method to remove a chapter
     public void removeChapter(Chapter chapter) {
         this.chapters.removeIf(c -> c.getId().equals(chapter.getId()));
+    }
+
+    public void addCharacter(Character character) {
+        if (this.characters == null) {
+            this.characters = new ArrayList<>();
+        }
+        this.characters.add(character);
+    }
+
+    public void removeCharacter(Character character) {
+        if (this.characters != null && character != null) {
+            this.characters.removeIf(c -> c.getId().equals(character.getId()));
+        }
+    }
+
+    public void updateCharacter(Character updatedCharacter) {
+        if (this.characters != null && updatedCharacter != null) {
+            for (int i = 0; i < this.characters.size(); i++) {
+                if (this.characters.get(i).getId().equals(updatedCharacter.getId())) {
+                    this.characters.set(i, updatedCharacter);
+                    return;
+                }
+            }
+        }
     }
 
     public Map<String, Integer> getDailyWordCounts() {
