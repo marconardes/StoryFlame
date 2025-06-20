@@ -12,18 +12,18 @@ import java.util.List;
 public class CharacterListView extends JPanel {
 
     private final ProjectViewModel viewModel;
-    private final Project currentProject;
+    // private final Project currentProject; // Removed field
     private final DefaultListModel<Character> characterListModel;
     private final JList<Character> characterJList;
 
     private JButton addButton;
     private JButton editButton;
     private JButton deleteButton;
-    private JButton closeButton; // Or done button
+    // private JButton closeButton; // Removed field
 
-    public CharacterListView(Frame owner, ProjectViewModel viewModel, Project project) {
+    public CharacterListView(ProjectViewModel viewModel) { // Changed constructor
         this.viewModel = viewModel;
-        this.currentProject = project;
+        // this.currentProject = project; // Removed assignment
         setLayout(new BorderLayout(5, 5));
         setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
 
@@ -39,13 +39,13 @@ public class CharacterListView extends JPanel {
         addButton = new JButton("Add");
         editButton = new JButton("Edit");
         deleteButton = new JButton("Delete");
-        closeButton = new JButton("Close");
+        // closeButton = new JButton("Close"); // Removed
 
         buttonPanel.add(addButton);
         buttonPanel.add(editButton);
         buttonPanel.add(deleteButton);
-        buttonPanel.add(Box.createHorizontalStrut(20)); // Some spacing
-        buttonPanel.add(closeButton);
+        // buttonPanel.add(Box.createHorizontalStrut(20)); // Some spacing // Optional, can keep
+        // buttonPanel.add(closeButton); // Removed
 
         add(buttonPanel, BorderLayout.SOUTH);
 
@@ -53,14 +53,22 @@ public class CharacterListView extends JPanel {
         addButton.addActionListener(e -> addCharacter());
         editButton.addActionListener(e -> editCharacter());
         deleteButton.addActionListener(e -> deleteCharacter());
-        closeButton.addActionListener(e -> closeView(owner)); // Pass owner to close dialog
+        // closeButton.addActionListener(e -> closeView(owner)); // Removed
 
-        // Initial state of buttons
+        // Initial state of buttons & listener for ViewModel changes
         updateButtonStates();
         characterJList.addListSelectionListener(e -> updateButtonStates());
+
+        this.viewModel.addPropertyChangeListener(evt -> {
+            if (ProjectViewModel.SELECTED_PROJECT_PROPERTY.equals(evt.getPropertyName())) {
+                loadCharacters();
+            }
+        });
+        loadCharacters(); // Initial load
     }
 
     private void loadCharacters() {
+        Project currentProject = viewModel.getSelectedProject();
         characterListModel.clear();
         if (currentProject != null) {
             List<Character> characters = viewModel.getProjectCharacters(currentProject.getId());
@@ -80,12 +88,17 @@ public class CharacterListView extends JPanel {
     }
 
     private void addCharacter() {
+        Project currentProject = viewModel.getSelectedProject();
+        if (currentProject == null) {
+            JOptionPane.showMessageDialog(this, "Please select a project first.", "No Project Selected", JOptionPane.INFORMATION_MESSAGE);
+            return;
+        }
         CharacterEditDialog dialog = new CharacterEditDialog((Frame) SwingUtilities.getWindowAncestor(this), null);
         dialog.setVisible(true);
 
         if (dialog.isSaved()) {
             Character newCharacter = dialog.getCharacter();
-            if (newCharacter != null && currentProject != null) {
+            if (newCharacter != null) { // currentProject already checked
                 viewModel.addCharacterToProject(currentProject.getId(), newCharacter);
                 loadCharacters(); // Refresh list
             }
@@ -93,8 +106,10 @@ public class CharacterListView extends JPanel {
     }
 
     private void editCharacter() {
+        Project currentProject = viewModel.getSelectedProject();
         Character selectedCharacter = characterJList.getSelectedValue();
         if (selectedCharacter == null || currentProject == null) {
+            // Button should be disabled if no character or project, but double check
             return;
         }
 
@@ -111,8 +126,10 @@ public class CharacterListView extends JPanel {
     }
 
     private void deleteCharacter() {
+        Project currentProject = viewModel.getSelectedProject();
         Character selectedCharacter = characterJList.getSelectedValue();
         if (selectedCharacter == null || currentProject == null) {
+            // Button should be disabled, but double check
             return;
         }
 
@@ -128,27 +145,11 @@ public class CharacterListView extends JPanel {
         }
     }
 
-    private void closeView(Frame owner) {
-        // If this panel is inside a JDialog, get the dialog and dispose it
-        Window window = SwingUtilities.getWindowAncestor(this);
-        if (window instanceof JDialog) {
-            ((JDialog) window).dispose();
-        } else if (owner instanceof JDialog) {
-            // Fallback if it was directly added to a JDialog passed as owner
-             ((JDialog) owner).dispose();
-        }
-        // If it's in a JFrame, other logic might be needed,
-        // but typically a character list view would be in a dialog.
-    }
+    // private void closeView(Frame owner) { // Removed method
+    // ...
+    // }
 
-    // Optional: A static method to show this panel in a dialog
-    public static void showDialog(Frame owner, ProjectViewModel viewModel, Project project) {
-        JDialog dialog = new JDialog(owner, "Manage Characters: " + project.getName(), true); // true for modal
-        CharacterListView view = new CharacterListView(owner, viewModel, project); // Pass owner for close logic
-        dialog.setDefaultCloseOperation(JDialog.DISPOSE_ON_CLOSE);
-        dialog.setContentPane(view);
-        dialog.pack();
-        dialog.setLocationRelativeTo(owner);
-        dialog.setVisible(true);
-    }
+    // public static void showDialog(Frame owner, ProjectViewModel viewModel, Project project) { // Removed method
+    // ...
+    // }
 }
