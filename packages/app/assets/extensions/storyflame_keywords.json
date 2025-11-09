@@ -1,0 +1,28 @@
+{
+  "id": "storyflame.keywords.repetition",
+  "name": "Detector de Repetições",
+  "description": "Sinaliza palavras sensíveis repetidas acima do limite configurado.",
+  "version": "0.1.0",
+  "author": "StoryFlame",
+  "type": "analyzer",
+  "rules": [
+    {
+      "id": "keyword.sussurrou",
+      "kind": "keyword",
+      "scope": "content",
+      "pattern": "sussurrou",
+      "message": "O verbo \"sussurrou\" aparece muitas vezes neste capítulo.",
+      "threshold": 4,
+      "severity": "info"
+    },
+    {
+      "id": "keyword.olhos",
+      "kind": "keyword",
+      "scope": "summary",
+      "pattern": "olhos",
+      "message": "A palavra \"olhos\" aparece em quase todos os resumos recentes.",
+      "threshold": 5,
+      "severity": "warning"
+    }
+  ]
+}

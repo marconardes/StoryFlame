@@ -1,0 +1,11 @@
+name: storyflame
+packages:
+  - packages/**
+
+scripts:
+  analyze:
+    run: flutter analyze .
+  format:
+    run: flutter format --set-exit-if-changed .
+  test:
+    run: dart run melos exec --dir-exists=test -- flutter test --reporter expanded

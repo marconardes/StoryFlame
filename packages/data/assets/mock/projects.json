@@ -1,0 +1,129 @@
+[
+  {
+    "id": "project-aurora",
+    "title": "Crônicas de Aurora",
+    "description": "Uma ópera espacial sobre diplomacia intergaláctica.",
+    "updatedAt": "2024-05-27T12:00:00Z",
+    "chapters": [
+      {
+        "id": "chapter-1",
+        "title": "Luzes Sobre Edria",
+        "summary": "Introdução aos protagonistas e ao conflito político.",
+        "content": "As luzes de Edria cintilavam além da cúpula quando Lyra recebeu o chamado da rainha.",
+        "wordCount": 18,
+        "updatedAt": "2024-05-27T12:30:00Z"
+      },
+      {
+        "id": "chapter-2",
+        "title": "O Conselho Sombrio",
+        "summary": "A primeira negociação falha enquanto o vírus Aurora se espalha.",
+        "content": "No conselho, cada representante falava em códigos, temendo as paredes ouvintes.",
+        "wordCount": 19,
+        "updatedAt": "2024-05-27T13:00:00Z"
+      }
+    ],
+    "characters": [
+      {
+        "id": "char-lyra",
+        "name": "Lyra Sade",
+        "alias": "A Emissária",
+        "description": "Diplomata treinada para negociar com impérios hostis.",
+        "history": "Vinda da colônia de Safir, Lyra acumulou vitórias diplomáticas em cenários impossíveis.",
+        "traits": ["Paciente", "Observadora"],
+        "relationships": ["Mentora: Rainha Solenne"],
+        "notes": ["Sempre carrega um diário holográfico"],
+        "chapterIds": ["chapter-1", "chapter-2"],
+        "updatedAt": "2024-05-27T14:00:00Z"
+      }
+    ],
+    "glossary": [
+      {
+        "id": "term-aurora",
+        "term": "Aurora",
+        "definition": "Vírus sintético capaz de paralisar sistemas cibernéticos.",
+        "category": "Tecnologia",
+        "notes": "Citado em diálogos como ameaça velada.",
+        "chapterIds": ["chapter-2"],
+        "updatedAt": "2024-05-27T14:05:00Z"
+      }
+    ],
+    "timeline": [
+      {
+        "id": "event-1",
+        "title": "Convocação da Emissária",
+        "description": "Lyra é chamada para liderar a missão em Edria.",
+        "date": "2024-05-27T09:00:00Z",
+        "chapterId": "chapter-1",
+        "order": 0,
+        "tags": ["Conflito"]
+      }
+    ],
+    "worldElements": [
+      {
+        "id": "loc-edria",
+        "name": "Edria",
+        "description": "Cidade-cúpula suspensa sobre um planeta ácido.",
+        "lore": "Construída por engenheiros exilados.",
+        "chapterIds": ["chapter-1"],
+        "type": "location",
+        "updatedAt": "2024-05-27T15:00:00Z"
+      }
+    ],
+    "creativeIdeas": [
+      {
+        "id": "idea-1",
+        "title": "Reunião secreta no reator",
+        "description": "Escrever cena onde Lyra descobre sabotagem no núcleo da cidade.",
+        "tags": ["suspense", "revelação"],
+        "status": "idea",
+        "updatedAt": "2024-05-27T16:00:00Z"
+      }
+    ],
+    "templates": [
+      {
+        "id": "template-demo",
+        "name": "Trama Diplomática",
+        "description": "Sequência sugerida para negociações intergalácticas.",
+        "steps": [
+          "Receber o ultimato",
+          "Descobrir o traidor",
+          "Virar o jogo no conselho"
+        ],
+        "completedSteps": ["Receber o ultimato"],
+        "updatedAt": "2024-05-27T16:10:00Z"
+      }
+    ],
+    "publicationChecklist": {
+      "betaRead": true,
+      "coverReady": false,
+      "isbnRegistered": false,
+      "ebookExported": false,
+      "kdpPackageReady": false
+    },
+    "publicationHistory": []
+  },
+  {
+    "id": "project-veredas",
+    "title": "Veredas do Tempo",
+    "description": "Romance histórico com saltos temporais pelo sertão brasileiro.",
+    "updatedAt": "2024-05-20T18:30:00Z",
+    "chapters": [
+      {
+        "id": "chapter-3",
+        "title": "Plantio",
+        "summary": "O narrador acorda em 1893 e precisa se adaptar ao clima hostil.",
+        "content": "A terra rachada cortava os pés descalços, mas João jurou que o milho vingaria.",
+        "wordCount": 20,
+        "updatedAt": "2024-05-20T19:00:00Z"
+      }
+    ],
+    "characters": [],
+    "glossary": [],
+    "timeline": [],
+    "worldElements": [],
+    "creativeIdeas": [],
+    "templates": [],
+    "publicationChecklist": null,
+    "publicationHistory": []
+  }
+]

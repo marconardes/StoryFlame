@@ -1,0 +1,10 @@
+name: storyflame_workspace
+description: Workspace configuration for StoryFlame flutter packages.
+version: 0.0.1
+publish_to: none
+
+environment:
+  sdk: ^3.7.0
+
+dev_dependencies:
+  melos: ^6.3.2
