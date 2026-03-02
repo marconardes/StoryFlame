@@ -89,7 +89,22 @@ Backlog:
 Entregavel:
 - Livro navegavel dentro da aplicacao
 
-### Sprint 5 - Narrative Tag Engine (base)
+### Sprint 5 - Personagens e consistencia narrativa
+
+Objetivo: dar contexto narrativo ao manuscrito antes de introduzir tags.
+
+Backlog:
+- [ ] Criar CRUD de personagens
+- [ ] Criar tela de personagens no desktop
+- [ ] Vincular POV da cena a personagem
+- [ ] Permitir busca e selecao de personagem
+- [ ] Validar referencias quebradas entre cena e personagem
+- [ ] Criar testes unitarios de integridade narrativa
+
+Entregavel:
+- O manuscrito passa a ter personagens editaveis e ligados as cenas
+
+### Sprint 6 - Narrative Tag Engine (base)
 
 Objetivo: reconhecer tags narrativas como `{lfp1}` dentro do texto.
 
@@ -107,7 +122,22 @@ Entregavel:
 Marco:
 - Primeiro momento de diferenciacao clara do produto
 
-### Sprint 6 - Expansao de templates
+### Sprint 7 - Biblioteca de tags e perfis
+
+Objetivo: tornar o sistema de tags utilizavel com contexto de personagem.
+
+Backlog:
+- [ ] Criar `narrative_tags.json`
+- [ ] Montar biblioteca inicial de tags
+- [ ] Suportar prefixo por personagem
+- [ ] Criar editor de perfil de personagem
+- [ ] Permitir criar nova tag
+- [ ] Implementar validador de inconsistencias
+
+Entregavel:
+- O escritor consegue manter biblioteca de tags e perfis narrativos por personagem
+
+### Sprint 8 - Expansao de templates
 
 Objetivo: transformar tags em texto renderizado.
 
@@ -125,24 +155,9 @@ Entregavel:
 Marco:
 - O diferencial narrativo do StoryFlame passa a ser visivel no uso diario
 
-### Sprint 7 - Biblioteca de tags
+### Sprint 9 - UX de produtividade
 
-Objetivo: tornar o sistema de tags utilizavel na pratica.
-
-Backlog:
-- [ ] Criar `narrative_tags.json`
-- [ ] Montar biblioteca inicial de tags
-- [ ] Suportar prefixo por personagem
-- [ ] Criar editor de perfil de personagem
-- [ ] Permitir criar nova tag
-- [ ] Implementar validador de inconsistencias
-
-Entregavel:
-- O escritor consegue produzir texto usando tags como fluxo principal
-
-### Sprint 8 - UX de produtividade
-
-Objetivo: acelerar o ritmo de escrita.
+Objetivo: acelerar o ritmo de escrita com tags e navegacao.
 
 Backlog:
 - [ ] Autocomplete de tags
@@ -158,7 +173,7 @@ Entregavel:
 Marco:
 - O StoryFlame ganha um diferencial forte de produtividade
 
-### Sprint 9 - Exportacao ZIP solida
+### Sprint 10 - Portabilidade e backups
 
 Objetivo: garantir portabilidade confiavel do projeto.
 
@@ -173,42 +188,9 @@ Backlog:
 Entregavel:
 - Projeto portavel e seguro
 
-### Sprint 10 - Pipeline emocional (infra)
+### Sprint 11 - Exportacao publicavel
 
-Objetivo: preparar a base tecnica da analise emocional.
-
-Backlog:
-- [ ] Implementar `Chunker`
-- [ ] Implementar `EmotionAggregator`
-- [ ] Implementar `EmotionCache`
-- [ ] Criar estrutura `analysis/`
-- [ ] Criar heatmap base
-- [ ] Criar timeline base
-
-Entregavel:
-- Infraestrutura pronta para IA local
-
-### Sprint 11 - Modo B (leve)
-
-Objetivo: colocar a classificacao emocional offline para funcionar.
-
-Backlog:
-- [ ] Implementar `FastTextEmotionEngine`
-- [ ] Integrar modelo PT-BR
-- [ ] Classificar sentimento
-- [ ] Classificar emocoes
-- [ ] Persistir `emotion.json`
-- [ ] Criar UI de relatorio
-
-Entregavel:
-- StoryFlame analisa emocao offline
-
-Marco:
-- Grande marco funcional do produto
-
-### Sprint 12 - Exportacao publicavel
-
-Objetivo: fechar um MVP forte e exportavel.
+Objetivo: transformar o manuscrito em saida utilizavel fora do app.
 
 Backlog:
 - [ ] Criar pipeline de expansao antes do export
@@ -221,14 +203,37 @@ Backlog:
 Entregavel:
 - Manuscrito sai em formato publicavel
 
+### Sprint 12 - Pipeline emocional (infra + Modo B inicial)
+
+Objetivo: fechar o MVP com a primeira camada util de analise offline.
+
+Backlog:
+- [ ] Implementar `Chunker`
+- [ ] Implementar `EmotionAggregator`
+- [ ] Implementar `EmotionCache`
+- [ ] Criar estrutura `analysis/`
+- [ ] Implementar `FastTextEmotionEngine`
+- [ ] Integrar modelo PT-BR
+- [ ] Classificar sentimento
+- [ ] Classificar emocoes
+- [ ] Persistir `emotion.json`
+- [ ] Criar UI de relatorio
+
+Entregavel:
+- StoryFlame passa a oferecer analise emocional offline no Modo B inicial
+
+Marco:
+- Grande marco funcional do MVP
+
 ## 5. Resultado Esperado ao Final da Semana 12
 
 - StoryFlame compila em desktop e Android
 - Projetos funcionam offline com armazenamento local e portabilidade em ZIP
-- O autor consegue estruturar livro, escrever cenas e navegar no manuscrito
-- O sistema de Narrative Tags ja suporta deteccao, expansao e biblioteca inicial
+- O autor consegue estruturar livro, escrever cenas, navegar no manuscrito e gerenciar personagens
+- O sistema de Narrative Tags ja suporta deteccao, biblioteca inicial, perfis e expansao
 - A produtividade de escrita melhora com autocomplete, preview e alternancia de modos
-- A analise emocional offline funciona no Modo B
+- O manuscrito pode ser exportado tanto como projeto portavel quanto em formatos publicaveis
+- A analise emocional offline funciona em um primeiro recorte util do Modo B
 - O manuscrito pode ser exportado para formatos de publicacao
 
 ## 6. Pos-MVP
