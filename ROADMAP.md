@@ -34,11 +34,11 @@ StoryFlame e o nome oficial do produto neste repositório. Este roadmap substitu
 Objetivo: criar um esqueleto tecnico solido.
 
 Backlog:
-- [ ] Criar monorepo (`core`, `desktop`, `android`)
-- [ ] Definir estrutura de pacotes
-- [ ] Criar modelos base `Project`, `Chapter`, `Scene` e `Character`
-- [ ] Definir formato ZIP v1 em rascunho
-- [ ] Configurar build com Gradle
+- [x] Criar monorepo (`core`, `desktop`, `android`)
+- [x] Definir estrutura de pacotes
+- [x] Criar modelos base `Project`, `Chapter`, `Scene` e `Character`
+- [x] Definir formato ZIP v1 em rascunho
+- [x] Configurar build com Gradle
 
 Entregavel:
 - Projeto compila nas duas plataformas
