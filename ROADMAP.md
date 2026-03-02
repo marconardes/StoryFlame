@@ -79,12 +79,12 @@ Entregavel:
 Objetivo: organizar o manuscrito de forma navegavel.
 
 Backlog:
-- [ ] CRUD de capitulos
-- [ ] CRUD de cenas
-- [ ] Reordenar capitulos
-- [ ] Reordenar cenas
-- [ ] Criar navegacao rapida
-- [ ] Implementar busca textual simples
+- [x] CRUD de capitulos
+- [x] CRUD de cenas
+- [x] Reordenar capitulos
+- [x] Reordenar cenas
+- [x] Criar navegacao rapida
+- [x] Implementar busca textual simples
 
 Entregavel:
 - Livro navegavel dentro da aplicacao
