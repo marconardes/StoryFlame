@@ -109,12 +109,12 @@ Entregavel:
 Objetivo: reconhecer tags narrativas como `{lfp1}` dentro do texto.
 
 Backlog:
-- [ ] Criar modelo `NarrativeTag`
-- [ ] Criar modelo `CharacterTagProfile`
-- [ ] Implementar detector por regex para `{tag}`
-- [ ] Implementar parser de tags
-- [ ] Validar existencia da tag
-- [ ] Criar testes unitarios
+- [x] Criar modelo `NarrativeTag`
+- [x] Criar modelo `CharacterTagProfile`
+- [x] Implementar detector por regex para `{tag}`
+- [x] Implementar parser de tags
+- [x] Validar existencia da tag
+- [x] Criar testes unitarios
 
 Entregavel:
 - Sistema detecta tags no texto

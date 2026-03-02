@@ -10,6 +10,9 @@ import io.storyflame.core.search.SearchTarget;
 import io.storyflame.core.storage.ProjectArchiveStore;
 import io.storyflame.core.storage.ProjectAutosaveService;
 import io.storyflame.core.storage.ProjectStoragePaths;
+import io.storyflame.core.tags.NarrativeTagCatalog;
+import io.storyflame.core.tags.NarrativeTagParser;
+import io.storyflame.core.tags.ParsedNarrativeTag;
 import io.storyflame.core.text.WordCount;
 import io.storyflame.core.validation.NarrativeIntegrityIssue;
 import io.storyflame.core.validation.NarrativeIntegrityValidator;
@@ -31,10 +34,8 @@ import javax.swing.BoxLayout;
 import javax.swing.DefaultListModel;
 import javax.swing.JButton;
 import javax.swing.JComponent;
-import javax.swing.JDesktopPane;
 import javax.swing.JFileChooser;
 import javax.swing.JFrame;
-import javax.swing.JInternalFrame;
 import javax.swing.JLabel;
 import javax.swing.JList;
 import javax.swing.JMenu;
@@ -44,6 +45,7 @@ import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JSplitPane;
+import javax.swing.JTabbedPane;
 import javax.swing.JTextArea;
 import javax.swing.JTextField;
 import javax.swing.JToolBar;
@@ -84,9 +86,12 @@ public final class StoryFlameDesktopApp {
     private final JLabel sceneCountLabel;
     private final JLabel characterCountLabel;
     private final JLabel searchCountLabel;
+    private final JLabel tagCountLabel;
     private final JLabel projectPathLabel;
     private final JLabel pointOfViewLabel;
     private final JLabel integrityLabel;
+    private final JLabel selectedCharacterScenesLabel;
+    private final JLabel selectedCharacterPointOfViewLabel;
     private final JLabel statusLabel;
     private final DefaultListModel<String> chapterListModel;
     private final DefaultListModel<String> sceneListModel;
@@ -103,14 +108,10 @@ public final class StoryFlameDesktopApp {
     private final List<Character> visibleCharacters;
     private final List<Character> visiblePointOfViewCharacters;
     private final Timer searchRefreshTimer;
+    private final NarrativeTagCatalog narrativeTagCatalog;
 
     private JFrame frame;
-    private JDesktopPane desktopPane;
-    private JInternalFrame editorFrame;
-    private JInternalFrame structureFrame;
-    private JInternalFrame projectFrame;
-    private JInternalFrame searchFrame;
-    private JInternalFrame characterFrame;
+    private JTabbedPane tabbedPane;
     private Project currentProject;
     private Path currentPath;
     private Chapter selectedChapter;
@@ -138,9 +139,12 @@ public final class StoryFlameDesktopApp {
         this.sceneCountLabel = new JLabel("0 cenas");
         this.characterCountLabel = new JLabel("0 personagens");
         this.searchCountLabel = new JLabel("0 resultados");
+        this.tagCountLabel = new JLabel("0 tags");
         this.projectPathLabel = new JLabel("Sem arquivo");
         this.pointOfViewLabel = new JLabel("POV: sem personagem");
         this.integrityLabel = new JLabel("0 referencias quebradas");
+        this.selectedCharacterScenesLabel = new JLabel("0 cenas ligadas");
+        this.selectedCharacterPointOfViewLabel = new JLabel("Nao e o POV atual");
         this.statusLabel = new JLabel("Nenhum projeto carregado.");
         this.chapterListModel = new DefaultListModel<>();
         this.sceneListModel = new DefaultListModel<>();
@@ -158,6 +162,7 @@ public final class StoryFlameDesktopApp {
         this.visiblePointOfViewCharacters = new ArrayList<>();
         this.searchRefreshTimer = new Timer(250, event -> refreshSearchResultsNow());
         this.searchRefreshTimer.setRepeats(false);
+        this.narrativeTagCatalog = NarrativeTagCatalog.defaultCatalog();
     }
 
     public static void main(String[] args) {
@@ -181,28 +186,30 @@ public final class StoryFlameDesktopApp {
         });
 
         configureEditorComponents();
-        createInternalFrames();
+        createTabs();
         bindFieldListeners();
-        desktopPane.addComponentListener(new java.awt.event.ComponentAdapter() {
-            @Override
-            public void componentResized(java.awt.event.ComponentEvent event) {
-                arrangeInternalFrames();
-            }
-        });
 
         frame.setLocationRelativeTo(null);
         frame.setVisible(true);
-        arrangeInternalFrames();
         createProject();
     }
 
     private JPanel buildRootPanel() {
-        desktopPane = new JDesktopPane();
-        desktopPane.setBackground(new Color(236, 232, 224));
+        tabbedPane = new JTabbedPane();
+        tabbedPane.setBackground(new Color(236, 232, 224));
+
+        JPanel projectSidebar = buildProjectPanel();
+        projectSidebar.setPreferredSize(new Dimension(300, 10));
+
+        JSplitPane contentSplitPane = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT, projectSidebar, tabbedPane);
+        contentSplitPane.setBorder(BorderFactory.createEmptyBorder());
+        contentSplitPane.setResizeWeight(0.0);
+        contentSplitPane.setDividerLocation(300);
+        contentSplitPane.setOneTouchExpandable(true);
 
         JPanel root = new JPanel(new BorderLayout());
         root.add(buildToolBar(), BorderLayout.NORTH);
-        root.add(desktopPane, BorderLayout.CENTER);
+        root.add(contentSplitPane, BorderLayout.CENTER);
         root.add(statusLabel, BorderLayout.SOUTH);
         return root;
     }
@@ -275,6 +282,8 @@ public final class StoryFlameDesktopApp {
         toolBar.add(characterCountLabel);
         toolBar.add(Box.createHorizontalStrut(12));
         toolBar.add(searchCountLabel);
+        toolBar.add(Box.createHorizontalStrut(12));
+        toolBar.add(tagCountLabel);
         toolBar.add(Box.createHorizontalGlue());
         toolBar.add(contextLabel);
         toolBar.add(Box.createHorizontalStrut(20));
@@ -282,26 +291,11 @@ public final class StoryFlameDesktopApp {
         return toolBar;
     }
 
-    private void createInternalFrames() {
-        editorFrame = createInternalFrame("Editor", 330, 20, 920, 720, buildEditorPanel());
-        structureFrame = createInternalFrame("Estrutura do livro", 20, 20, 290, 420, buildStructurePanel());
-        projectFrame = createInternalFrame("Projeto", 20, 460, 290, 280, buildProjectPanel());
-        searchFrame = createInternalFrame("Busca rapida", 1030, 20, 220, 420, buildSearchPanel());
-        characterFrame = createInternalFrame("Personagens", 1030, 460, 220, 280, buildCharacterPanel());
-
-        desktopPane.add(editorFrame);
-        desktopPane.add(structureFrame);
-        desktopPane.add(projectFrame);
-        desktopPane.add(searchFrame);
-        desktopPane.add(characterFrame);
-    }
-
-    private JInternalFrame createInternalFrame(String title, int x, int y, int width, int height, JPanel content) {
-        JInternalFrame internalFrame = new JInternalFrame(title, true, false, true, true);
-        internalFrame.setBounds(x, y, width, height);
-        internalFrame.setVisible(true);
-        internalFrame.setContentPane(content);
-        return internalFrame;
+    private void createTabs() {
+        tabbedPane.addTab("Editor", buildEditorPanel());
+        tabbedPane.addTab("Estrutura", buildStructurePanel());
+        tabbedPane.addTab("Busca", buildSearchPanel());
+        tabbedPane.addTab("Personagens", buildCharacterPanel());
     }
 
     private JPanel buildEditorPanel() {
@@ -400,14 +394,17 @@ public final class StoryFlameDesktopApp {
         root.setBackground(new Color(244, 239, 231));
         root.add(characterSearchField, BorderLayout.NORTH);
 
-        JPanel center = new JPanel(new BorderLayout(8, 8));
-        center.setOpaque(false);
-        center.add(buildCharacterToolbar(), BorderLayout.NORTH);
-        center.add(new JScrollPane(characterList), BorderLayout.CENTER);
-        center.add(buildCharacterDetailsPanel(), BorderLayout.SOUTH);
-        root.add(center, BorderLayout.CENTER);
+        JPanel listPanel = new JPanel(new BorderLayout(8, 8));
+        listPanel.setOpaque(false);
+        listPanel.add(buildCharacterToolbar(), BorderLayout.NORTH);
+        listPanel.add(new JScrollPane(characterList), BorderLayout.CENTER);
 
-        JPanel footer = new JPanel(new GridLayout(0, 1, 0, 8));
+        JSplitPane splitPane = new JSplitPane(JSplitPane.VERTICAL_SPLIT, listPanel, buildCharacterDetailsPanel());
+        splitPane.setBorder(BorderFactory.createEmptyBorder());
+        splitPane.setResizeWeight(0.5);
+        root.add(splitPane, BorderLayout.CENTER);
+
+        JPanel footer = new JPanel(new GridLayout(1, 0, 8, 0));
         footer.setOpaque(false);
         footer.add(buildEditorBadge(characterCountLabel));
         footer.add(buildEditorBadge(integrityLabel));
@@ -418,8 +415,30 @@ public final class StoryFlameDesktopApp {
     private JPanel buildCharacterDetailsPanel() {
         JPanel panel = new JPanel(new BorderLayout(8, 8));
         panel.setOpaque(false);
-        panel.add(characterNameField, BorderLayout.NORTH);
+        panel.setBorder(BorderFactory.createTitledBorder("Ficha do personagem"));
+
+        JPanel header = new JPanel(new BorderLayout(8, 8));
+        header.setOpaque(false);
+        header.add(characterNameField, BorderLayout.NORTH);
+
+        JPanel badges = new JPanel(new GridLayout(1, 0, 8, 0));
+        badges.setOpaque(false);
+        badges.add(buildEditorBadge(selectedCharacterScenesLabel));
+        badges.add(buildEditorBadge(selectedCharacterPointOfViewLabel));
+        header.add(badges, BorderLayout.SOUTH);
+        panel.add(header, BorderLayout.NORTH);
+
         panel.add(new JScrollPane(characterDescriptionArea), BorderLayout.CENTER);
+
+        JPanel footer = new JPanel(new GridLayout(1, 0, 8, 0));
+        footer.setOpaque(false);
+        JButton assignButton = new JButton("Usar como POV da cena");
+        JButton clearSearchButton = new JButton("Limpar busca");
+        assignButton.addActionListener(event -> assignSelectedCharacterAsPointOfView());
+        clearSearchButton.addActionListener(event -> characterSearchField.setText(""));
+        footer.add(assignButton);
+        footer.add(clearSearchButton);
+        panel.add(footer, BorderLayout.SOUTH);
         return panel;
     }
 
@@ -721,7 +740,6 @@ public final class StoryFlameDesktopApp {
         selectedCharacter = currentProject.getCharacters().isEmpty() ? null : currentProject.getCharacters().get(0);
         syncFieldsFromProject();
         statusLabel.setText("Projeto criado em " + currentPath);
-        arrangeInternalFrames();
         focusEditorFrame();
     }
 
@@ -739,7 +757,6 @@ public final class StoryFlameDesktopApp {
         selectedCharacter = currentProject.getCharacters().isEmpty() ? null : currentProject.getCharacters().get(0);
         syncFieldsFromProject();
         statusLabel.setText("Projeto aberto de " + currentPath);
-        arrangeInternalFrames();
         focusEditorFrame();
     }
 
@@ -823,6 +840,7 @@ public final class StoryFlameDesktopApp {
             selectedScene.setContent(sceneEditorArea.getText());
         }
         updateWordCount();
+        updateTagCountLabel();
         renderSummary();
         scheduleSearchRefresh();
         scheduleAutosave();
@@ -940,9 +958,17 @@ public final class StoryFlameDesktopApp {
             return;
         }
         syncProjectFromFields();
-        Character character = new Character(null, "Personagem " + (currentProject.getCharacters().size() + 1), "");
+        String draftName = preferredNewCharacterName();
+        Character character = new Character(
+                null,
+                draftName.isBlank() ? "Personagem " + (currentProject.getCharacters().size() + 1) : draftName,
+                ""
+        );
         currentProject.getCharacters().add(character);
         selectedCharacter = character;
+        if (!characterSearchField.getText().isBlank()) {
+            characterSearchField.setText("");
+        }
         refreshCharacterLists();
         refreshPointOfViewList();
         onProjectEdited();
@@ -1094,6 +1120,8 @@ public final class StoryFlameDesktopApp {
             characterNameField.setText("");
             characterDescriptionArea.setText("");
             characterCountLabel.setText("0 personagens");
+            selectedCharacterScenesLabel.setText("0 cenas ligadas");
+            selectedCharacterPointOfViewLabel.setText("Nao e o POV atual");
             updateIntegrityLabel();
             syncingUi = previousSyncingUi;
             return;
@@ -1121,6 +1149,12 @@ public final class StoryFlameDesktopApp {
 
         characterNameField.setText(selectedCharacter == null ? "" : selectedCharacter.getName());
         characterDescriptionArea.setText(selectedCharacter == null ? "" : selectedCharacter.getDescription());
+        selectedCharacterScenesLabel.setText(selectedCharacter == null
+                ? "0 cenas ligadas"
+                : countScenesForCharacter(selectedCharacter) + " cenas ligadas");
+        selectedCharacterPointOfViewLabel.setText(selectedCharacter == null
+                ? "Nao e o POV atual"
+                : (isSelectedCharacterPointOfView() ? "POV da cena atual" : "Nao e o POV atual"));
         updateIntegrityLabel();
         syncingUi = previousSyncingUi;
     }
@@ -1262,6 +1296,7 @@ public final class StoryFlameDesktopApp {
         projectPathLabel.setText(currentPath == null ? "Sem arquivo" : currentPath.toString());
         sceneUndoManager.discardAllEdits();
         updateWordCount();
+        updateTagCountLabel();
         refreshPointOfViewList();
         renderSummary();
         syncingUi = previousSyncingUi;
@@ -1279,6 +1314,7 @@ public final class StoryFlameDesktopApp {
                 Capitulo atual: %s
                 Cena atual: %s
                 POV da cena: %s
+                Tags na cena: %s
                 Capitulos: %d
                 Cenas no capitulo: %d
                 Personagens: %d
@@ -1293,6 +1329,7 @@ public final class StoryFlameDesktopApp {
                 selectedChapter == null ? "-" : selectedChapter.getTitle(),
                 selectedScene == null ? "-" : selectedScene.getTitle(),
                 displayPointOfViewName(),
+                formatCurrentSceneTagSummary(),
                 currentProject.getChapters().size(),
                 selectedChapter == null ? 0 : selectedChapter.getScenes().size(),
                 currentProject.getCharacters().size(),
@@ -1480,6 +1517,17 @@ public final class StoryFlameDesktopApp {
         wordCountLabel.setText(wordCount + " palavras");
     }
 
+    private void updateTagCountLabel() {
+        List<ParsedNarrativeTag> parsedTags = currentSceneTags();
+        long invalidCount = parsedTags.stream().filter(tag -> !tag.valid()).count();
+        if (parsedTags.isEmpty()) {
+            tagCountLabel.setText("0 tags");
+            return;
+        }
+        tagCountLabel.setText(parsedTags.size() + " tags"
+                + (invalidCount > 0 ? " | " + invalidCount + " invalidas" : " | todas validas"));
+    }
+
     private void applySelectedPointOfView() {
         if (selectedScene == null) {
             return;
@@ -1514,7 +1562,25 @@ public final class StoryFlameDesktopApp {
     }
 
     private String displayCharacterName(Character character) {
-        return displayTitle(character == null ? "" : character.getName(), "Personagem");
+        if (character == null) {
+            return "Personagem";
+        }
+        int sceneCount = countScenesForCharacter(character);
+        String suffix = sceneCount == 1 ? "1 cena" : sceneCount + " cenas";
+        String povMarker = selectedScene != null && character.getId().equals(selectedScene.getPointOfViewCharacterId()) ? " | POV atual" : "";
+        return displayTitle(character.getName(), "Personagem") + " | " + suffix + povMarker;
+    }
+
+    private String preferredNewCharacterName() {
+        String searchDraft = characterSearchField.getText();
+        if (searchDraft != null && !searchDraft.isBlank()) {
+            return searchDraft.trim();
+        }
+        String nameDraft = characterNameField.getText();
+        if (nameDraft != null && !nameDraft.isBlank()) {
+            return nameDraft.trim();
+        }
+        return "";
     }
 
     private String displayPointOfViewName() {
@@ -1540,6 +1606,58 @@ public final class StoryFlameDesktopApp {
         return null;
     }
 
+    private int countScenesForCharacter(Character character) {
+        if (currentProject == null || character == null) {
+            return 0;
+        }
+        int count = 0;
+        for (Chapter chapter : currentProject.getChapters()) {
+            for (Scene scene : chapter.getScenes()) {
+                if (character.getId().equals(scene.getPointOfViewCharacterId())) {
+                    count++;
+                }
+            }
+        }
+        return count;
+    }
+
+    private boolean isSelectedCharacterPointOfView() {
+        return selectedCharacter != null
+                && selectedScene != null
+                && selectedCharacter.getId().equals(selectedScene.getPointOfViewCharacterId());
+    }
+
+    private List<ParsedNarrativeTag> currentSceneTags() {
+        if (selectedScene == null) {
+            return List.of();
+        }
+        return NarrativeTagParser.parse(selectedScene.getContent(), narrativeTagCatalog);
+    }
+
+    private String formatCurrentSceneTagSummary() {
+        List<ParsedNarrativeTag> parsedTags = currentSceneTags();
+        if (parsedTags.isEmpty()) {
+            return "nenhuma";
+        }
+        List<String> validTagIds = parsedTags.stream()
+                .filter(ParsedNarrativeTag::valid)
+                .map(ParsedNarrativeTag::tagId)
+                .distinct()
+                .toList();
+        List<String> invalidTagIds = parsedTags.stream()
+                .filter(tag -> !tag.valid())
+                .map(ParsedNarrativeTag::tagId)
+                .distinct()
+                .toList();
+        if (invalidTagIds.isEmpty()) {
+            return String.join(", ", validTagIds);
+        }
+        if (validTagIds.isEmpty()) {
+            return "invalidas: " + String.join(", ", invalidTagIds);
+        }
+        return "validas: " + String.join(", ", validTagIds) + " | invalidas: " + String.join(", ", invalidTagIds);
+    }
+
     private void scheduleAutosave() {
         currentPath = resolveSavePath(currentPath);
         Path autosavePath = currentPath;
@@ -1556,57 +1674,37 @@ public final class StoryFlameDesktopApp {
     }
 
     private void focusEditorFrame() {
-        activateFrame(editorFrame);
+        selectTab("Editor");
         sceneEditorArea.requestFocusInWindow();
     }
 
     private void focusStructureFrame() {
-        activateFrame(structureFrame);
+        selectTab("Estrutura");
         chapterList.requestFocusInWindow();
     }
 
     private void focusProjectFrame() {
-        activateFrame(projectFrame);
         titleField.requestFocusInWindow();
     }
 
     private void focusSearchFrame() {
-        activateFrame(searchFrame);
+        selectTab("Busca");
         searchField.requestFocusInWindow();
     }
 
     private void focusCharacterFrame() {
-        activateFrame(characterFrame);
+        selectTab("Personagens");
         characterList.requestFocusInWindow();
     }
 
-    private void activateFrame(JInternalFrame internalFrame) {
-        try {
-            internalFrame.setIcon(false);
-            internalFrame.setSelected(true);
-            internalFrame.toFront();
-        } catch (Exception ignored) {
-        }
-    }
-
-    private void arrangeInternalFrames() {
-        if (desktopPane == null || editorFrame == null) {
+    private void selectTab(String title) {
+        if (tabbedPane == null) {
             return;
         }
-        int width = Math.max(desktopPane.getWidth(), 1024);
-        int height = Math.max(desktopPane.getHeight(), 680);
-        int margin = 16;
-        int leftColumnWidth = Math.max(260, width / 5);
-        int rightColumnWidth = Math.max(240, width / 6);
-        int centerWidth = width - leftColumnWidth - rightColumnWidth - (margin * 4);
-        int topHeight = Math.max(300, (height - (margin * 3)) / 2);
-        int bottomHeight = height - topHeight - (margin * 3);
-
-        structureFrame.setBounds(margin, margin, leftColumnWidth, topHeight);
-        projectFrame.setBounds(margin, topHeight + (margin * 2), leftColumnWidth, bottomHeight);
-        editorFrame.setBounds(leftColumnWidth + (margin * 2), margin, centerWidth, height - (margin * 2));
-        searchFrame.setBounds(leftColumnWidth + centerWidth + (margin * 3), margin, rightColumnWidth, topHeight);
-        characterFrame.setBounds(leftColumnWidth + centerWidth + (margin * 3), topHeight + (margin * 2), rightColumnWidth, bottomHeight);
+        int index = tabbedPane.indexOfTab(title);
+        if (index >= 0) {
+            tabbedPane.setSelectedIndex(index);
+        }
     }
 
     private void applyDesktopLookAndFeel() {
