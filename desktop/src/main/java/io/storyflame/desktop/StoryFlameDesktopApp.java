@@ -600,8 +600,15 @@ public final class StoryFlameDesktopApp {
         }
         if (selectedScene != null) {
             selectedScene.setTitle(sceneTitleField.getText());
+            int sceneIndex = selectedChapter == null ? -1 : selectedChapter.getScenes().indexOf(selectedScene);
+            if (sceneIndex >= 0 && sceneIndex < sceneListModel.size()) {
+                sceneListModel.set(sceneIndex, (sceneIndex + 1) + ". " + displayTitle(selectedScene.getTitle(), "Cena"));
+            }
         }
-        refreshStructureLists();
+        contextLabel.setText((selectedChapter == null ? "-" : displayTitle(selectedChapter.getTitle(), "Capitulo"))
+                + " / "
+                + (selectedScene == null ? "-" : displayTitle(selectedScene.getTitle(), "Cena")));
+        sceneCountLabel.setText(selectedChapter == null ? "0 cenas" : selectedChapter.getScenes().size() + " cenas");
         renderSummary();
         scheduleSearchRefresh();
         scheduleAutosave();
