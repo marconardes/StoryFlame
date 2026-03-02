@@ -155,6 +155,19 @@ Entregavel:
 Marco:
 - O diferencial narrativo do StoryFlame passa a ser visivel no uso diario
 
+### Estabilizacao tecnica ate o Sprint 8
+
+Objetivo: reduzir acoplamento da aplicacao desktop antes de seguir para produtividade e exportacao.
+
+Backlog:
+- [x] Extrair formatacao de resumo da UI principal
+- [x] Extrair regras derivadas de personagens, POV e tags para helpers do desktop
+- [x] Reduzir responsabilidade direta de `StoryFlameDesktopApp`
+- [x] Simplificar a superficie da UI de tags sem perder a base do `core`
+
+Entregavel:
+- Base desktop mais facil de manter para os proximos sprints
+
 ### Sprint 9 - UX de produtividade
 
 Objetivo: acelerar o ritmo de escrita com tags e navegacao.

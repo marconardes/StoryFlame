@@ -12,14 +12,10 @@ import io.storyflame.core.storage.ProjectAutosaveService;
 import io.storyflame.core.storage.ProjectStoragePaths;
 import io.storyflame.core.tags.CharacterTagProfile;
 import io.storyflame.core.tags.NarrativeTag;
-import io.storyflame.core.tags.NarrativeTagCatalog;
-import io.storyflame.core.tags.NarrativeTagParser;
 import io.storyflame.core.tags.ParsedNarrativeTag;
 import io.storyflame.core.tags.TagLibraryIssue;
 import io.storyflame.core.tags.TagLibraryValidator;
-import io.storyflame.core.tags.TemplateExpansionEngine;
 import io.storyflame.core.tags.TemplateExpansionMode;
-import io.storyflame.core.tags.TemplateExpansionResult;
 import io.storyflame.core.text.WordCount;
 import io.storyflame.core.validation.NarrativeIntegrityIssue;
 import io.storyflame.core.validation.NarrativeIntegrityValidator;
@@ -525,18 +521,16 @@ public final class StoryFlameDesktopApp {
         panel.setOpaque(false);
         panel.setBorder(BorderFactory.createTitledBorder("Detalhes da tag"));
 
-        JPanel fields = new JPanel(new GridLayout(0, 1, 0, 8));
+        JPanel fields = new JPanel(new GridLayout(1, 0, 8, 0));
         fields.setOpaque(false);
-        fields.add(tagIdField);
         fields.add(tagLabelField);
         fields.add(tagTemplateField);
-        panel.add(fields, BorderLayout.NORTH);
-        panel.add(new JScrollPane(tagDescriptionArea), BorderLayout.CENTER);
+        panel.add(fields, BorderLayout.CENTER);
 
         JPanel footer = new JPanel(new GridLayout(1, 0, 8, 0));
         footer.setOpaque(false);
         JButton duplicateButton = new JButton("Duplicar tag");
-        JButton clearButton = new JButton("Limpar campos");
+        JButton clearButton = new JButton("Nova tag limpa");
         duplicateButton.addActionListener(event -> duplicateTag());
         clearButton.addActionListener(event -> clearSelectedTagDraft());
         footer.add(duplicateButton);
@@ -550,15 +544,21 @@ public final class StoryFlameDesktopApp {
         panel.setOpaque(false);
         panel.setBorder(BorderFactory.createTitledBorder("Detalhes do perfil"));
 
-        JPanel fields = new JPanel(new GridLayout(0, 1, 0, 8));
-        fields.setOpaque(false);
-        fields.add(profilePrefixField);
-        fields.add(profilePreferredTagsField);
-        panel.add(fields, BorderLayout.CENTER);
+        JPanel summary = new JPanel(new GridLayout(1, 0, 8, 0));
+        summary.setOpaque(false);
+        summary.add(buildEditorBadge(selectedProfileCharacterLabel));
+        summary.add(buildEditorBadge(selectedProfileStatusLabel));
+        panel.add(summary, BorderLayout.CENTER);
 
+        JPanel actions = new JPanel(new GridLayout(1, 0, 8, 0));
+        actions.setOpaque(false);
         JButton applyCurrentTagButton = new JButton("Usar tag selecionada");
+        JButton removeCurrentTagButton = new JButton("Remover tag selecionada");
         applyCurrentTagButton.addActionListener(event -> appendSelectedTagToProfile());
-        panel.add(applyCurrentTagButton, BorderLayout.SOUTH);
+        removeCurrentTagButton.addActionListener(event -> removeSelectedTagFromProfile());
+        actions.add(applyCurrentTagButton);
+        actions.add(removeCurrentTagButton);
+        panel.add(actions, BorderLayout.SOUTH);
         return panel;
     }
 
@@ -1100,13 +1100,16 @@ public final class StoryFlameDesktopApp {
     }
 
     private void onTagEdited() {
-        if (syncingUi || currentProject == null || currentPath == null || selectedTag == null) {
+        if (syncingUi || currentProject == null || currentPath == null) {
+            return;
+        }
+        if (selectedTag == null) {
             return;
         }
         NarrativeTag updatedTag = new NarrativeTag(
-                nonBlankOrFallback(tagIdField.getText(), selectedTag.id()),
+                selectedTag.id(),
                 tagLabelField.getText(),
-                tagDescriptionArea.getText(),
+                selectedTag.description(),
                 tagTemplateField.getText()
         );
         int index = currentProject.getNarrativeTags().indexOf(selectedTag);
@@ -1123,14 +1126,6 @@ public final class StoryFlameDesktopApp {
     private void onProfileEdited() {
         if (syncingUi || currentProject == null || currentPath == null || selectedProfile == null) {
             return;
-        }
-        selectedProfile.setPrefix(profilePrefixField.getText().trim());
-        selectedProfile.getPreferredTagIds().clear();
-        for (String value : profilePreferredTagsField.getText().split(",")) {
-            String trimmed = value.trim().toLowerCase();
-            if (!trimmed.isBlank()) {
-                selectedProfile.getPreferredTagIds().add(trimmed);
-            }
         }
         refreshTagProfiles();
         renderSummary();
@@ -1263,7 +1258,7 @@ public final class StoryFlameDesktopApp {
         }
         int confirmation = JOptionPane.showConfirmDialog(
                 frame,
-                "Excluir personagem '" + displayCharacterName(selectedCharacter) + "'?",
+                "Excluir personagem '" + DesktopProjectInsights.displayCharacterName(currentProject, selectedScene, selectedCharacter) + "'?",
                 "Excluir personagem",
                 JOptionPane.YES_NO_OPTION,
                 JOptionPane.WARNING_MESSAGE
@@ -1291,12 +1286,14 @@ public final class StoryFlameDesktopApp {
         if (currentProject == null) {
             return;
         }
-        String baseId = sanitizeTagId(tagSearchField.getText().isBlank() ? tagIdField.getText() : tagSearchField.getText());
+        String draftLabel = tagSearchField.getText().isBlank() ? tagLabelField.getText() : tagSearchField.getText();
+        String baseId = sanitizeTagId(draftLabel);
         if (baseId.isBlank()) {
             baseId = "tag" + (currentProject.getNarrativeTags().size() + 1);
         }
         String uniqueId = ensureUniqueTagId(baseId);
-        NarrativeTag tag = new NarrativeTag(uniqueId, uniqueId, "", "");
+        String label = draftLabel == null || draftLabel.isBlank() ? uniqueId : draftLabel.trim();
+        NarrativeTag tag = new NarrativeTag(uniqueId, label, "", "");
         currentProject.getNarrativeTags().add(tag);
         selectedTag = tag;
         tagSearchField.setText("");
@@ -1347,10 +1344,12 @@ public final class StoryFlameDesktopApp {
 
     private void clearSelectedTagDraft() {
         syncingUi = true;
-        tagIdField.setText("");
         tagLabelField.setText("");
         tagTemplateField.setText("");
-        tagDescriptionArea.setText("");
+        selectedTag = null;
+        tagList.clearSelection();
+        selectedTagUsageLabel.setText("0 usos no manuscrito");
+        selectedTagStatusLabel.setText("Nova tag");
         syncingUi = false;
     }
 
@@ -1365,6 +1364,17 @@ public final class StoryFlameDesktopApp {
         renderSummary();
         scheduleAutosave();
         statusLabel.setText("Tag adicionada ao perfil.");
+    }
+
+    private void removeSelectedTagFromProfile() {
+        if (selectedProfile == null || selectedTag == null) {
+            return;
+        }
+        selectedProfile.getPreferredTagIds().removeIf(tagId -> tagId.equals(selectedTag.id()));
+        refreshTagProfiles();
+        renderSummary();
+        scheduleAutosave();
+        statusLabel.setText("Tag removida do perfil.");
     }
 
     private void assignSelectedCharacterAsPointOfView() {
@@ -1499,7 +1509,7 @@ public final class StoryFlameDesktopApp {
                 continue;
             }
             visibleCharacters.add(character);
-            characterListModel.addElement(displayCharacterName(character));
+            characterListModel.addElement(DesktopProjectInsights.displayCharacterName(currentProject, selectedScene, character));
         }
 
         characterCountLabel.setText(currentProject.getCharacters().size() + " personagens");
@@ -1516,10 +1526,10 @@ public final class StoryFlameDesktopApp {
         characterDescriptionArea.setText(selectedCharacter == null ? "" : selectedCharacter.getDescription());
         selectedCharacterScenesLabel.setText(selectedCharacter == null
                 ? "0 cenas ligadas"
-                : countScenesForCharacter(selectedCharacter) + " cenas ligadas");
+                : DesktopProjectInsights.countScenesForCharacter(currentProject, selectedCharacter) + " cenas ligadas");
         selectedCharacterPointOfViewLabel.setText(selectedCharacter == null
                 ? "Nao e o POV atual"
-                : (isSelectedCharacterPointOfView() ? "POV da cena atual" : "Nao e o POV atual"));
+                : (DesktopProjectInsights.isSelectedCharacterPointOfView(selectedScene, selectedCharacter) ? "POV da cena atual" : "Nao e o POV atual"));
         updateIntegrityLabel();
         syncingUi = previousSyncingUi;
     }
@@ -1532,13 +1542,11 @@ public final class StoryFlameDesktopApp {
         visibleTags.clear();
         tagListModel.clear();
         if (currentProject == null) {
-            tagIdField.setText("");
             tagLabelField.setText("");
             tagTemplateField.setText("");
-            tagDescriptionArea.setText("");
             tagLibraryIssuesLabel.setText("0 inconsistencias de tags");
             selectedTagUsageLabel.setText("0 usos no manuscrito");
-            selectedTagStatusLabel.setText("Tag valida");
+            selectedTagStatusLabel.setText("Nova tag");
             syncingUi = previousSyncingUi;
             return;
         }
@@ -1562,16 +1570,14 @@ public final class StoryFlameDesktopApp {
             selectedTag = currentProject.getNarrativeTags().isEmpty() ? null : currentProject.getNarrativeTags().get(0);
         }
 
-        tagIdField.setText(selectedTag == null ? "" : selectedTag.id());
         tagLabelField.setText(selectedTag == null ? "" : selectedTag.label());
         tagTemplateField.setText(selectedTag == null ? "" : selectedTag.template());
-        tagDescriptionArea.setText(selectedTag == null ? "" : selectedTag.description());
         selectedTagUsageLabel.setText(selectedTag == null
                 ? "0 usos no manuscrito"
-                : countTagUsage(selectedTag.id()) + " usos no manuscrito");
+                : DesktopProjectInsights.countTagUsage(currentProject, selectedTag.id()) + " usos no manuscrito");
         selectedTagStatusLabel.setText(selectedTag == null
-                ? "Tag valida"
-                : (selectedTag.template().isBlank() ? "Sem template proprio" : "Template configurado"));
+                ? "Nova tag"
+                : (selectedTag.template().isBlank() ? "Sem texto renderizado" : "Texto renderizado pronto"));
         updateTagLibraryIssuesLabel();
         syncingUi = previousSyncingUi;
     }
@@ -1594,7 +1600,7 @@ public final class StoryFlameDesktopApp {
 
         for (CharacterTagProfile profile : currentProject.getCharacterTagProfiles()) {
             visibleProfiles.add(profile);
-            profileListModel.addElement(formatProfileLabel(profile));
+            profileListModel.addElement(DesktopProjectInsights.formatProfileLabel(currentProject, selectedScene, profile));
         }
 
         if (selectedProfile != null && visibleProfiles.contains(selectedProfile)) {
@@ -1610,10 +1616,10 @@ public final class StoryFlameDesktopApp {
         profilePreferredTagsField.setText(selectedProfile == null ? "" : String.join(", ", selectedProfile.getPreferredTagIds()));
         selectedProfileCharacterLabel.setText(selectedProfile == null
                 ? "Nenhum perfil selecionado"
-                : formatProfileLabel(selectedProfile));
+                : DesktopProjectInsights.formatProfileLabel(currentProject, selectedScene, selectedProfile));
         selectedProfileStatusLabel.setText(selectedProfile == null
                 ? "Sem inconsistencias"
-                : profileHasIssues(selectedProfile) ? "Perfil com inconsistencias" : "Perfil consistente");
+                : DesktopProjectInsights.profileStatusText(currentProject, selectedProfile));
         updateTagLibraryIssuesLabel();
         syncingUi = previousSyncingUi;
     }
@@ -1630,19 +1636,19 @@ public final class StoryFlameDesktopApp {
         }
 
         String query = povSearchField.getText() == null ? "" : povSearchField.getText().trim().toLowerCase();
-        Character selectedPovCharacter = findCharacterById(selectedScene == null ? null : selectedScene.getPointOfViewCharacterId());
+        Character selectedPovCharacter = DesktopProjectInsights.findCharacterById(currentProject, selectedScene == null ? null : selectedScene.getPointOfViewCharacterId());
         for (Character character : currentProject.getCharacters()) {
             String haystack = (character.getName() + "\n" + character.getDescription()).toLowerCase();
             if (!query.isBlank() && !haystack.contains(query)) {
                 continue;
             }
             visiblePointOfViewCharacters.add(character);
-            povListModel.addElement(displayCharacterName(character));
+            povListModel.addElement(DesktopProjectInsights.displayCharacterName(currentProject, selectedScene, character));
         }
         if (selectedPovCharacter != null && visiblePointOfViewCharacters.contains(selectedPovCharacter)) {
             povList.setSelectedIndex(visiblePointOfViewCharacters.indexOf(selectedPovCharacter));
         }
-        pointOfViewLabel.setText("POV: " + displayPointOfViewName());
+        pointOfViewLabel.setText("POV: " + DesktopProjectInsights.displayPointOfViewName(currentProject, selectedScene));
         syncingUi = previousSyncingUi;
     }
 
@@ -1790,49 +1796,13 @@ public final class StoryFlameDesktopApp {
             summaryArea.setText("");
             return;
         }
-        TemplateExpansionResult expansionResult = currentSceneExpansion();
-        summaryArea.setText("""
-                Arquivo: %s
-                Projeto: %s
-                Autor: %s
-                Capitulo atual: %s
-                Cena atual: %s
-                POV da cena: %s
-                Tags na cena: %s
-                Modo de expansao: %s
-                Tags expandidas: %s
-                Tags invalidas: %s
-                Inconsistencias de tags: %d
-                Capitulos: %d
-                Cenas no capitulo: %d
-                Personagens: %d
-                Resultados de busca: %d
-                Referencias quebradas: %d
-                Palavras na cena: %d
-                Atualizado em: %s
-
-                Preview:
-                %s
-                """.formatted(
+        summaryArea.setText(DesktopSummaryFormatter.format(
+                currentProject,
                 currentPath,
-                currentProject.getTitle(),
-                currentProject.getAuthor(),
-                selectedChapter == null ? "-" : selectedChapter.getTitle(),
-                selectedScene == null ? "-" : selectedScene.getTitle(),
-                displayPointOfViewName(),
-                formatCurrentSceneTagSummary(),
-                templateExpansionMode == TemplateExpansionMode.DRAFT ? "rascunho" : "render",
-                expansionResult.expandedTagIds().isEmpty() ? "-" : String.join(", ", expansionResult.expandedTagIds()),
-                expansionResult.invalidTagIds().isEmpty() ? "-" : String.join(", ", expansionResult.invalidTagIds()),
-                TagLibraryValidator.validate(currentProject).size(),
-                currentProject.getChapters().size(),
-                selectedChapter == null ? 0 : selectedChapter.getScenes().size(),
-                currentProject.getCharacters().size(),
-                searchMatches.size(),
-                NarrativeIntegrityValidator.findBrokenPointOfViewReferences(currentProject).size(),
-                selectedScene == null ? 0 : WordCount.count(selectedScene.getContent()),
-                currentProject.getUpdatedAt(),
-                expansionResult.text()
+                selectedChapter,
+                selectedScene,
+                searchMatches,
+                templateExpansionMode
         ));
     }
 
@@ -1902,14 +1872,10 @@ public final class StoryFlameDesktopApp {
         characterSearchField.enableInputMethods(true);
         characterNameField.enableInputMethods(true);
         povSearchField.enableInputMethods(true);
-        tagIdField.enableInputMethods(true);
         tagLabelField.enableInputMethods(true);
         tagTemplateField.enableInputMethods(true);
-        profilePrefixField.enableInputMethods(true);
-        profilePreferredTagsField.enableInputMethods(true);
         sceneEditorArea.enableInputMethods(true);
         characterDescriptionArea.enableInputMethods(true);
-        tagDescriptionArea.enableInputMethods(true);
 
         titleField.setFont(new Font("Serif", Font.PLAIN, 15));
         authorField.setFont(new Font("Serif", Font.PLAIN, 15));
@@ -1918,15 +1884,12 @@ public final class StoryFlameDesktopApp {
         chapterTitleField.setBorder(BorderFactory.createTitledBorder("Titulo do capitulo"));
         sceneTitleField.setBorder(BorderFactory.createTitledBorder("Titulo da cena"));
         searchField.setBorder(BorderFactory.createTitledBorder("Buscar"));
-        tagSearchField.setBorder(BorderFactory.createTitledBorder("Buscar tag"));
+        tagSearchField.setBorder(BorderFactory.createTitledBorder("Buscar ou criar tag"));
         characterSearchField.setBorder(BorderFactory.createTitledBorder("Buscar personagem"));
         characterNameField.setBorder(BorderFactory.createTitledBorder("Nome do personagem"));
         povSearchField.setBorder(BorderFactory.createTitledBorder("Buscar POV"));
-        tagIdField.setBorder(BorderFactory.createTitledBorder("Id da tag"));
-        tagLabelField.setBorder(BorderFactory.createTitledBorder("Rotulo"));
-        tagTemplateField.setBorder(BorderFactory.createTitledBorder("Template"));
-        profilePrefixField.setBorder(BorderFactory.createTitledBorder("Prefixo do personagem"));
-        profilePreferredTagsField.setBorder(BorderFactory.createTitledBorder("Tags preferidas (csv)"));
+        tagLabelField.setBorder(BorderFactory.createTitledBorder("Tag"));
+        tagTemplateField.setBorder(BorderFactory.createTitledBorder("Texto renderizado"));
 
         chapterList.setFont(new Font("Serif", Font.PLAIN, 15));
         sceneList.setFont(new Font("Serif", Font.PLAIN, 15));
@@ -1971,13 +1934,6 @@ public final class StoryFlameDesktopApp {
         characterDescriptionArea.setFont(new Font("Serif", Font.PLAIN, 14));
         characterDescriptionArea.setBackground(new Color(251, 248, 242));
         characterDescriptionArea.setBorder(BorderFactory.createTitledBorder("Descricao"));
-
-        tagDescriptionArea.setLineWrap(true);
-        tagDescriptionArea.setWrapStyleWord(true);
-        tagDescriptionArea.setRows(5);
-        tagDescriptionArea.setFont(new Font("Serif", Font.PLAIN, 14));
-        tagDescriptionArea.setBackground(new Color(251, 248, 242));
-        tagDescriptionArea.setBorder(BorderFactory.createTitledBorder("Descricao da tag"));
 
         statusLabel.setBorder(BorderFactory.createEmptyBorder(6, 10, 6, 10));
         statusLabel.setOpaque(true);
@@ -2038,7 +1994,7 @@ public final class StoryFlameDesktopApp {
     }
 
     private void updateTagCountLabel() {
-        List<ParsedNarrativeTag> parsedTags = currentSceneTags();
+        List<ParsedNarrativeTag> parsedTags = DesktopProjectInsights.currentSceneTags(currentProject, selectedScene);
         long invalidCount = parsedTags.stream().filter(tag -> !tag.valid()).count();
         if (parsedTags.isEmpty()) {
             tagCountLabel.setText("0 tags");
@@ -2081,16 +2037,6 @@ public final class StoryFlameDesktopApp {
         integrityLabel.setText(issues.size() + " referencias quebradas");
     }
 
-    private String displayCharacterName(Character character) {
-        if (character == null) {
-            return "Personagem";
-        }
-        int sceneCount = countScenesForCharacter(character);
-        String suffix = sceneCount == 1 ? "1 cena" : sceneCount + " cenas";
-        String povMarker = selectedScene != null && character.getId().equals(selectedScene.getPointOfViewCharacterId()) ? " | POV atual" : "";
-        return displayTitle(character.getName(), "Personagem") + " | " + suffix + povMarker;
-    }
-
     private String preferredNewCharacterName() {
         String searchDraft = characterSearchField.getText();
         if (searchDraft != null && !searchDraft.isBlank()) {
@@ -2103,88 +2049,6 @@ public final class StoryFlameDesktopApp {
         return "";
     }
 
-    private String displayPointOfViewName() {
-        Character povCharacter = findCharacterById(selectedScene == null ? null : selectedScene.getPointOfViewCharacterId());
-        if (povCharacter != null) {
-            return displayCharacterName(povCharacter);
-        }
-        if (selectedScene != null && selectedScene.getPointOfViewCharacterId() != null && !selectedScene.getPointOfViewCharacterId().isBlank()) {
-            return "referencia quebrada (" + selectedScene.getPointOfViewCharacterId() + ")";
-        }
-        return "sem personagem";
-    }
-
-    private Character findCharacterById(String characterId) {
-        if (currentProject == null || characterId == null || characterId.isBlank()) {
-            return null;
-        }
-        for (Character character : currentProject.getCharacters()) {
-            if (characterId.equals(character.getId())) {
-                return character;
-            }
-        }
-        return null;
-    }
-
-    private int countScenesForCharacter(Character character) {
-        if (currentProject == null || character == null) {
-            return 0;
-        }
-        int count = 0;
-        for (Chapter chapter : currentProject.getChapters()) {
-            for (Scene scene : chapter.getScenes()) {
-                if (character.getId().equals(scene.getPointOfViewCharacterId())) {
-                    count++;
-                }
-            }
-        }
-        return count;
-    }
-
-    private boolean isSelectedCharacterPointOfView() {
-        return selectedCharacter != null
-                && selectedScene != null
-                && selectedCharacter.getId().equals(selectedScene.getPointOfViewCharacterId());
-    }
-
-    private List<ParsedNarrativeTag> currentSceneTags() {
-        if (selectedScene == null) {
-            return List.of();
-        }
-        return NarrativeTagParser.parse(selectedScene.getContent(), currentNarrativeTagCatalog());
-    }
-
-    private TemplateExpansionResult currentSceneExpansion() {
-        if (selectedScene == null) {
-            return new TemplateExpansionResult("", List.of(), List.of());
-        }
-        return TemplateExpansionEngine.expand(selectedScene.getContent(), currentNarrativeTagCatalog(), templateExpansionMode);
-    }
-
-    private String formatCurrentSceneTagSummary() {
-        List<ParsedNarrativeTag> parsedTags = currentSceneTags();
-        if (parsedTags.isEmpty()) {
-            return "nenhuma";
-        }
-        List<String> validTagIds = parsedTags.stream()
-                .filter(ParsedNarrativeTag::valid)
-                .map(ParsedNarrativeTag::tagId)
-                .distinct()
-                .toList();
-        List<String> invalidTagIds = parsedTags.stream()
-                .filter(tag -> !tag.valid())
-                .map(ParsedNarrativeTag::tagId)
-                .distinct()
-                .toList();
-        if (invalidTagIds.isEmpty()) {
-            return String.join(", ", validTagIds);
-        }
-        if (validTagIds.isEmpty()) {
-            return "invalidas: " + String.join(", ", invalidTagIds);
-        }
-        return "validas: " + String.join(", ", validTagIds) + " | invalidas: " + String.join(", ", invalidTagIds);
-    }
-
     private void setTemplateExpansionMode(TemplateExpansionMode mode) {
         templateExpansionMode = mode;
         renderModeLabel.setText(mode == TemplateExpansionMode.DRAFT ? "Rascunho" : "Render");
@@ -2192,13 +2056,6 @@ public final class StoryFlameDesktopApp {
         statusLabel.setText(mode == TemplateExpansionMode.DRAFT
                 ? "Modo rascunho ativo."
                 : "Modo render ativo.");
-    }
-
-    private NarrativeTagCatalog currentNarrativeTagCatalog() {
-        if (currentProject == null || currentProject.getNarrativeTags().isEmpty()) {
-            return NarrativeTagCatalog.defaultCatalog();
-        }
-        return new NarrativeTagCatalog(currentProject.getNarrativeTags());
     }
 
     private void updateTagLibraryIssuesLabel() {
@@ -2221,13 +2078,6 @@ public final class StoryFlameDesktopApp {
                 currentProject.getCharacters().stream().noneMatch(character -> character.getId().equals(profile.getCharacterId())));
     }
 
-    private String formatProfileLabel(CharacterTagProfile profile) {
-        Character character = findCharacterById(profile.getCharacterId());
-        String name = character == null ? profile.getCharacterId() : displayCharacterName(character);
-        String prefix = profile.getPrefix() == null || profile.getPrefix().isBlank() ? "sem prefixo" : profile.getPrefix();
-        return name + " | " + prefix;
-    }
-
     private String sanitizeTagId(String value) {
         if (value == null || value.isBlank()) {
             return "";
@@ -2248,35 +2098,6 @@ public final class StoryFlameDesktopApp {
     private boolean hasTagId(String candidate) {
         for (NarrativeTag tag : currentProject.getNarrativeTags()) {
             if (tag.id().equals(candidate)) {
-                return true;
-            }
-        }
-        return false;
-    }
-
-    private int countTagUsage(String tagId) {
-        if (currentProject == null || tagId == null || tagId.isBlank()) {
-            return 0;
-        }
-        int count = 0;
-        for (Chapter chapter : currentProject.getChapters()) {
-            for (Scene scene : chapter.getScenes()) {
-                for (ParsedNarrativeTag parsedTag : NarrativeTagParser.parse(scene.getContent(), currentNarrativeTagCatalog())) {
-                    if (parsedTag.tagId().equals(tagId)) {
-                        count++;
-                    }
-                }
-            }
-        }
-        return count;
-    }
-
-    private boolean profileHasIssues(CharacterTagProfile profile) {
-        if (profile == null || currentProject == null) {
-            return false;
-        }
-        for (TagLibraryIssue issue : TagLibraryValidator.validate(currentProject)) {
-            if (issue.message().contains(profile.getCharacterId()) || issue.message().contains(profile.getPrefix())) {
                 return true;
             }
         }
