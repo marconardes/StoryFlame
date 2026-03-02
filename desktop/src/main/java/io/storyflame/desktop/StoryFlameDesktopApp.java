@@ -457,6 +457,22 @@ public final class StoryFlameDesktopApp {
                 onSceneTitleEdited();
             }
         };
+        DocumentListener chapterTitleListener = new DocumentListener() {
+            @Override
+            public void insertUpdate(DocumentEvent event) {
+                onChapterTitleEdited();
+            }
+
+            @Override
+            public void removeUpdate(DocumentEvent event) {
+                onChapterTitleEdited();
+            }
+
+            @Override
+            public void changedUpdate(DocumentEvent event) {
+                onChapterTitleEdited();
+            }
+        };
         DocumentListener sceneContentListener = new DocumentListener() {
             @Override
             public void insertUpdate(DocumentEvent event) {
@@ -476,7 +492,7 @@ public final class StoryFlameDesktopApp {
 
         titleField.getDocument().addDocumentListener(metadataListener);
         authorField.getDocument().addDocumentListener(metadataListener);
-        chapterTitleField.getDocument().addDocumentListener(metadataListener);
+        chapterTitleField.getDocument().addDocumentListener(chapterTitleListener);
         sceneTitleField.getDocument().addDocumentListener(sceneTitleListener);
         sceneEditorArea.getDocument().addDocumentListener(sceneContentListener);
         searchField.getDocument().addDocumentListener(new DocumentListener() {
@@ -511,7 +527,6 @@ public final class StoryFlameDesktopApp {
                 }
             }
         });
-
         sceneEditorArea.getDocument().addUndoableEditListener(sceneUndoManager);
         installUndoRedo(sceneEditorArea, sceneUndoManager);
         installWindowShortcut(frame.getRootPane(), "F1", this::focusEditorFrame);
@@ -587,6 +602,28 @@ public final class StoryFlameDesktopApp {
             selectedScene.setTitle(sceneTitleField.getText());
         }
         refreshStructureLists();
+        renderSummary();
+        scheduleSearchRefresh();
+        scheduleAutosave();
+        statusLabel.setText("Alteracoes pendentes...");
+    }
+
+    private void onChapterTitleEdited() {
+        if (syncingUi || currentProject == null || currentPath == null) {
+            return;
+        }
+        if (selectedChapter != null) {
+            selectedChapter.setTitle(chapterTitleField.getText());
+            int chapterIndex = currentProject.getChapters().indexOf(selectedChapter);
+            if (chapterIndex >= 0 && chapterIndex < chapterListModel.size()) {
+                chapterListModel.set(chapterIndex, (chapterIndex + 1) + ". " + displayTitle(selectedChapter.getTitle(), "Capitulo"));
+            }
+        }
+        contextLabel.setText((selectedChapter == null ? "-" : displayTitle(selectedChapter.getTitle(), "Capitulo"))
+                + " / "
+                + (selectedScene == null ? "-" : displayTitle(selectedScene.getTitle(), "Cena")));
+        chapterCountLabel.setText(currentProject.getChapters().size() + " capitulos");
+        sceneCountLabel.setText(selectedChapter == null ? "0 cenas" : selectedChapter.getScenes().size() + " cenas");
         renderSummary();
         scheduleSearchRefresh();
         scheduleAutosave();
@@ -972,6 +1009,13 @@ public final class StoryFlameDesktopApp {
     }
 
     private void configureEditorComponents() {
+        titleField.enableInputMethods(true);
+        authorField.enableInputMethods(true);
+        chapterTitleField.enableInputMethods(true);
+        sceneTitleField.enableInputMethods(true);
+        searchField.enableInputMethods(true);
+        sceneEditorArea.enableInputMethods(true);
+
         titleField.setFont(new Font("Serif", Font.PLAIN, 15));
         authorField.setFont(new Font("Serif", Font.PLAIN, 15));
         titleField.setBorder(BorderFactory.createTitledBorder("Titulo"));

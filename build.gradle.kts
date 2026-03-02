@@ -1,4 +1,5 @@
 import org.gradle.api.plugins.JavaPluginExtension
+import org.gradle.api.tasks.compile.JavaCompile
 import org.gradle.api.tasks.testing.Test
 import org.gradle.kotlin.dsl.configure
 import org.gradle.kotlin.dsl.withType
@@ -22,8 +23,14 @@ subprojects {
         }
     }
 
+    tasks.withType<JavaCompile>().configureEach {
+        options.encoding = "UTF-8"
+    }
+
     tasks.withType<Test>().configureEach {
         useJUnitPlatform()
+        systemProperty("file.encoding", "UTF-8")
+        systemProperty("sun.jnu.encoding", "UTF-8")
     }
 }
 

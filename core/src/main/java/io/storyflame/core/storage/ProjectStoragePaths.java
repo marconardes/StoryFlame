@@ -2,6 +2,7 @@ package io.storyflame.core.storage;
 
 import io.storyflame.core.model.Project;
 import java.nio.file.Path;
+import java.text.Normalizer;
 
 public final class ProjectStoragePaths {
     public static final String ARCHIVE_EXTENSION = ".storyflame";
@@ -31,7 +32,9 @@ public final class ProjectStoragePaths {
     }
 
     public static String sanitize(String value) {
-        return value.toLowerCase()
+        String normalized = Normalizer.normalize(value, Normalizer.Form.NFD)
+                .replaceAll("\\p{M}+", "");
+        return normalized.toLowerCase()
                 .replaceAll("[^a-z0-9]+", "-")
                 .replaceAll("(^-+|-+$)", "");
     }
