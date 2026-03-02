@@ -7,8 +7,10 @@ import io.storyflame.core.model.Scene;
 import io.storyflame.core.search.ProjectSearch;
 import io.storyflame.core.search.SearchMatch;
 import io.storyflame.core.search.SearchTarget;
+import io.storyflame.core.storage.ProjectArchiveInspection;
 import io.storyflame.core.storage.ProjectArchiveStore;
 import io.storyflame.core.storage.ProjectAutosaveService;
+import io.storyflame.core.storage.ProjectBackupService;
 import io.storyflame.core.storage.ProjectStoragePaths;
 import io.storyflame.core.tags.CharacterTagProfile;
 import io.storyflame.core.tags.NarrativeTag;
@@ -59,6 +61,7 @@ import javax.swing.JTextArea;
 import javax.swing.JTextField;
 import javax.swing.JToggleButton;
 import javax.swing.JToolBar;
+import javax.swing.JTree;
 import javax.swing.KeyStroke;
 import javax.swing.SwingConstants;
 import javax.swing.ListSelectionModel;
@@ -71,6 +74,9 @@ import javax.swing.text.BadLocationException;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
 import javax.swing.event.ListSelectionEvent;
+import javax.swing.tree.DefaultMutableTreeNode;
+import javax.swing.tree.DefaultTreeModel;
+import javax.swing.tree.TreePath;
 import javax.swing.undo.CannotRedoException;
 import javax.swing.undo.CannotUndoException;
 import javax.swing.undo.UndoManager;
@@ -81,6 +87,7 @@ public final class StoryFlameDesktopApp {
 
     private final ProjectArchiveStore store;
     private final ProjectAutosaveService autosaveService;
+    private final ProjectBackupService backupService;
     private final JTextField titleField;
     private final JTextField authorField;
     private final JTextField chapterTitleField;
@@ -138,6 +145,7 @@ public final class StoryFlameDesktopApp {
     private final JList<String> characterList;
     private final JList<String> povList;
     private final JList<String> profileList;
+    private final JTree editorStructureTree;
     private final UndoManager sceneUndoManager;
     private final List<SearchMatch> searchMatches;
     private final List<NarrativeTag> visibleTags;
@@ -167,6 +175,11 @@ public final class StoryFlameDesktopApp {
     private StoryFlameDesktopApp() {
         this.store = new ProjectArchiveStore(ProjectStoragePaths.defaultDesktopProjectsDirectory());
         this.autosaveService = new ProjectAutosaveService(store, Duration.ofSeconds(2));
+        this.backupService = new ProjectBackupService(
+                ProjectStoragePaths.defaultDesktopBackupsDirectory(),
+                8,
+                Duration.ofMinutes(5)
+        );
         this.titleField = new JTextField();
         this.authorField = new JTextField();
         this.chapterTitleField = new JTextField();
@@ -224,6 +237,7 @@ public final class StoryFlameDesktopApp {
         this.characterList = new JList<>(characterListModel);
         this.povList = new JList<>(povListModel);
         this.profileList = new JList<>(profileListModel);
+        this.editorStructureTree = new JTree(new DefaultMutableTreeNode("Livro"));
         this.sceneUndoManager = new UndoManager();
         this.searchMatches = new ArrayList<>();
         this.visibleTags = new ArrayList<>();
@@ -298,6 +312,9 @@ public final class StoryFlameDesktopApp {
         fileMenu.add(menuItem("Novo projeto", "control N", this::createProject));
         fileMenu.add(menuItem("Abrir...", "control O", () -> openProject(frame)));
         fileMenu.add(menuItem("Salvar", "control S", this::saveProject));
+        fileMenu.add(menuItem("Exportar ZIP...", "control shift E", () -> exportProjectArchive(frame)));
+        fileMenu.add(menuItem("Importar ZIP...", "control shift I", () -> importProjectArchive(frame)));
+        fileMenu.add(menuItem("Verificar arquivo...", "control shift V", () -> inspectProjectArchive(frame)));
         fileMenu.addSeparator();
         fileMenu.add(menuItem("Fechar", "control W", frame::dispose));
 
@@ -334,6 +351,8 @@ public final class StoryFlameDesktopApp {
         JButton newButton = new JButton("Novo");
         JButton openButton = new JButton("Abrir");
         JButton saveButton = new JButton("Salvar");
+        JButton exportButton = new JButton("Exportar");
+        JButton importButton = new JButton("Importar");
         JButton structureButton = new JButton("Estrutura");
         JButton projectButton = new JButton("Projeto");
         JButton searchButton = new JButton("Buscar");
@@ -346,6 +365,8 @@ public final class StoryFlameDesktopApp {
         newButton.addActionListener(event -> createProject());
         openButton.addActionListener(event -> openProject(frame));
         saveButton.addActionListener(event -> saveProject());
+        exportButton.addActionListener(event -> exportProjectArchive(frame));
+        importButton.addActionListener(event -> importProjectArchive(frame));
         structureButton.addActionListener(event -> focusStructureFrame());
         projectButton.addActionListener(event -> focusProjectFrame());
         searchButton.addActionListener(event -> focusSearchFrame());
@@ -355,6 +376,8 @@ public final class StoryFlameDesktopApp {
         toolBar.add(newButton);
         toolBar.add(openButton);
         toolBar.add(saveButton);
+        toolBar.add(exportButton);
+        toolBar.add(importButton);
         toolBar.addSeparator();
         toolBar.add(structureButton);
         toolBar.add(projectButton);
@@ -403,7 +426,21 @@ public final class StoryFlameDesktopApp {
         header.add(sceneTitleField, BorderLayout.CENTER);
         header.add(buildEditorBadge(contextLabel), BorderLayout.SOUTH);
         panel.add(header, BorderLayout.NORTH);
-        panel.add(new JScrollPane(sceneEditorArea), BorderLayout.CENTER);
+
+        JPanel navigationPanel = new JPanel(new BorderLayout(8, 8));
+        navigationPanel.setOpaque(false);
+        navigationPanel.setBorder(BorderFactory.createTitledBorder("Cenas"));
+        navigationPanel.setPreferredSize(new Dimension(260, 10));
+        navigationPanel.add(new JScrollPane(editorStructureTree), BorderLayout.CENTER);
+
+        JSplitPane editorSplitPane = new JSplitPane(
+                JSplitPane.HORIZONTAL_SPLIT,
+                navigationPanel,
+                new JScrollPane(sceneEditorArea)
+        );
+        editorSplitPane.setResizeWeight(0.22);
+        editorSplitPane.setBorder(BorderFactory.createEmptyBorder());
+        panel.add(editorSplitPane, BorderLayout.CENTER);
         panel.add(buildPointOfViewPanel(), BorderLayout.EAST);
         JPanel footer = new JPanel(new BorderLayout(8, 8));
         footer.setOpaque(false);
@@ -651,14 +688,17 @@ public final class StoryFlameDesktopApp {
 
         JPanel footer = new JPanel(new GridLayout(1, 0, 8, 0));
         footer.setOpaque(false);
+        JButton updateNameButton = new JButton("Atualizar nome");
         JButton assignButton = new JButton("Usar como POV da cena");
         JButton useSelectedTagButton = new JButton("Usar tag selecionada");
         JButton removeSelectedTagButton = new JButton("Remover tag selecionada");
         JButton clearSearchButton = new JButton("Limpar busca");
+        updateNameButton.addActionListener(event -> applyCharacterNameUpdate());
         assignButton.addActionListener(event -> assignSelectedCharacterAsPointOfView());
         useSelectedTagButton.addActionListener(event -> appendSelectedTagToCharacter());
         removeSelectedTagButton.addActionListener(event -> removeSelectedTagFromCharacter());
         clearSearchButton.addActionListener(event -> characterSearchField.setText(""));
+        footer.add(updateNameButton);
         footer.add(assignButton);
         footer.add(useSelectedTagButton);
         footer.add(removeSelectedTagButton);
@@ -994,6 +1034,8 @@ public final class StoryFlameDesktopApp {
         characterList.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
         povList.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
         profileList.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
+        editorStructureTree.setRootVisible(false);
+        editorStructureTree.setShowsRootHandles(true);
 
         chapterList.addListSelectionListener(this::onChapterSelected);
         sceneList.addListSelectionListener(this::onSceneSelected);
@@ -1001,6 +1043,7 @@ public final class StoryFlameDesktopApp {
         tagList.addListSelectionListener(this::onTagSelected);
         characterList.addListSelectionListener(this::onCharacterSelected);
         profileList.addListSelectionListener(this::onProfileSelected);
+        editorStructureTree.addTreeSelectionListener(event -> onEditorTreeSelected());
         searchList.addMouseListener(new java.awt.event.MouseAdapter() {
             @Override
             public void mouseClicked(java.awt.event.MouseEvent event) {
@@ -1050,15 +1093,7 @@ public final class StoryFlameDesktopApp {
         if (result != JFileChooser.APPROVE_OPTION) {
             return;
         }
-        currentPath = chooser.getSelectedFile().toPath();
-        currentProject = store.open(currentPath);
-        ensureEditorStructure();
-        selectedChapter = currentProject.getChapters().get(0);
-        selectedScene = selectedChapter.getScenes().get(0);
-        selectedCharacter = currentProject.getCharacters().isEmpty() ? null : currentProject.getCharacters().get(0);
-        syncFieldsFromProject();
-        statusLabel.setText("Projeto aberto de " + currentPath);
-        focusEditorFrame();
+        loadProjectFromPath(chooser.getSelectedFile().toPath(), "Projeto aberto de ");
     }
 
     private void saveProject() {
@@ -1071,6 +1106,77 @@ public final class StoryFlameDesktopApp {
         statusLabel.setText("Projeto salvo em " + currentPath);
     }
 
+    private void exportProjectArchive(JFrame owner) {
+        if (currentProject == null) {
+            return;
+        }
+        syncProjectFromFields();
+        JFileChooser chooser = new JFileChooser(store.getBaseDirectory().toFile());
+        chooser.setSelectedFile((currentPath == null ? ProjectStoragePaths.suggestedArchivePath(store.getBaseDirectory(), currentProject) : currentPath).toFile());
+        int result = chooser.showSaveDialog(owner);
+        if (result != JFileChooser.APPROVE_OPTION) {
+            return;
+        }
+        Path targetPath = chooser.getSelectedFile().toPath();
+        if (!targetPath.getFileName().toString().endsWith(ProjectStoragePaths.ARCHIVE_EXTENSION)) {
+            targetPath = targetPath.resolveSibling(targetPath.getFileName() + ProjectStoragePaths.ARCHIVE_EXTENSION);
+        }
+        store.exportArchive(currentProject, targetPath);
+        statusLabel.setText("Projeto exportado para " + targetPath);
+    }
+
+    private void importProjectArchive(JFrame owner) {
+        JFileChooser chooser = new JFileChooser(store.getBaseDirectory().toFile());
+        int result = chooser.showOpenDialog(owner);
+        if (result != JFileChooser.APPROVE_OPTION) {
+            return;
+        }
+        Path sourcePath = chooser.getSelectedFile().toPath();
+        ProjectArchiveInspection inspection = store.inspect(sourcePath);
+        if (!inspection.valid()) {
+            JOptionPane.showMessageDialog(
+                    owner,
+                    "Arquivo invalido:\n" + String.join("\n", inspection.issues()),
+                    "Importar projeto",
+                    JOptionPane.ERROR_MESSAGE
+            );
+            return;
+        }
+        Path importedPath = store.importArchive(sourcePath);
+        loadProjectFromPath(importedPath, inspection.requiresMigration() ? "Projeto importado e migrado de " : "Projeto importado de ");
+    }
+
+    private void inspectProjectArchive(JFrame owner) {
+        JFileChooser chooser = new JFileChooser(store.getBaseDirectory().toFile());
+        int result = chooser.showOpenDialog(owner);
+        if (result != JFileChooser.APPROVE_OPTION) {
+            return;
+        }
+        Path sourcePath = chooser.getSelectedFile().toPath();
+        ProjectArchiveInspection inspection = store.inspect(sourcePath);
+        String status = inspection.valid() ? "Arquivo valido" : "Arquivo invalido";
+        String migration = inspection.requiresMigration() ? "\nMigracao necessaria: sim" : "\nMigracao necessaria: nao";
+        String details = inspection.issues().isEmpty() ? "\nSem inconsistencias." : "\n" + String.join("\n", inspection.issues());
+        JOptionPane.showMessageDialog(
+                owner,
+                status + migration + details,
+                "Verificar arquivo",
+                inspection.valid() ? JOptionPane.INFORMATION_MESSAGE : JOptionPane.ERROR_MESSAGE
+        );
+    }
+
+    private void loadProjectFromPath(Path path, String statusPrefix) {
+        currentPath = path;
+        currentProject = store.open(currentPath);
+        ensureEditorStructure();
+        selectedChapter = currentProject.getChapters().get(0);
+        selectedScene = selectedChapter.getScenes().get(0);
+        selectedCharacter = currentProject.getCharacters().isEmpty() ? null : currentProject.getCharacters().get(0);
+        syncFieldsFromProject();
+        statusLabel.setText(statusPrefix + currentPath);
+        focusEditorFrame();
+    }
+
     private void onProjectEdited() {
         if (syncingUi || currentProject == null || currentPath == null) {
             return;
@@ -1080,9 +1186,10 @@ public final class StoryFlameDesktopApp {
         scheduleSearchRefresh();
         currentPath = resolveSavePath(currentPath);
         Path autosavePath = currentPath;
-        autosaveService.schedule(currentProject, autosavePath, () ->
-                SwingUtilities.invokeLater(() -> statusLabel.setText("Autosave concluido em " + autosavePath))
-        );
+        autosaveService.schedule(currentProject, autosavePath, () -> {
+            createProjectBackup(autosavePath);
+            SwingUtilities.invokeLater(() -> statusLabel.setText("Autosave concluido em " + autosavePath));
+        });
         statusLabel.setText("Alteracoes pendentes...");
     }
 
@@ -1163,6 +1270,14 @@ public final class StoryFlameDesktopApp {
         renderSummary();
         scheduleAutosave();
         statusLabel.setText("Alteracoes pendentes...");
+    }
+
+    private void applyCharacterNameUpdate() {
+        if (currentProject == null || selectedCharacter == null) {
+            return;
+        }
+        onCharacterEdited();
+        statusLabel.setText("Nome do personagem atualizado.");
     }
 
     private void onTagEdited() {
@@ -1301,7 +1416,7 @@ public final class StoryFlameDesktopApp {
         if (currentProject == null) {
             return;
         }
-        syncProjectFromFields();
+        syncProjectFromFieldsExceptCharacter();
         String draftName = preferredNewCharacterName();
         Character character = new Character(
                 null,
@@ -1532,6 +1647,7 @@ public final class StoryFlameDesktopApp {
 
         chapterListModel.clear();
         sceneListModel.clear();
+        refreshEditorStructureTree();
         if (currentProject == null) {
             chapterTitleField.setText("");
             chapterCountLabel.setText("0 capitulos");
@@ -1562,6 +1678,7 @@ public final class StoryFlameDesktopApp {
         if (selectedSceneIndex >= 0 && selectedSceneIndex < sceneListModel.size()) {
             sceneList.setSelectedIndex(selectedSceneIndex);
         }
+        selectEditorTreeCurrentScene();
         syncingUi = previousSyncingUi;
     }
 
@@ -1620,8 +1737,14 @@ public final class StoryFlameDesktopApp {
             selectedCharacter = currentProject.getCharacters().isEmpty() ? null : currentProject.getCharacters().get(0);
         }
 
-        characterNameField.setText(selectedCharacter == null ? "" : selectedCharacter.getName());
-        characterDescriptionArea.setText(selectedCharacter == null ? "" : selectedCharacter.getDescription());
+        String characterName = selectedCharacter == null ? "" : selectedCharacter.getName();
+        String characterDescription = selectedCharacter == null ? "" : selectedCharacter.getDescription();
+        if (!characterNameField.isFocusOwner() && !characterName.equals(characterNameField.getText())) {
+            characterNameField.setText(characterName);
+        }
+        if (!characterDescriptionArea.isFocusOwner() && !characterDescription.equals(characterDescriptionArea.getText())) {
+            characterDescriptionArea.setText(characterDescription);
+        }
         selectedCharacterScenesLabel.setText(selectedCharacter == null
                 ? "0 cenas ligadas"
                 : DesktopProjectInsights.countScenesForCharacter(currentProject, selectedCharacter) + " cenas ligadas");
@@ -1792,6 +1915,68 @@ public final class StoryFlameDesktopApp {
         statusLabel.setText("Navegacao rapida: " + formatSearchLabel(match));
     }
 
+    private void refreshEditorStructureTree() {
+        DefaultMutableTreeNode root = new DefaultMutableTreeNode("Livro");
+        if (currentProject != null) {
+            for (int chapterIndex = 0; chapterIndex < currentProject.getChapters().size(); chapterIndex++) {
+                Chapter chapter = currentProject.getChapters().get(chapterIndex);
+                DefaultMutableTreeNode chapterNode = new DefaultMutableTreeNode(new EditorTreeNode(
+                        (chapterIndex + 1) + ". " + displayTitle(chapter.getTitle(), "Capitulo"),
+                        chapter,
+                        null
+                ));
+                for (int sceneIndex = 0; sceneIndex < chapter.getScenes().size(); sceneIndex++) {
+                    Scene scene = chapter.getScenes().get(sceneIndex);
+                    chapterNode.add(new DefaultMutableTreeNode(new EditorTreeNode(
+                            (sceneIndex + 1) + ". " + displayTitle(scene.getTitle(), "Cena"),
+                            chapter,
+                            scene
+                    )));
+                }
+                root.add(chapterNode);
+            }
+        }
+        editorStructureTree.setModel(new DefaultTreeModel(root));
+        for (int index = 0; index < editorStructureTree.getRowCount(); index++) {
+            editorStructureTree.expandRow(index);
+        }
+    }
+
+    private void selectEditorTreeCurrentScene() {
+        DefaultMutableTreeNode root = (DefaultMutableTreeNode) editorStructureTree.getModel().getRoot();
+        if (root == null || selectedChapter == null) {
+            editorStructureTree.clearSelection();
+            return;
+        }
+        for (int chapterIndex = 0; chapterIndex < root.getChildCount(); chapterIndex++) {
+            DefaultMutableTreeNode chapterNode = (DefaultMutableTreeNode) root.getChildAt(chapterIndex);
+            EditorTreeNode chapterValue = treeNodeValue(chapterNode);
+            if (chapterValue == null || chapterValue.chapter() != selectedChapter) {
+                continue;
+            }
+            if (selectedScene == null) {
+                editorStructureTree.setSelectionPath(new TreePath(chapterNode.getPath()));
+                return;
+            }
+            for (int sceneIndex = 0; sceneIndex < chapterNode.getChildCount(); sceneIndex++) {
+                DefaultMutableTreeNode sceneNode = (DefaultMutableTreeNode) chapterNode.getChildAt(sceneIndex);
+                EditorTreeNode sceneValue = treeNodeValue(sceneNode);
+                if (sceneValue != null && sceneValue.scene() == selectedScene) {
+                    editorStructureTree.setSelectionPath(new TreePath(sceneNode.getPath()));
+                    return;
+                }
+            }
+            editorStructureTree.setSelectionPath(new TreePath(chapterNode.getPath()));
+            return;
+        }
+        editorStructureTree.clearSelection();
+    }
+
+    private EditorTreeNode treeNodeValue(DefaultMutableTreeNode node) {
+        Object value = node == null ? null : node.getUserObject();
+        return value instanceof EditorTreeNode editorTreeNode ? editorTreeNode : null;
+    }
+
     private void selectCurrentObjects() {
         syncingUi = true;
         int chapterIndex = currentProject.getChapters().indexOf(selectedChapter);
@@ -1800,8 +1985,29 @@ public final class StoryFlameDesktopApp {
             int sceneIndex = selectedChapter.getScenes().indexOf(selectedScene);
             sceneList.setSelectedIndex(sceneIndex);
         }
+        selectEditorTreeCurrentScene();
         updateEditorFields();
         syncingUi = false;
+    }
+
+    private void onEditorTreeSelected() {
+        if (syncingUi || currentProject == null) {
+            return;
+        }
+        Object selectedPathComponent = editorStructureTree.getLastSelectedPathComponent();
+        if (!(selectedPathComponent instanceof DefaultMutableTreeNode node)) {
+            return;
+        }
+        EditorTreeNode selectedNode = treeNodeValue(node);
+        if (selectedNode == null) {
+            return;
+        }
+        syncProjectFromFields();
+        selectedChapter = selectedNode.chapter();
+        ensureChapterHasScene(selectedChapter);
+        selectedScene = selectedNode.scene() == null ? selectedChapter.getScenes().get(0) : selectedNode.scene();
+        refreshStructureLists();
+        selectCurrentObjects();
     }
 
     private void onChapterSelected(ListSelectionEvent event) {
@@ -1924,8 +2130,20 @@ public final class StoryFlameDesktopApp {
     private Path saveProjectArchive(Path previousPath) {
         Path targetPath = resolveSavePath(previousPath);
         store.save(currentProject, targetPath);
+        createProjectBackup(targetPath);
         deleteSupersededArchive(previousPath, targetPath);
         return targetPath;
+    }
+
+    private void createProjectBackup(Path archivePath) {
+        if (currentProject == null || archivePath == null) {
+            return;
+        }
+        try {
+            backupService.createBackup(archivePath, currentProject);
+        } catch (Exception exception) {
+            SwingUtilities.invokeLater(() -> statusLabel.setText("Projeto salvo, mas o backup falhou."));
+        }
     }
 
     private Path resolveSavePath(Path previousPath) {
@@ -2008,6 +2226,7 @@ public final class StoryFlameDesktopApp {
 
         chapterList.setFont(new Font("Serif", Font.PLAIN, 15));
         sceneList.setFont(new Font("Serif", Font.PLAIN, 15));
+        editorStructureTree.setFont(new Font("Serif", Font.PLAIN, 15));
         searchList.setFont(new Font("Serif", Font.PLAIN, 14));
         tagList.setFont(new Font("Serif", Font.PLAIN, 14));
         characterList.setFont(new Font("Serif", Font.PLAIN, 15));
@@ -2247,11 +2466,20 @@ public final class StoryFlameDesktopApp {
         if (searchDraft != null && !searchDraft.isBlank()) {
             return searchDraft.trim();
         }
-        String nameDraft = characterNameField.getText();
-        if (nameDraft != null && !nameDraft.isBlank()) {
-            return nameDraft.trim();
-        }
         return "";
+    }
+
+    private void syncProjectFromFieldsExceptCharacter() {
+        currentProject.setTitle(titleField.getText());
+        currentProject.setAuthor(authorField.getText());
+        if (selectedChapter != null) {
+            selectedChapter.setTitle(chapterTitleField.getText());
+        }
+        if (selectedScene != null) {
+            selectedScene.setTitle(sceneTitleField.getText());
+            selectedScene.setContent(sceneEditorArea.getText());
+        }
+        updateWordCount();
     }
 
     private void setTemplateExpansionMode(TemplateExpansionMode mode) {
@@ -2685,6 +2913,13 @@ public final class StoryFlameDesktopApp {
     }
 
     private record TagQuery(int startIndex, String query, boolean insideTag) {
+    }
+
+    private record EditorTreeNode(String label, Chapter chapter, Scene scene) {
+        @Override
+        public String toString() {
+            return label;
+        }
     }
 
     private void scheduleAutosave() {

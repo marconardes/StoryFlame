@@ -4,6 +4,7 @@ import java.util.List;
 
 public final class ProjectArchiveLayout {
     public static final String SPEC_VERSION = "1";
+    public static final int SPEC_VERSION_NUMBER = 1;
     public static final String MANIFEST_FILE = "manifest.json";
     public static final String PROJECT_FILE = "project.json";
     public static final String NARRATIVE_TAGS_FILE = "narrative_tags.json";

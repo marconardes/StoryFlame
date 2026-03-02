@@ -14,6 +14,10 @@ public final class ProjectStoragePaths {
         return Path.of(System.getProperty("user.home"), ".storyflame", "projects");
     }
 
+    public static Path defaultDesktopBackupsDirectory() {
+        return Path.of(System.getProperty("user.home"), ".storyflame", "backups");
+    }
+
     public static Path suggestedArchivePath(Path baseDirectory, Project project) {
         String normalizedTitle = project.getTitle().isBlank() ? "untitled-project" : sanitize(project.getTitle());
         if (normalizedTitle.isBlank()) {
@@ -37,5 +41,13 @@ public final class ProjectStoragePaths {
         return normalized.toLowerCase()
                 .replaceAll("[^a-z0-9]+", "-")
                 .replaceAll("(^-+|-+$)", "");
+    }
+
+    public static Path backupDirectory(Path backupRootDirectory, Project project) {
+        String projectSlug = sanitize(project.getTitle().isBlank() ? "project" : project.getTitle());
+        if (projectSlug.isBlank()) {
+            projectSlug = "project";
+        }
+        return backupRootDirectory.resolve(projectSlug + "-" + project.getId());
     }
 }

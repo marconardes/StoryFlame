@@ -191,12 +191,12 @@ Marco:
 Objetivo: garantir portabilidade confiavel do projeto.
 
 Backlog:
-- [ ] Exportar ZIP
-- [ ] Importar ZIP
-- [ ] Validar integridade do pacote
-- [ ] Implementar migracao de versao
-- [ ] Criar backups automaticos
-- [ ] Executar teste de stress
+- [x] Exportar ZIP
+- [x] Importar ZIP
+- [x] Validar integridade do pacote
+- [x] Implementar migracao de versao
+- [x] Criar backups automaticos
+- [x] Executar teste de stress
 
 Entregavel:
 - Projeto portavel e seguro

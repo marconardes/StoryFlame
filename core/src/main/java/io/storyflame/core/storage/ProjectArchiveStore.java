@@ -35,10 +35,12 @@ import java.util.zip.ZipOutputStream;
 public final class ProjectArchiveStore {
     private final Gson gson;
     private final Path baseDirectory;
+    private final ProjectArchiveInspector archiveInspector;
 
     public ProjectArchiveStore(Path baseDirectory) {
         this.baseDirectory = Objects.requireNonNull(baseDirectory);
         this.gson = JsonMapperFactory.create();
+        this.archiveInspector = new ProjectArchiveInspector();
     }
 
     public Path getBaseDirectory() {
@@ -84,14 +86,27 @@ public final class ProjectArchiveStore {
         }
     }
 
+    public Path exportArchive(Project project, Path targetPath) {
+        return save(project, targetPath);
+    }
+
+    public ProjectArchiveInspection inspect(Path path) {
+        return archiveInspector.inspect(path);
+    }
+
     public Project open(Path path) {
         Objects.requireNonNull(path);
+        ProjectArchiveInspection inspection = inspect(path);
+        if (!inspection.valid()) {
+            throw new IllegalStateException("Project archive is invalid: " + String.join("; ", inspection.issues()));
+        }
         try (ZipInputStream zip = new ZipInputStream(new BufferedInputStream(Files.newInputStream(path)))) {
             ProjectDocument projectDocument = null;
             Map<String, Chapter> chapters = new LinkedHashMap<>();
             Map<String, Character> characters = new LinkedHashMap<>();
             List<NarrativeTag> narrativeTags = List.of();
             List<CharacterTagProfile> characterTagProfiles = List.of();
+            ProjectManifest manifest = null;
             ZipEntry entry;
             while ((entry = zip.getNextEntry()) != null) {
                 String name = entry.getName();
@@ -99,7 +114,7 @@ public final class ProjectArchiveStore {
                     continue;
                 }
                 if (ProjectArchiveLayout.MANIFEST_FILE.equals(name)) {
-                    readManifest(zip);
+                    manifest = readManifest(zip);
                 } else if (ProjectArchiveLayout.PROJECT_FILE.equals(name)) {
                     projectDocument = readProject(zip);
                 } else if (ProjectArchiveLayout.NARRATIVE_TAGS_FILE.equals(name)) {
@@ -117,10 +132,22 @@ public final class ProjectArchiveStore {
             if (projectDocument == null) {
                 throw new IllegalStateException("Project archive is missing project.json");
             }
+            normalizeManifest(manifest);
             return projectDocument.toModel(chapters, characters, narrativeTags, characterTagProfiles);
         } catch (IOException exception) {
             throw new UncheckedIOException("Unable to open project archive: " + path, exception);
         }
+    }
+
+    public Path importArchive(Path sourcePath) {
+        Project project = open(sourcePath);
+        Path targetPath = ProjectStoragePaths.suggestedArchivePath(baseDirectory, project);
+        return save(project, targetPath);
+    }
+
+    public Path migrateArchive(Path sourcePath, Path targetPath) {
+        Project project = open(sourcePath);
+        return save(project, targetPath);
     }
 
     public List<Path> listProjects() {
@@ -153,6 +180,15 @@ public final class ProjectArchiveStore {
             return gson.fromJson(reader, ProjectManifest.class);
         } catch (Exception exception) {
             throw new IllegalStateException("Invalid manifest.json", exception);
+        }
+    }
+
+    private void normalizeManifest(ProjectManifest manifest) {
+        if (manifest == null) {
+            return;
+        }
+        if (manifest.version() > ProjectArchiveLayout.SPEC_VERSION_NUMBER) {
+            throw new IllegalStateException("Unsupported project archive version: " + manifest.version());
         }
     }
 
