@@ -64,12 +64,12 @@ Entregavel:
 Objetivo: permitir escrita real de cenas.
 
 Backlog:
-- [ ] Implementar editor de cena
-- [ ] Criar binding entre cena e editor
-- [ ] Adicionar undo/redo
-- [ ] Adicionar contador de palavras
-- [ ] Tratar performance de scroll
-- [ ] Testar com texto longo
+- [x] Implementar editor de cena
+- [x] Criar binding entre cena e editor
+- [x] Adicionar undo/redo
+- [x] Adicionar contador de palavras
+- [x] Tratar performance de scroll
+- [x] Testar com texto longo
 
 Entregavel:
 - Ja e possivel escrever capitulos
