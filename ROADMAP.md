@@ -48,13 +48,13 @@ Entregavel:
 Objetivo: salvar e carregar projetos sem dependencia externa.
 
 Backlog:
-- [ ] Implementar storage local de projeto
-- [ ] Implementar serializacao JSON
-- [ ] Criar fluxo de criar projeto
-- [ ] Criar fluxo de abrir projeto
-- [ ] Criar fluxo de salvar projeto
-- [ ] Adicionar autosave basico
-- [ ] Testar com projeto grande
+- [x] Implementar storage local de projeto
+- [x] Implementar serializacao JSON
+- [x] Criar fluxo de criar projeto
+- [x] Criar fluxo de abrir projeto
+- [x] Criar fluxo de salvar projeto
+- [x] Adicionar autosave basico
+- [x] Testar com projeto grande
 
 Entregavel:
 - Projeto abre e salva sem perder dados
