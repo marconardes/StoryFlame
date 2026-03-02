@@ -1,6 +1,7 @@
 package io.storyflame.desktop;
 
 import io.storyflame.core.model.Chapter;
+import io.storyflame.core.model.Character;
 import io.storyflame.core.model.Project;
 import io.storyflame.core.model.Scene;
 import io.storyflame.core.search.ProjectSearch;
@@ -10,6 +11,8 @@ import io.storyflame.core.storage.ProjectArchiveStore;
 import io.storyflame.core.storage.ProjectAutosaveService;
 import io.storyflame.core.storage.ProjectStoragePaths;
 import io.storyflame.core.text.WordCount;
+import io.storyflame.core.validation.NarrativeIntegrityIssue;
+import io.storyflame.core.validation.NarrativeIntegrityValidator;
 import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Dimension;
@@ -37,6 +40,7 @@ import javax.swing.JList;
 import javax.swing.JMenu;
 import javax.swing.JMenuBar;
 import javax.swing.JMenuItem;
+import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JSplitPane;
@@ -68,23 +72,36 @@ public final class StoryFlameDesktopApp {
     private final JTextField chapterTitleField;
     private final JTextField sceneTitleField;
     private final JTextField searchField;
+    private final JTextField characterSearchField;
+    private final JTextField characterNameField;
+    private final JTextField povSearchField;
     private final JTextArea sceneEditorArea;
     private final JTextArea summaryArea;
+    private final JTextArea characterDescriptionArea;
     private final JLabel contextLabel;
     private final JLabel wordCountLabel;
     private final JLabel chapterCountLabel;
     private final JLabel sceneCountLabel;
+    private final JLabel characterCountLabel;
     private final JLabel searchCountLabel;
     private final JLabel projectPathLabel;
+    private final JLabel pointOfViewLabel;
+    private final JLabel integrityLabel;
     private final JLabel statusLabel;
     private final DefaultListModel<String> chapterListModel;
     private final DefaultListModel<String> sceneListModel;
     private final DefaultListModel<String> searchListModel;
+    private final DefaultListModel<String> characterListModel;
+    private final DefaultListModel<String> povListModel;
     private final JList<String> chapterList;
     private final JList<String> sceneList;
     private final JList<String> searchList;
+    private final JList<String> characterList;
+    private final JList<String> povList;
     private final UndoManager sceneUndoManager;
     private final List<SearchMatch> searchMatches;
+    private final List<Character> visibleCharacters;
+    private final List<Character> visiblePointOfViewCharacters;
     private final Timer searchRefreshTimer;
 
     private JFrame frame;
@@ -93,10 +110,12 @@ public final class StoryFlameDesktopApp {
     private JInternalFrame structureFrame;
     private JInternalFrame projectFrame;
     private JInternalFrame searchFrame;
+    private JInternalFrame characterFrame;
     private Project currentProject;
     private Path currentPath;
     private Chapter selectedChapter;
     private Scene selectedScene;
+    private Character selectedCharacter;
     private boolean syncingUi;
 
     private StoryFlameDesktopApp() {
@@ -107,23 +126,36 @@ public final class StoryFlameDesktopApp {
         this.chapterTitleField = new JTextField();
         this.sceneTitleField = new JTextField();
         this.searchField = new JTextField();
+        this.characterSearchField = new JTextField();
+        this.characterNameField = new JTextField();
+        this.povSearchField = new JTextField();
         this.sceneEditorArea = new JTextArea();
         this.summaryArea = new JTextArea();
+        this.characterDescriptionArea = new JTextArea();
         this.contextLabel = new JLabel("Nenhuma cena selecionada");
         this.wordCountLabel = new JLabel("0 palavras");
         this.chapterCountLabel = new JLabel("0 capitulos");
         this.sceneCountLabel = new JLabel("0 cenas");
+        this.characterCountLabel = new JLabel("0 personagens");
         this.searchCountLabel = new JLabel("0 resultados");
         this.projectPathLabel = new JLabel("Sem arquivo");
+        this.pointOfViewLabel = new JLabel("POV: sem personagem");
+        this.integrityLabel = new JLabel("0 referencias quebradas");
         this.statusLabel = new JLabel("Nenhum projeto carregado.");
         this.chapterListModel = new DefaultListModel<>();
         this.sceneListModel = new DefaultListModel<>();
         this.searchListModel = new DefaultListModel<>();
+        this.characterListModel = new DefaultListModel<>();
+        this.povListModel = new DefaultListModel<>();
         this.chapterList = new JList<>(chapterListModel);
         this.sceneList = new JList<>(sceneListModel);
         this.searchList = new JList<>(searchListModel);
+        this.characterList = new JList<>(characterListModel);
+        this.povList = new JList<>(povListModel);
         this.sceneUndoManager = new UndoManager();
         this.searchMatches = new ArrayList<>();
+        this.visibleCharacters = new ArrayList<>();
+        this.visiblePointOfViewCharacters = new ArrayList<>();
         this.searchRefreshTimer = new Timer(250, event -> refreshSearchResultsNow());
         this.searchRefreshTimer.setRepeats(false);
     }
@@ -194,6 +226,7 @@ public final class StoryFlameDesktopApp {
         windowMenu.add(menuItem("Estrutura", "F2", this::focusStructureFrame));
         windowMenu.add(menuItem("Projeto", "F3", this::focusProjectFrame));
         windowMenu.add(menuItem("Busca", "F4", this::focusSearchFrame));
+        windowMenu.add(menuItem("Personagens", "F5", this::focusCharacterFrame));
 
         menuBar.add(fileMenu);
         menuBar.add(editMenu);
@@ -216,6 +249,7 @@ public final class StoryFlameDesktopApp {
         JButton structureButton = new JButton("Estrutura");
         JButton projectButton = new JButton("Projeto");
         JButton searchButton = new JButton("Buscar");
+        JButton characterButton = new JButton("Personagens");
 
         newButton.addActionListener(event -> createProject());
         openButton.addActionListener(event -> openProject(frame));
@@ -223,6 +257,7 @@ public final class StoryFlameDesktopApp {
         structureButton.addActionListener(event -> focusStructureFrame());
         projectButton.addActionListener(event -> focusProjectFrame());
         searchButton.addActionListener(event -> focusSearchFrame());
+        characterButton.addActionListener(event -> focusCharacterFrame());
 
         toolBar.add(newButton);
         toolBar.add(openButton);
@@ -231,10 +266,13 @@ public final class StoryFlameDesktopApp {
         toolBar.add(structureButton);
         toolBar.add(projectButton);
         toolBar.add(searchButton);
+        toolBar.add(characterButton);
         toolBar.addSeparator();
         toolBar.add(chapterCountLabel);
         toolBar.add(Box.createHorizontalStrut(12));
         toolBar.add(sceneCountLabel);
+        toolBar.add(Box.createHorizontalStrut(12));
+        toolBar.add(characterCountLabel);
         toolBar.add(Box.createHorizontalStrut(12));
         toolBar.add(searchCountLabel);
         toolBar.add(Box.createHorizontalGlue());
@@ -249,11 +287,13 @@ public final class StoryFlameDesktopApp {
         structureFrame = createInternalFrame("Estrutura do livro", 20, 20, 290, 420, buildStructurePanel());
         projectFrame = createInternalFrame("Projeto", 20, 460, 290, 280, buildProjectPanel());
         searchFrame = createInternalFrame("Busca rapida", 1030, 20, 220, 420, buildSearchPanel());
+        characterFrame = createInternalFrame("Personagens", 1030, 460, 220, 280, buildCharacterPanel());
 
         desktopPane.add(editorFrame);
         desktopPane.add(structureFrame);
         desktopPane.add(projectFrame);
         desktopPane.add(searchFrame);
+        desktopPane.add(characterFrame);
     }
 
     private JInternalFrame createInternalFrame(String title, int x, int y, int width, int height, JPanel content) {
@@ -274,6 +314,7 @@ public final class StoryFlameDesktopApp {
         header.add(buildEditorBadge(contextLabel), BorderLayout.SOUTH);
         panel.add(header, BorderLayout.NORTH);
         panel.add(new JScrollPane(sceneEditorArea), BorderLayout.CENTER);
+        panel.add(buildPointOfViewPanel(), BorderLayout.EAST);
         JPanel footer = new JPanel(new BorderLayout(8, 8));
         footer.setOpaque(false);
         footer.add(buildEditorBadge(projectPathLabel), BorderLayout.CENTER);
@@ -353,6 +394,60 @@ public final class StoryFlameDesktopApp {
         return root;
     }
 
+    private JPanel buildCharacterPanel() {
+        JPanel root = new JPanel(new BorderLayout(8, 8));
+        root.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
+        root.setBackground(new Color(244, 239, 231));
+        root.add(characterSearchField, BorderLayout.NORTH);
+
+        JPanel center = new JPanel(new BorderLayout(8, 8));
+        center.setOpaque(false);
+        center.add(buildCharacterToolbar(), BorderLayout.NORTH);
+        center.add(new JScrollPane(characterList), BorderLayout.CENTER);
+        center.add(buildCharacterDetailsPanel(), BorderLayout.SOUTH);
+        root.add(center, BorderLayout.CENTER);
+
+        JPanel footer = new JPanel(new GridLayout(0, 1, 0, 8));
+        footer.setOpaque(false);
+        footer.add(buildEditorBadge(characterCountLabel));
+        footer.add(buildEditorBadge(integrityLabel));
+        root.add(footer, BorderLayout.SOUTH);
+        return root;
+    }
+
+    private JPanel buildCharacterDetailsPanel() {
+        JPanel panel = new JPanel(new BorderLayout(8, 8));
+        panel.setOpaque(false);
+        panel.add(characterNameField, BorderLayout.NORTH);
+        panel.add(new JScrollPane(characterDescriptionArea), BorderLayout.CENTER);
+        return panel;
+    }
+
+    private JPanel buildPointOfViewPanel() {
+        JPanel root = new JPanel(new BorderLayout(8, 8));
+        root.setOpaque(false);
+        root.setPreferredSize(new Dimension(250, 10));
+        root.setBorder(BorderFactory.createEmptyBorder(0, 12, 0, 0));
+
+        JPanel header = new JPanel(new GridLayout(0, 1, 0, 8));
+        header.setOpaque(false);
+        header.add(buildEditorBadge(pointOfViewLabel));
+        header.add(povSearchField);
+        root.add(header, BorderLayout.NORTH);
+        root.add(new JScrollPane(povList), BorderLayout.CENTER);
+
+        JPanel footer = new JPanel(new GridLayout(1, 0, 8, 0));
+        footer.setOpaque(false);
+        JButton applyButton = new JButton("Usar POV");
+        JButton clearButton = new JButton("Limpar POV");
+        applyButton.addActionListener(event -> applySelectedPointOfView());
+        clearButton.addActionListener(event -> clearPointOfView());
+        footer.add(applyButton);
+        footer.add(clearButton);
+        root.add(footer, BorderLayout.SOUTH);
+        return root;
+    }
+
     private JPanel buildChapterToolbar() {
         JPanel panel = new JPanel();
         JButton addButton = new JButton("+");
@@ -393,11 +488,29 @@ public final class StoryFlameDesktopApp {
         return panel;
     }
 
+    private JPanel buildCharacterToolbar() {
+        JPanel panel = new JPanel();
+        JButton addButton = new JButton("+");
+        JButton deleteButton = new JButton("-");
+        JButton focusButton = new JButton("POV");
+        JButton assignButton = new JButton("Usar");
+        addButton.addActionListener(event -> addCharacter());
+        deleteButton.addActionListener(event -> deleteCharacter());
+        focusButton.addActionListener(event -> focusEditorFrame());
+        assignButton.addActionListener(event -> assignSelectedCharacterAsPointOfView());
+        panel.add(addButton);
+        panel.add(deleteButton);
+        panel.add(assignButton);
+        panel.add(focusButton);
+        return panel;
+    }
+
     private JPanel buildStructureSummaryPanel() {
         JPanel panel = new JPanel(new GridLayout(1, 0, 8, 0));
         panel.setOpaque(false);
         panel.add(buildEditorBadge(chapterCountLabel));
         panel.add(buildEditorBadge(sceneCountLabel));
+        panel.add(buildEditorBadge(characterCountLabel));
         panel.add(buildEditorBadge(contextLabel));
         return panel;
     }
@@ -489,12 +602,30 @@ public final class StoryFlameDesktopApp {
                 onSceneContentEdited();
             }
         };
+        DocumentListener characterListener = new DocumentListener() {
+            @Override
+            public void insertUpdate(DocumentEvent event) {
+                onCharacterEdited();
+            }
+
+            @Override
+            public void removeUpdate(DocumentEvent event) {
+                onCharacterEdited();
+            }
+
+            @Override
+            public void changedUpdate(DocumentEvent event) {
+                onCharacterEdited();
+            }
+        };
 
         titleField.getDocument().addDocumentListener(metadataListener);
         authorField.getDocument().addDocumentListener(metadataListener);
         chapterTitleField.getDocument().addDocumentListener(chapterTitleListener);
         sceneTitleField.getDocument().addDocumentListener(sceneTitleListener);
         sceneEditorArea.getDocument().addDocumentListener(sceneContentListener);
+        characterNameField.getDocument().addDocumentListener(characterListener);
+        characterDescriptionArea.getDocument().addDocumentListener(characterListener);
         searchField.getDocument().addDocumentListener(new DocumentListener() {
             @Override
             public void insertUpdate(DocumentEvent event) {
@@ -511,19 +642,62 @@ public final class StoryFlameDesktopApp {
                 scheduleSearchRefresh();
             }
         });
+        characterSearchField.getDocument().addDocumentListener(new DocumentListener() {
+            @Override
+            public void insertUpdate(DocumentEvent event) {
+                refreshCharacterLists();
+            }
+
+            @Override
+            public void removeUpdate(DocumentEvent event) {
+                refreshCharacterLists();
+            }
+
+            @Override
+            public void changedUpdate(DocumentEvent event) {
+                refreshCharacterLists();
+            }
+        });
+        povSearchField.getDocument().addDocumentListener(new DocumentListener() {
+            @Override
+            public void insertUpdate(DocumentEvent event) {
+                refreshPointOfViewList();
+            }
+
+            @Override
+            public void removeUpdate(DocumentEvent event) {
+                refreshPointOfViewList();
+            }
+
+            @Override
+            public void changedUpdate(DocumentEvent event) {
+                refreshPointOfViewList();
+            }
+        });
 
         chapterList.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
         sceneList.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
         searchList.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
+        characterList.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
+        povList.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
 
         chapterList.addListSelectionListener(this::onChapterSelected);
         sceneList.addListSelectionListener(this::onSceneSelected);
         searchList.addListSelectionListener(this::onSearchSelected);
+        characterList.addListSelectionListener(this::onCharacterSelected);
         searchList.addMouseListener(new java.awt.event.MouseAdapter() {
             @Override
             public void mouseClicked(java.awt.event.MouseEvent event) {
                 if (event.getClickCount() == 2) {
                     navigateToSearchSelection();
+                }
+            }
+        });
+        povList.addMouseListener(new java.awt.event.MouseAdapter() {
+            @Override
+            public void mouseClicked(java.awt.event.MouseEvent event) {
+                if (event.getClickCount() == 2) {
+                    applySelectedPointOfView();
                 }
             }
         });
@@ -533,6 +707,8 @@ public final class StoryFlameDesktopApp {
         installWindowShortcut(frame.getRootPane(), "F2", this::focusStructureFrame);
         installWindowShortcut(frame.getRootPane(), "F3", this::focusProjectFrame);
         installWindowShortcut(frame.getRootPane(), "F4", this::focusSearchFrame);
+        installWindowShortcut(frame.getRootPane(), "F5", this::focusCharacterFrame);
+        installWindowShortcut(frame.getRootPane(), "control alt P", this::assignSelectedCharacterAsPointOfView);
     }
 
     private void createProject() {
@@ -542,6 +718,7 @@ public final class StoryFlameDesktopApp {
         store.save(currentProject, currentPath);
         selectedChapter = currentProject.getChapters().get(0);
         selectedScene = selectedChapter.getScenes().get(0);
+        selectedCharacter = currentProject.getCharacters().isEmpty() ? null : currentProject.getCharacters().get(0);
         syncFieldsFromProject();
         statusLabel.setText("Projeto criado em " + currentPath);
         arrangeInternalFrames();
@@ -559,6 +736,7 @@ public final class StoryFlameDesktopApp {
         ensureEditorStructure();
         selectedChapter = currentProject.getChapters().get(0);
         selectedScene = selectedChapter.getScenes().get(0);
+        selectedCharacter = currentProject.getCharacters().isEmpty() ? null : currentProject.getCharacters().get(0);
         syncFieldsFromProject();
         statusLabel.setText("Projeto aberto de " + currentPath);
         arrangeInternalFrames();
@@ -651,11 +829,25 @@ public final class StoryFlameDesktopApp {
         statusLabel.setText("Alteracoes pendentes...");
     }
 
+    private void onCharacterEdited() {
+        if (syncingUi || currentProject == null || currentPath == null || selectedCharacter == null) {
+            return;
+        }
+        selectedCharacter.setName(characterNameField.getText());
+        selectedCharacter.setDescription(characterDescriptionArea.getText());
+        refreshCharacterLists();
+        refreshPointOfViewList();
+        renderSummary();
+        scheduleAutosave();
+        statusLabel.setText("Alteracoes pendentes...");
+    }
+
     private void syncFieldsFromProject() {
         syncingUi = true;
         titleField.setText(currentProject.getTitle());
         authorField.setText(currentProject.getAuthor());
         refreshStructureLists();
+        refreshCharacterLists();
         updateEditorFields();
         refreshSearchResultsNow();
         syncingUi = false;
@@ -670,6 +862,10 @@ public final class StoryFlameDesktopApp {
         if (selectedScene != null) {
             selectedScene.setTitle(sceneTitleField.getText());
             selectedScene.setContent(sceneEditorArea.getText());
+        }
+        if (selectedCharacter != null) {
+            selectedCharacter.setName(characterNameField.getText());
+            selectedCharacter.setDescription(characterDescriptionArea.getText());
         }
         updateWordCount();
     }
@@ -737,6 +933,60 @@ public final class StoryFlameDesktopApp {
         refreshStructureLists();
         selectCurrentObjects();
         onProjectEdited();
+    }
+
+    private void addCharacter() {
+        if (currentProject == null) {
+            return;
+        }
+        syncProjectFromFields();
+        Character character = new Character(null, "Personagem " + (currentProject.getCharacters().size() + 1), "");
+        currentProject.getCharacters().add(character);
+        selectedCharacter = character;
+        refreshCharacterLists();
+        refreshPointOfViewList();
+        onProjectEdited();
+    }
+
+    private void deleteCharacter() {
+        if (currentProject == null || selectedCharacter == null) {
+            return;
+        }
+        int confirmation = JOptionPane.showConfirmDialog(
+                frame,
+                "Excluir personagem '" + displayCharacterName(selectedCharacter) + "'?",
+                "Excluir personagem",
+                JOptionPane.YES_NO_OPTION,
+                JOptionPane.WARNING_MESSAGE
+        );
+        if (confirmation != JOptionPane.YES_OPTION) {
+            return;
+        }
+        syncProjectFromFields();
+        int removedIndex = currentProject.getCharacters().indexOf(selectedCharacter);
+        if (removedIndex < 0) {
+            return;
+        }
+        currentProject.getCharacters().remove(removedIndex);
+        selectedCharacter = currentProject.getCharacters().isEmpty()
+                ? null
+                : currentProject.getCharacters().get(Math.max(0, removedIndex - 1));
+        refreshCharacterLists();
+        refreshPointOfViewList();
+        onProjectEdited();
+    }
+
+    private void assignSelectedCharacterAsPointOfView() {
+        if (selectedScene == null || selectedCharacter == null) {
+            return;
+        }
+        selectedScene.setPointOfViewCharacterId(selectedCharacter.getId());
+        refreshPointOfViewList();
+        updateIntegrityLabel();
+        renderSummary();
+        scheduleAutosave();
+        statusLabel.setText("POV definido a partir do personagem selecionado.");
+        focusEditorFrame();
     }
 
     private void deleteScene() {
@@ -833,6 +1083,76 @@ public final class StoryFlameDesktopApp {
         renderSummary();
     }
 
+    private void refreshCharacterLists() {
+        boolean previousSyncingUi = syncingUi;
+        syncingUi = true;
+        Character previousSelection = selectedCharacter;
+
+        visibleCharacters.clear();
+        characterListModel.clear();
+        if (currentProject == null) {
+            characterNameField.setText("");
+            characterDescriptionArea.setText("");
+            characterCountLabel.setText("0 personagens");
+            updateIntegrityLabel();
+            syncingUi = previousSyncingUi;
+            return;
+        }
+
+        String query = characterSearchField.getText() == null ? "" : characterSearchField.getText().trim().toLowerCase();
+        for (Character character : currentProject.getCharacters()) {
+            String haystack = (character.getName() + "\n" + character.getDescription()).toLowerCase();
+            if (!query.isBlank() && !haystack.contains(query)) {
+                continue;
+            }
+            visibleCharacters.add(character);
+            characterListModel.addElement(displayCharacterName(character));
+        }
+
+        characterCountLabel.setText(currentProject.getCharacters().size() + " personagens");
+        if (previousSelection != null && visibleCharacters.contains(previousSelection)) {
+            characterList.setSelectedIndex(visibleCharacters.indexOf(previousSelection));
+        } else if (!visibleCharacters.isEmpty()) {
+            characterList.setSelectedIndex(0);
+            selectedCharacter = visibleCharacters.get(0);
+        } else if (!currentProject.getCharacters().contains(selectedCharacter)) {
+            selectedCharacter = currentProject.getCharacters().isEmpty() ? null : currentProject.getCharacters().get(0);
+        }
+
+        characterNameField.setText(selectedCharacter == null ? "" : selectedCharacter.getName());
+        characterDescriptionArea.setText(selectedCharacter == null ? "" : selectedCharacter.getDescription());
+        updateIntegrityLabel();
+        syncingUi = previousSyncingUi;
+    }
+
+    private void refreshPointOfViewList() {
+        boolean previousSyncingUi = syncingUi;
+        syncingUi = true;
+        visiblePointOfViewCharacters.clear();
+        povListModel.clear();
+        if (currentProject == null) {
+            pointOfViewLabel.setText("POV: sem personagem");
+            syncingUi = previousSyncingUi;
+            return;
+        }
+
+        String query = povSearchField.getText() == null ? "" : povSearchField.getText().trim().toLowerCase();
+        Character selectedPovCharacter = findCharacterById(selectedScene == null ? null : selectedScene.getPointOfViewCharacterId());
+        for (Character character : currentProject.getCharacters()) {
+            String haystack = (character.getName() + "\n" + character.getDescription()).toLowerCase();
+            if (!query.isBlank() && !haystack.contains(query)) {
+                continue;
+            }
+            visiblePointOfViewCharacters.add(character);
+            povListModel.addElement(displayCharacterName(character));
+        }
+        if (selectedPovCharacter != null && visiblePointOfViewCharacters.contains(selectedPovCharacter)) {
+            povList.setSelectedIndex(visiblePointOfViewCharacters.indexOf(selectedPovCharacter));
+        }
+        pointOfViewLabel.setText("POV: " + displayPointOfViewName());
+        syncingUi = previousSyncingUi;
+    }
+
     private void scheduleSearchRefresh() {
         if (syncingUi) {
             return;
@@ -908,6 +1228,19 @@ public final class StoryFlameDesktopApp {
         updateEditorFields();
     }
 
+    private void onCharacterSelected(ListSelectionEvent event) {
+        if (event.getValueIsAdjusting() || syncingUi || currentProject == null) {
+            return;
+        }
+        syncProjectFromFields();
+        int selectedIndex = characterList.getSelectedIndex();
+        if (selectedIndex < 0 || selectedIndex >= visibleCharacters.size()) {
+            return;
+        }
+        selectedCharacter = visibleCharacters.get(selectedIndex);
+        refreshCharacterLists();
+    }
+
     private void onSearchSelected(ListSelectionEvent event) {
         if (event.getValueIsAdjusting() || syncingUi) {
             return;
@@ -929,6 +1262,7 @@ public final class StoryFlameDesktopApp {
         projectPathLabel.setText(currentPath == null ? "Sem arquivo" : currentPath.toString());
         sceneUndoManager.discardAllEdits();
         updateWordCount();
+        refreshPointOfViewList();
         renderSummary();
         syncingUi = previousSyncingUi;
     }
@@ -944,9 +1278,12 @@ public final class StoryFlameDesktopApp {
                 Autor: %s
                 Capitulo atual: %s
                 Cena atual: %s
+                POV da cena: %s
                 Capitulos: %d
                 Cenas no capitulo: %d
+                Personagens: %d
                 Resultados de busca: %d
+                Referencias quebradas: %d
                 Palavras na cena: %d
                 Atualizado em: %s
                 """.formatted(
@@ -955,9 +1292,12 @@ public final class StoryFlameDesktopApp {
                 currentProject.getAuthor(),
                 selectedChapter == null ? "-" : selectedChapter.getTitle(),
                 selectedScene == null ? "-" : selectedScene.getTitle(),
+                displayPointOfViewName(),
                 currentProject.getChapters().size(),
                 selectedChapter == null ? 0 : selectedChapter.getScenes().size(),
+                currentProject.getCharacters().size(),
                 searchMatches.size(),
+                NarrativeIntegrityValidator.findBrokenPointOfViewReferences(currentProject).size(),
                 selectedScene == null ? 0 : WordCount.count(selectedScene.getContent()),
                 currentProject.getUpdatedAt()
         ));
@@ -1004,6 +1344,7 @@ public final class StoryFlameDesktopApp {
         if (currentProject == null || currentProject.getChapters().isEmpty()) {
             selectedChapter = null;
             selectedScene = null;
+            selectedCharacter = null;
             return;
         }
         if (selectedChapter == null || !currentProject.getChapters().contains(selectedChapter)) {
@@ -1013,6 +1354,9 @@ public final class StoryFlameDesktopApp {
         if (selectedScene == null || !selectedChapter.getScenes().contains(selectedScene)) {
             selectedScene = selectedChapter.getScenes().get(0);
         }
+        if (selectedCharacter != null && !currentProject.getCharacters().contains(selectedCharacter)) {
+            selectedCharacter = null;
+        }
     }
 
     private void configureEditorComponents() {
@@ -1021,7 +1365,11 @@ public final class StoryFlameDesktopApp {
         chapterTitleField.enableInputMethods(true);
         sceneTitleField.enableInputMethods(true);
         searchField.enableInputMethods(true);
+        characterSearchField.enableInputMethods(true);
+        characterNameField.enableInputMethods(true);
+        povSearchField.enableInputMethods(true);
         sceneEditorArea.enableInputMethods(true);
+        characterDescriptionArea.enableInputMethods(true);
 
         titleField.setFont(new Font("Serif", Font.PLAIN, 15));
         authorField.setFont(new Font("Serif", Font.PLAIN, 15));
@@ -1030,13 +1378,20 @@ public final class StoryFlameDesktopApp {
         chapterTitleField.setBorder(BorderFactory.createTitledBorder("Titulo do capitulo"));
         sceneTitleField.setBorder(BorderFactory.createTitledBorder("Titulo da cena"));
         searchField.setBorder(BorderFactory.createTitledBorder("Buscar"));
+        characterSearchField.setBorder(BorderFactory.createTitledBorder("Buscar personagem"));
+        characterNameField.setBorder(BorderFactory.createTitledBorder("Nome do personagem"));
+        povSearchField.setBorder(BorderFactory.createTitledBorder("Buscar POV"));
 
         chapterList.setFont(new Font("Serif", Font.PLAIN, 15));
         sceneList.setFont(new Font("Serif", Font.PLAIN, 15));
         searchList.setFont(new Font("Serif", Font.PLAIN, 14));
+        characterList.setFont(new Font("Serif", Font.PLAIN, 15));
+        povList.setFont(new Font("Serif", Font.PLAIN, 14));
         chapterList.setFixedCellHeight(28);
         sceneList.setFixedCellHeight(28);
         searchList.setFixedCellHeight(32);
+        characterList.setFixedCellHeight(28);
+        povList.setFixedCellHeight(28);
 
         sceneTitleField.setFont(new Font("Serif", Font.BOLD, 22));
         sceneEditorArea.setFont(new Font("Serif", Font.PLAIN, 22));
@@ -1059,6 +1414,13 @@ public final class StoryFlameDesktopApp {
         summaryArea.setFont(new Font("Serif", Font.PLAIN, 14));
         summaryArea.setBackground(new Color(251, 248, 242));
         summaryArea.setBorder(BorderFactory.createTitledBorder("Resumo"));
+
+        characterDescriptionArea.setLineWrap(true);
+        characterDescriptionArea.setWrapStyleWord(true);
+        characterDescriptionArea.setRows(6);
+        characterDescriptionArea.setFont(new Font("Serif", Font.PLAIN, 14));
+        characterDescriptionArea.setBackground(new Color(251, 248, 242));
+        characterDescriptionArea.setBorder(BorderFactory.createTitledBorder("Descricao"));
 
         statusLabel.setBorder(BorderFactory.createEmptyBorder(6, 10, 6, 10));
         statusLabel.setOpaque(true);
@@ -1118,6 +1480,66 @@ public final class StoryFlameDesktopApp {
         wordCountLabel.setText(wordCount + " palavras");
     }
 
+    private void applySelectedPointOfView() {
+        if (selectedScene == null) {
+            return;
+        }
+        int selectedIndex = povList.getSelectedIndex();
+        if (selectedIndex < 0 || selectedIndex >= visiblePointOfViewCharacters.size()) {
+            return;
+        }
+        selectedScene.setPointOfViewCharacterId(visiblePointOfViewCharacters.get(selectedIndex).getId());
+        refreshPointOfViewList();
+        updateIntegrityLabel();
+        renderSummary();
+        scheduleAutosave();
+        statusLabel.setText("POV atualizado.");
+    }
+
+    private void clearPointOfView() {
+        if (selectedScene == null) {
+            return;
+        }
+        selectedScene.setPointOfViewCharacterId(null);
+        refreshPointOfViewList();
+        updateIntegrityLabel();
+        renderSummary();
+        scheduleAutosave();
+        statusLabel.setText("POV removido.");
+    }
+
+    private void updateIntegrityLabel() {
+        List<NarrativeIntegrityIssue> issues = NarrativeIntegrityValidator.findBrokenPointOfViewReferences(currentProject);
+        integrityLabel.setText(issues.size() + " referencias quebradas");
+    }
+
+    private String displayCharacterName(Character character) {
+        return displayTitle(character == null ? "" : character.getName(), "Personagem");
+    }
+
+    private String displayPointOfViewName() {
+        Character povCharacter = findCharacterById(selectedScene == null ? null : selectedScene.getPointOfViewCharacterId());
+        if (povCharacter != null) {
+            return displayCharacterName(povCharacter);
+        }
+        if (selectedScene != null && selectedScene.getPointOfViewCharacterId() != null && !selectedScene.getPointOfViewCharacterId().isBlank()) {
+            return "referencia quebrada (" + selectedScene.getPointOfViewCharacterId() + ")";
+        }
+        return "sem personagem";
+    }
+
+    private Character findCharacterById(String characterId) {
+        if (currentProject == null || characterId == null || characterId.isBlank()) {
+            return null;
+        }
+        for (Character character : currentProject.getCharacters()) {
+            if (characterId.equals(character.getId())) {
+                return character;
+            }
+        }
+        return null;
+    }
+
     private void scheduleAutosave() {
         currentPath = resolveSavePath(currentPath);
         Path autosavePath = currentPath;
@@ -1153,6 +1575,11 @@ public final class StoryFlameDesktopApp {
         searchField.requestFocusInWindow();
     }
 
+    private void focusCharacterFrame() {
+        activateFrame(characterFrame);
+        characterList.requestFocusInWindow();
+    }
+
     private void activateFrame(JInternalFrame internalFrame) {
         try {
             internalFrame.setIcon(false);
@@ -1172,13 +1599,14 @@ public final class StoryFlameDesktopApp {
         int leftColumnWidth = Math.max(260, width / 5);
         int rightColumnWidth = Math.max(240, width / 6);
         int centerWidth = width - leftColumnWidth - rightColumnWidth - (margin * 4);
-        int topHeight = Math.max(390, height / 2);
+        int topHeight = Math.max(300, (height - (margin * 3)) / 2);
         int bottomHeight = height - topHeight - (margin * 3);
 
         structureFrame.setBounds(margin, margin, leftColumnWidth, topHeight);
         projectFrame.setBounds(margin, topHeight + (margin * 2), leftColumnWidth, bottomHeight);
         editorFrame.setBounds(leftColumnWidth + (margin * 2), margin, centerWidth, height - (margin * 2));
         searchFrame.setBounds(leftColumnWidth + centerWidth + (margin * 3), margin, rightColumnWidth, topHeight);
+        characterFrame.setBounds(leftColumnWidth + centerWidth + (margin * 3), topHeight + (margin * 2), rightColumnWidth, bottomHeight);
     }
 
     private void applyDesktopLookAndFeel() {

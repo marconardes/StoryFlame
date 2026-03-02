@@ -94,12 +94,12 @@ Entregavel:
 Objetivo: dar contexto narrativo ao manuscrito antes de introduzir tags.
 
 Backlog:
-- [ ] Criar CRUD de personagens
-- [ ] Criar tela de personagens no desktop
-- [ ] Vincular POV da cena a personagem
-- [ ] Permitir busca e selecao de personagem
-- [ ] Validar referencias quebradas entre cena e personagem
-- [ ] Criar testes unitarios de integridade narrativa
+- [x] Criar CRUD de personagens
+- [x] Criar tela de personagens no desktop
+- [x] Vincular POV da cena a personagem
+- [x] Permitir busca e selecao de personagem
+- [x] Validar referencias quebradas entre cena e personagem
+- [x] Criar testes unitarios de integridade narrativa
 
 Entregavel:
 - O manuscrito passa a ter personagens editaveis e ligados as cenas
