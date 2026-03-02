@@ -7,6 +7,9 @@ import io.storyflame.core.model.Chapter;
 import io.storyflame.core.model.Character;
 import io.storyflame.core.model.Project;
 import io.storyflame.core.model.Scene;
+import io.storyflame.core.tags.CharacterTagProfile;
+import io.storyflame.core.tags.NarrativeTag;
+import io.storyflame.core.tags.NarrativeTagCatalog;
 import java.io.BufferedInputStream;
 import java.io.BufferedOutputStream;
 import java.io.IOException;
@@ -43,7 +46,9 @@ public final class ProjectArchiveStore {
     }
 
     public Project createProject(String title, String author) {
-        return Project.blank(title, author);
+        Project project = Project.blank(title, author);
+        project.getNarrativeTags().addAll(NarrativeTagCatalog.defaultCatalog().all());
+        return project;
     }
 
     public Path save(Project project) {
@@ -59,6 +64,8 @@ public final class ProjectArchiveStore {
             try (ZipOutputStream zip = new ZipOutputStream(new BufferedOutputStream(Files.newOutputStream(path)))) {
                 writeJson(zip, ProjectArchiveLayout.MANIFEST_FILE, ProjectManifest.initial(Instant.now().toString()));
                 writeJson(zip, ProjectArchiveLayout.PROJECT_FILE, ProjectDocument.from(project));
+                writeJson(zip, ProjectArchiveLayout.NARRATIVE_TAGS_FILE, new ArrayList<>(project.getNarrativeTags()));
+                writeJson(zip, ProjectArchiveLayout.CHARACTER_TAG_PROFILES_FILE, new ArrayList<>(project.getCharacterTagProfiles()));
                 zip.putNextEntry(new ZipEntry(ProjectArchiveLayout.CHAPTERS_DIRECTORY));
                 zip.closeEntry();
                 zip.putNextEntry(new ZipEntry(ProjectArchiveLayout.CHARACTERS_DIRECTORY));
@@ -83,6 +90,8 @@ public final class ProjectArchiveStore {
             ProjectDocument projectDocument = null;
             Map<String, Chapter> chapters = new LinkedHashMap<>();
             Map<String, Character> characters = new LinkedHashMap<>();
+            List<NarrativeTag> narrativeTags = List.of();
+            List<CharacterTagProfile> characterTagProfiles = List.of();
             ZipEntry entry;
             while ((entry = zip.getNextEntry()) != null) {
                 String name = entry.getName();
@@ -93,6 +102,10 @@ public final class ProjectArchiveStore {
                     readManifest(zip);
                 } else if (ProjectArchiveLayout.PROJECT_FILE.equals(name)) {
                     projectDocument = readProject(zip);
+                } else if (ProjectArchiveLayout.NARRATIVE_TAGS_FILE.equals(name)) {
+                    narrativeTags = readNarrativeTags(zip);
+                } else if (ProjectArchiveLayout.CHARACTER_TAG_PROFILES_FILE.equals(name)) {
+                    characterTagProfiles = readCharacterTagProfiles(zip);
                 } else if (name.startsWith(ProjectArchiveLayout.CHAPTERS_DIRECTORY)) {
                     ChapterDocument document = readChapter(zip);
                     chapters.put(document.id(), document.toModel());
@@ -104,7 +117,7 @@ public final class ProjectArchiveStore {
             if (projectDocument == null) {
                 throw new IllegalStateException("Project archive is missing project.json");
             }
-            return projectDocument.toModel(chapters, characters);
+            return projectDocument.toModel(chapters, characters, narrativeTags, characterTagProfiles);
         } catch (IOException exception) {
             throw new UncheckedIOException("Unable to open project archive: " + path, exception);
         }
@@ -158,6 +171,18 @@ public final class ProjectArchiveStore {
         return gson.fromJson(reader, Character.class);
     }
 
+    private List<NarrativeTag> readNarrativeTags(ZipInputStream zip) {
+        Reader reader = new InputStreamReader(zip, StandardCharsets.UTF_8);
+        NarrativeTag[] tags = gson.fromJson(reader, NarrativeTag[].class);
+        return tags == null ? List.of() : List.of(tags);
+    }
+
+    private List<CharacterTagProfile> readCharacterTagProfiles(ZipInputStream zip) {
+        Reader reader = new InputStreamReader(zip, StandardCharsets.UTF_8);
+        CharacterTagProfile[] profiles = gson.fromJson(reader, CharacterTagProfile[].class);
+        return profiles == null ? List.of() : List.of(profiles);
+    }
+
     private record ProjectDocument(
             String id,
             String title,
@@ -179,7 +204,12 @@ public final class ProjectArchiveStore {
             );
         }
 
-        Project toModel(Map<String, Chapter> chaptersById, Map<String, Character> charactersById) {
+        Project toModel(
+                Map<String, Chapter> chaptersById,
+                Map<String, Character> charactersById,
+                List<NarrativeTag> narrativeTags,
+                List<CharacterTagProfile> characterTagProfiles
+        ) {
             List<Chapter> orderedChapters = new ArrayList<>();
             for (String chapterId : chapterIds) {
                 Chapter chapter = chaptersById.get(chapterId);
@@ -194,7 +224,7 @@ public final class ProjectArchiveStore {
                     orderedCharacters.add(character);
                 }
             }
-            return new Project(id, title, author, createdAt, updatedAt, orderedChapters, orderedCharacters);
+            return new Project(id, title, author, createdAt, updatedAt, orderedChapters, orderedCharacters, narrativeTags, characterTagProfiles);
         }
     }
 
@@ -208,4 +238,3 @@ public final class ProjectArchiveStore {
         }
     }
 }
-

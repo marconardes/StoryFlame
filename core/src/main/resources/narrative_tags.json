@@ -1,0 +1,32 @@
+[
+  {
+    "id": "lfp1",
+    "label": "Leitura de face 1",
+    "description": "Primeira variacao de leitura facial e percepcao.",
+    "template": "leu o rosto com precisão"
+  },
+  {
+    "id": "lfp2",
+    "label": "Leitura de face 2",
+    "description": "Segunda variacao de leitura facial e percepcao.",
+    "template": "percebeu um segundo traço por trás da expressão"
+  },
+  {
+    "id": "emo1",
+    "label": "Emocao 1",
+    "description": "Marcador emocional base.",
+    "template": "sentiu a emoção crescer no peito"
+  },
+  {
+    "id": "close1",
+    "label": "Close narrativo",
+    "description": "Aproxima o foco narrativo do detalhe.",
+    "template": "o foco caiu num detalhe mínimo"
+  },
+  {
+    "id": "beat1",
+    "label": "Beat de ritmo",
+    "description": "Pausa curta para marcar ritmo de cena.",
+    "template": "houve uma pausa curta"
+  }
+]

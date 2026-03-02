@@ -11,8 +11,8 @@ class NarrativeTagParserTest {
     @Test
     void validatesTagExistenceAgainstCatalog() {
         NarrativeTagCatalog catalog = new NarrativeTagCatalog(List.of(
-                new NarrativeTag("lfp1", "LFP", "Descricao"),
-                new NarrativeTag("emo1", "Emocao", "Descricao")
+                new NarrativeTag("lfp1", "LFP", "Descricao", "template 1"),
+                new NarrativeTag("emo1", "Emocao", "Descricao", "template 2")
         ));
 
         List<ParsedNarrativeTag> parsedTags = NarrativeTagParser.parse("A {lfp1} B {missing1} C {emo1}", catalog);

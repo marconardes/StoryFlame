@@ -1,11 +1,16 @@
 package io.storyflame.core.tags;
 
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
+import java.io.InputStreamReader;
+import java.io.Reader;
+import java.nio.charset.StandardCharsets;
 import java.util.Collection;
 import java.util.LinkedHashMap;
 import java.util.Map;
-import java.util.Objects;
 
 public final class NarrativeTagCatalog {
+    private static final String DEFAULT_RESOURCE = "/narrative_tags.json";
     private final Map<String, NarrativeTag> tagsById;
 
     public NarrativeTagCatalog(Collection<NarrativeTag> tags) {
@@ -17,13 +22,16 @@ public final class NarrativeTagCatalog {
     }
 
     public static NarrativeTagCatalog defaultCatalog() {
-        return new NarrativeTagCatalog(java.util.List.of(
-                new NarrativeTag("lfp1", "Leitura de face 1", "Primeira variacao de leitura facial e percepcao."),
-                new NarrativeTag("lfp2", "Leitura de face 2", "Segunda variacao de leitura facial e percepcao."),
-                new NarrativeTag("emo1", "Emocao 1", "Marcador emocional base."),
-                new NarrativeTag("close1", "Close narrativo", "Aproxima o foco narrativo do detalhe."),
-                new NarrativeTag("beat1", "Beat de ritmo", "Pausa curta para marcar ritmo de cena.")
-        ));
+        try (Reader reader = new InputStreamReader(
+                NarrativeTagCatalog.class.getResourceAsStream(DEFAULT_RESOURCE),
+                StandardCharsets.UTF_8
+        )) {
+            Gson gson = new GsonBuilder().create();
+            NarrativeTag[] tags = gson.fromJson(reader, NarrativeTag[].class);
+            return new NarrativeTagCatalog(tags == null ? java.util.List.of() : java.util.List.of(tags));
+        } catch (Exception exception) {
+            throw new IllegalStateException("Unable to load default narrative tag catalog", exception);
+        }
     }
 
     public boolean contains(String tagId) {

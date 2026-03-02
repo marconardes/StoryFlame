@@ -1,5 +1,7 @@
 package io.storyflame.core.model;
 
+import io.storyflame.core.tags.CharacterTagProfile;
+import io.storyflame.core.tags.NarrativeTag;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
@@ -14,6 +16,8 @@ public final class Project {
     private Instant updatedAt;
     private final List<Chapter> chapters;
     private final List<Character> characters;
+    private final List<NarrativeTag> narrativeTags;
+    private final List<CharacterTagProfile> characterTagProfiles;
 
     public Project() {
         this(
@@ -22,6 +26,8 @@ public final class Project {
                 "",
                 Instant.now(),
                 Instant.now(),
+                new ArrayList<>(),
+                new ArrayList<>(),
                 new ArrayList<>(),
                 new ArrayList<>()
         );
@@ -34,7 +40,9 @@ public final class Project {
             Instant createdAt,
             Instant updatedAt,
             List<Chapter> chapters,
-            List<Character> characters
+            List<Character> characters,
+            List<NarrativeTag> narrativeTags,
+            List<CharacterTagProfile> characterTagProfiles
     ) {
         Instant now = Instant.now();
         this.id = Objects.requireNonNullElse(id, UUID.randomUUID().toString());
@@ -44,10 +52,12 @@ public final class Project {
         this.updatedAt = Objects.requireNonNullElse(updatedAt, this.createdAt);
         this.chapters = new ArrayList<>(Objects.requireNonNullElse(chapters, List.of()));
         this.characters = new ArrayList<>(Objects.requireNonNullElse(characters, List.of()));
+        this.narrativeTags = new ArrayList<>(Objects.requireNonNullElse(narrativeTags, List.of()));
+        this.characterTagProfiles = new ArrayList<>(Objects.requireNonNullElse(characterTagProfiles, List.of()));
     }
 
     public static Project blank(String title, String author) {
-        return new Project(UUID.randomUUID().toString(), title, author, Instant.now(), Instant.now(), List.of(), List.of());
+        return new Project(UUID.randomUUID().toString(), title, author, Instant.now(), Instant.now(), List.of(), List.of(), List.of(), List.of());
     }
 
     public String getId() {
@@ -100,8 +110,15 @@ public final class Project {
         return characters;
     }
 
+    public List<NarrativeTag> getNarrativeTags() {
+        return narrativeTags;
+    }
+
+    public List<CharacterTagProfile> getCharacterTagProfiles() {
+        return characterTagProfiles;
+    }
+
     public void touch() {
         updatedAt = Instant.now();
     }
 }
-

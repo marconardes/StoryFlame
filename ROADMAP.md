@@ -127,12 +127,12 @@ Marco:
 Objetivo: tornar o sistema de tags utilizavel com contexto de personagem.
 
 Backlog:
-- [ ] Criar `narrative_tags.json`
-- [ ] Montar biblioteca inicial de tags
-- [ ] Suportar prefixo por personagem
-- [ ] Criar editor de perfil de personagem
-- [ ] Permitir criar nova tag
-- [ ] Implementar validador de inconsistencias
+- [x] Criar `narrative_tags.json`
+- [x] Montar biblioteca inicial de tags
+- [x] Suportar prefixo por personagem
+- [x] Criar editor de perfil de personagem
+- [x] Permitir criar nova tag
+- [x] Implementar validador de inconsistencias
 
 Entregavel:
 - O escritor consegue manter biblioteca de tags e perfis narrativos por personagem
@@ -142,12 +142,12 @@ Entregavel:
 Objetivo: transformar tags em texto renderizado.
 
 Backlog:
-- [ ] Implementar `TemplateExpansionEngine`
-- [ ] Mapear tag para template
-- [ ] Preservar pontuacao na expansao
-- [ ] Separar modo rascunho e modo render
-- [ ] Criar preview de expansao
-- [ ] Testar multiplas tags no mesmo trecho
+- [x] Implementar `TemplateExpansionEngine`
+- [x] Mapear tag para template
+- [x] Preservar pontuacao na expansao
+- [x] Separar modo rascunho e modo render
+- [x] Criar preview de expansao
+- [x] Testar multiplas tags no mesmo trecho
 
 Entregavel:
 - Tags como `{lfp1}` passam a virar texto real

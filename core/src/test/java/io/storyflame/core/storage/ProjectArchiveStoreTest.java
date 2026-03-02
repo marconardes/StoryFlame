@@ -8,6 +8,8 @@ import io.storyflame.core.model.Chapter;
 import io.storyflame.core.model.Character;
 import io.storyflame.core.model.Project;
 import io.storyflame.core.model.Scene;
+import io.storyflame.core.tags.CharacterTagProfile;
+import io.storyflame.core.tags.NarrativeTag;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
@@ -31,6 +33,8 @@ class ProjectArchiveStoreTest {
         assertEquals(project.getAuthor(), loaded.getAuthor());
         assertEquals(project.getChapters().size(), loaded.getChapters().size());
         assertEquals(project.getCharacters().size(), loaded.getCharacters().size());
+        assertEquals(project.getNarrativeTags().size(), loaded.getNarrativeTags().size());
+        assertEquals(project.getCharacterTagProfiles().size(), loaded.getCharacterTagProfiles().size());
         assertEquals(
                 project.getChapters().get(0).getScenes().get(0).getContent(),
                 loaded.getChapters().get(0).getScenes().get(0).getContent()
@@ -68,6 +72,8 @@ class ProjectArchiveStoreTest {
         Project project = Project.blank("Nebula Hearts", "Marco");
         project.getCharacters().add(new Character("char-1", "Lia", "Pilot"));
         project.getCharacters().add(new Character("char-2", "Noa", "Engineer"));
+        project.getNarrativeTags().add(new NarrativeTag("custom-1", "Custom", "Descricao", "observou tudo"));
+        project.getCharacterTagProfiles().add(new CharacterTagProfile("char-1", "lia", List.of("custom-1")));
 
         List<Scene> scenes = new ArrayList<>();
         scenes.add(new Scene("scene-1", "Docking", "The station lights flickered.", "char-1"));

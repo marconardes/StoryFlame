@@ -6,6 +6,8 @@ public final class ProjectArchiveLayout {
     public static final String SPEC_VERSION = "1";
     public static final String MANIFEST_FILE = "manifest.json";
     public static final String PROJECT_FILE = "project.json";
+    public static final String NARRATIVE_TAGS_FILE = "narrative_tags.json";
+    public static final String CHARACTER_TAG_PROFILES_FILE = "character_tag_profiles.json";
     public static final String CHAPTERS_DIRECTORY = "chapters/";
     public static final String CHARACTERS_DIRECTORY = "characters/";
     public static final String ANALYSIS_DIRECTORY = "analysis/";
@@ -18,6 +20,8 @@ public final class ProjectArchiveLayout {
         return List.of(
                 MANIFEST_FILE,
                 PROJECT_FILE,
+                NARRATIVE_TAGS_FILE,
+                CHARACTER_TAG_PROFILES_FILE,
                 CHAPTERS_DIRECTORY,
                 CHARACTERS_DIRECTORY
         );
@@ -35,4 +39,3 @@ public final class ProjectArchiveLayout {
         return ANALYSIS_DIRECTORY + name + ".json";
     }
 }
-

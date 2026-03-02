@@ -10,9 +10,16 @@ import io.storyflame.core.search.SearchTarget;
 import io.storyflame.core.storage.ProjectArchiveStore;
 import io.storyflame.core.storage.ProjectAutosaveService;
 import io.storyflame.core.storage.ProjectStoragePaths;
+import io.storyflame.core.tags.CharacterTagProfile;
+import io.storyflame.core.tags.NarrativeTag;
 import io.storyflame.core.tags.NarrativeTagCatalog;
 import io.storyflame.core.tags.NarrativeTagParser;
 import io.storyflame.core.tags.ParsedNarrativeTag;
+import io.storyflame.core.tags.TagLibraryIssue;
+import io.storyflame.core.tags.TagLibraryValidator;
+import io.storyflame.core.tags.TemplateExpansionEngine;
+import io.storyflame.core.tags.TemplateExpansionMode;
+import io.storyflame.core.tags.TemplateExpansionResult;
 import io.storyflame.core.text.WordCount;
 import io.storyflame.core.validation.NarrativeIntegrityIssue;
 import io.storyflame.core.validation.NarrativeIntegrityValidator;
@@ -74,12 +81,19 @@ public final class StoryFlameDesktopApp {
     private final JTextField chapterTitleField;
     private final JTextField sceneTitleField;
     private final JTextField searchField;
+    private final JTextField tagSearchField;
     private final JTextField characterSearchField;
     private final JTextField characterNameField;
     private final JTextField povSearchField;
+    private final JTextField tagIdField;
+    private final JTextField tagLabelField;
+    private final JTextField tagTemplateField;
+    private final JTextField profilePrefixField;
+    private final JTextField profilePreferredTagsField;
     private final JTextArea sceneEditorArea;
     private final JTextArea summaryArea;
     private final JTextArea characterDescriptionArea;
+    private final JTextArea tagDescriptionArea;
     private final JLabel contextLabel;
     private final JLabel wordCountLabel;
     private final JLabel chapterCountLabel;
@@ -87,28 +101,40 @@ public final class StoryFlameDesktopApp {
     private final JLabel characterCountLabel;
     private final JLabel searchCountLabel;
     private final JLabel tagCountLabel;
+    private final JLabel renderModeLabel;
     private final JLabel projectPathLabel;
     private final JLabel pointOfViewLabel;
     private final JLabel integrityLabel;
+    private final JLabel tagLibraryIssuesLabel;
+    private final JLabel selectedTagUsageLabel;
+    private final JLabel selectedTagStatusLabel;
+    private final JLabel selectedProfileCharacterLabel;
+    private final JLabel selectedProfileStatusLabel;
     private final JLabel selectedCharacterScenesLabel;
     private final JLabel selectedCharacterPointOfViewLabel;
     private final JLabel statusLabel;
     private final DefaultListModel<String> chapterListModel;
     private final DefaultListModel<String> sceneListModel;
     private final DefaultListModel<String> searchListModel;
+    private final DefaultListModel<String> tagListModel;
     private final DefaultListModel<String> characterListModel;
     private final DefaultListModel<String> povListModel;
+    private final DefaultListModel<String> profileListModel;
     private final JList<String> chapterList;
     private final JList<String> sceneList;
     private final JList<String> searchList;
+    private final JList<String> tagList;
     private final JList<String> characterList;
     private final JList<String> povList;
+    private final JList<String> profileList;
     private final UndoManager sceneUndoManager;
     private final List<SearchMatch> searchMatches;
+    private final List<NarrativeTag> visibleTags;
     private final List<Character> visibleCharacters;
     private final List<Character> visiblePointOfViewCharacters;
+    private final List<CharacterTagProfile> visibleProfiles;
     private final Timer searchRefreshTimer;
-    private final NarrativeTagCatalog narrativeTagCatalog;
+    private TemplateExpansionMode templateExpansionMode;
 
     private JFrame frame;
     private JTabbedPane tabbedPane;
@@ -117,6 +143,8 @@ public final class StoryFlameDesktopApp {
     private Chapter selectedChapter;
     private Scene selectedScene;
     private Character selectedCharacter;
+    private NarrativeTag selectedTag;
+    private CharacterTagProfile selectedProfile;
     private boolean syncingUi;
 
     private StoryFlameDesktopApp() {
@@ -127,12 +155,19 @@ public final class StoryFlameDesktopApp {
         this.chapterTitleField = new JTextField();
         this.sceneTitleField = new JTextField();
         this.searchField = new JTextField();
+        this.tagSearchField = new JTextField();
         this.characterSearchField = new JTextField();
         this.characterNameField = new JTextField();
         this.povSearchField = new JTextField();
+        this.tagIdField = new JTextField();
+        this.tagLabelField = new JTextField();
+        this.tagTemplateField = new JTextField();
+        this.profilePrefixField = new JTextField();
+        this.profilePreferredTagsField = new JTextField();
         this.sceneEditorArea = new JTextArea();
         this.summaryArea = new JTextArea();
         this.characterDescriptionArea = new JTextArea();
+        this.tagDescriptionArea = new JTextArea();
         this.contextLabel = new JLabel("Nenhuma cena selecionada");
         this.wordCountLabel = new JLabel("0 palavras");
         this.chapterCountLabel = new JLabel("0 capitulos");
@@ -140,29 +175,41 @@ public final class StoryFlameDesktopApp {
         this.characterCountLabel = new JLabel("0 personagens");
         this.searchCountLabel = new JLabel("0 resultados");
         this.tagCountLabel = new JLabel("0 tags");
+        this.renderModeLabel = new JLabel("Rascunho");
         this.projectPathLabel = new JLabel("Sem arquivo");
         this.pointOfViewLabel = new JLabel("POV: sem personagem");
         this.integrityLabel = new JLabel("0 referencias quebradas");
+        this.tagLibraryIssuesLabel = new JLabel("0 inconsistencias de tags");
+        this.selectedTagUsageLabel = new JLabel("0 usos no manuscrito");
+        this.selectedTagStatusLabel = new JLabel("Tag valida");
+        this.selectedProfileCharacterLabel = new JLabel("Nenhum perfil selecionado");
+        this.selectedProfileStatusLabel = new JLabel("Sem inconsistencias");
         this.selectedCharacterScenesLabel = new JLabel("0 cenas ligadas");
         this.selectedCharacterPointOfViewLabel = new JLabel("Nao e o POV atual");
         this.statusLabel = new JLabel("Nenhum projeto carregado.");
         this.chapterListModel = new DefaultListModel<>();
         this.sceneListModel = new DefaultListModel<>();
         this.searchListModel = new DefaultListModel<>();
+        this.tagListModel = new DefaultListModel<>();
         this.characterListModel = new DefaultListModel<>();
         this.povListModel = new DefaultListModel<>();
+        this.profileListModel = new DefaultListModel<>();
         this.chapterList = new JList<>(chapterListModel);
         this.sceneList = new JList<>(sceneListModel);
         this.searchList = new JList<>(searchListModel);
+        this.tagList = new JList<>(tagListModel);
         this.characterList = new JList<>(characterListModel);
         this.povList = new JList<>(povListModel);
+        this.profileList = new JList<>(profileListModel);
         this.sceneUndoManager = new UndoManager();
         this.searchMatches = new ArrayList<>();
+        this.visibleTags = new ArrayList<>();
         this.visibleCharacters = new ArrayList<>();
         this.visiblePointOfViewCharacters = new ArrayList<>();
+        this.visibleProfiles = new ArrayList<>();
         this.searchRefreshTimer = new Timer(250, event -> refreshSearchResultsNow());
         this.searchRefreshTimer.setRepeats(false);
-        this.narrativeTagCatalog = NarrativeTagCatalog.defaultCatalog();
+        this.templateExpansionMode = TemplateExpansionMode.DRAFT;
     }
 
     public static void main(String[] args) {
@@ -227,6 +274,9 @@ public final class StoryFlameDesktopApp {
         JMenu editMenu = new JMenu("Editar");
         editMenu.add(menuItem("Desfazer", "control Z", this::undoSceneEdit));
         editMenu.add(menuItem("Refazer", "control Y", this::redoSceneEdit));
+        editMenu.addSeparator();
+        editMenu.add(menuItem("Modo rascunho", "control 1", () -> setTemplateExpansionMode(TemplateExpansionMode.DRAFT)));
+        editMenu.add(menuItem("Modo render", "control 2", () -> setTemplateExpansionMode(TemplateExpansionMode.RENDER)));
 
         JMenu windowMenu = new JMenu("Janelas");
         windowMenu.add(menuItem("Editor", "F1", this::focusEditorFrame));
@@ -234,6 +284,7 @@ public final class StoryFlameDesktopApp {
         windowMenu.add(menuItem("Projeto", "F3", this::focusProjectFrame));
         windowMenu.add(menuItem("Busca", "F4", this::focusSearchFrame));
         windowMenu.add(menuItem("Personagens", "F5", this::focusCharacterFrame));
+        windowMenu.add(menuItem("Tags", "F6", this::focusTagsFrame));
 
         menuBar.add(fileMenu);
         menuBar.add(editMenu);
@@ -257,6 +308,7 @@ public final class StoryFlameDesktopApp {
         JButton projectButton = new JButton("Projeto");
         JButton searchButton = new JButton("Buscar");
         JButton characterButton = new JButton("Personagens");
+        JButton tagsButton = new JButton("Tags");
 
         newButton.addActionListener(event -> createProject());
         openButton.addActionListener(event -> openProject(frame));
@@ -265,6 +317,7 @@ public final class StoryFlameDesktopApp {
         projectButton.addActionListener(event -> focusProjectFrame());
         searchButton.addActionListener(event -> focusSearchFrame());
         characterButton.addActionListener(event -> focusCharacterFrame());
+        tagsButton.addActionListener(event -> focusTagsFrame());
 
         toolBar.add(newButton);
         toolBar.add(openButton);
@@ -274,6 +327,7 @@ public final class StoryFlameDesktopApp {
         toolBar.add(projectButton);
         toolBar.add(searchButton);
         toolBar.add(characterButton);
+        toolBar.add(tagsButton);
         toolBar.addSeparator();
         toolBar.add(chapterCountLabel);
         toolBar.add(Box.createHorizontalStrut(12));
@@ -284,6 +338,8 @@ public final class StoryFlameDesktopApp {
         toolBar.add(searchCountLabel);
         toolBar.add(Box.createHorizontalStrut(12));
         toolBar.add(tagCountLabel);
+        toolBar.add(Box.createHorizontalStrut(12));
+        toolBar.add(renderModeLabel);
         toolBar.add(Box.createHorizontalGlue());
         toolBar.add(contextLabel);
         toolBar.add(Box.createHorizontalStrut(20));
@@ -296,6 +352,7 @@ public final class StoryFlameDesktopApp {
         tabbedPane.addTab("Estrutura", buildStructurePanel());
         tabbedPane.addTab("Busca", buildSearchPanel());
         tabbedPane.addTab("Personagens", buildCharacterPanel());
+        tabbedPane.addTab("Tags", buildTagsPanel());
     }
 
     private JPanel buildEditorPanel() {
@@ -312,7 +369,11 @@ public final class StoryFlameDesktopApp {
         JPanel footer = new JPanel(new BorderLayout(8, 8));
         footer.setOpaque(false);
         footer.add(buildEditorBadge(projectPathLabel), BorderLayout.CENTER);
-        footer.add(buildEditorBadge(wordCountLabel), BorderLayout.EAST);
+        JPanel rightBadges = new JPanel(new GridLayout(1, 0, 8, 0));
+        rightBadges.setOpaque(false);
+        rightBadges.add(buildEditorBadge(renderModeLabel));
+        rightBadges.add(buildEditorBadge(wordCountLabel));
+        footer.add(rightBadges, BorderLayout.EAST);
         panel.add(footer, BorderLayout.SOUTH);
         return panel;
     }
@@ -410,6 +471,111 @@ public final class StoryFlameDesktopApp {
         footer.add(buildEditorBadge(integrityLabel));
         root.add(footer, BorderLayout.SOUTH);
         return root;
+    }
+
+    private JPanel buildTagsPanel() {
+        JPanel root = new JPanel(new BorderLayout(8, 8));
+        root.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
+        root.setBackground(new Color(244, 239, 231));
+
+        JSplitPane splitPane = new JSplitPane(JSplitPane.VERTICAL_SPLIT, buildTagLibraryPanel(), buildTagProfilesPanel());
+        splitPane.setBorder(BorderFactory.createEmptyBorder());
+        splitPane.setResizeWeight(0.58);
+        root.add(splitPane, BorderLayout.CENTER);
+
+        JPanel footer = new JPanel(new GridLayout(1, 0, 8, 0));
+        footer.setOpaque(false);
+        footer.add(buildEditorBadge(tagCountLabel));
+        footer.add(buildEditorBadge(tagLibraryIssuesLabel));
+        root.add(footer, BorderLayout.SOUTH);
+        return root;
+    }
+
+    private JPanel buildTagLibraryPanel() {
+        JPanel panel = new JPanel(new BorderLayout(8, 8));
+        panel.setOpaque(false);
+        panel.setBorder(BorderFactory.createTitledBorder("Biblioteca de tags"));
+        JPanel header = new JPanel(new BorderLayout(8, 8));
+        header.setOpaque(false);
+        header.add(tagSearchField, BorderLayout.NORTH);
+        header.add(buildTagLibrarySummaryPanel(), BorderLayout.SOUTH);
+        panel.add(header, BorderLayout.NORTH);
+
+        JPanel center = new JPanel(new BorderLayout(8, 8));
+        center.setOpaque(false);
+        center.add(buildTagToolbar(), BorderLayout.NORTH);
+        center.add(new JScrollPane(tagList), BorderLayout.CENTER);
+        center.add(buildTagDetailsPanel(), BorderLayout.SOUTH);
+        panel.add(center, BorderLayout.CENTER);
+        return panel;
+    }
+
+    private JPanel buildTagProfilesPanel() {
+        JPanel panel = new JPanel(new BorderLayout(8, 8));
+        panel.setOpaque(false);
+        panel.setBorder(BorderFactory.createTitledBorder("Perfis por personagem"));
+        panel.add(buildTagProfileSummaryPanel(), BorderLayout.NORTH);
+        panel.add(new JScrollPane(profileList), BorderLayout.CENTER);
+        panel.add(buildProfileDetailsPanel(), BorderLayout.SOUTH);
+        return panel;
+    }
+
+    private JPanel buildTagDetailsPanel() {
+        JPanel panel = new JPanel(new BorderLayout(8, 8));
+        panel.setOpaque(false);
+        panel.setBorder(BorderFactory.createTitledBorder("Detalhes da tag"));
+
+        JPanel fields = new JPanel(new GridLayout(0, 1, 0, 8));
+        fields.setOpaque(false);
+        fields.add(tagIdField);
+        fields.add(tagLabelField);
+        fields.add(tagTemplateField);
+        panel.add(fields, BorderLayout.NORTH);
+        panel.add(new JScrollPane(tagDescriptionArea), BorderLayout.CENTER);
+
+        JPanel footer = new JPanel(new GridLayout(1, 0, 8, 0));
+        footer.setOpaque(false);
+        JButton duplicateButton = new JButton("Duplicar tag");
+        JButton clearButton = new JButton("Limpar campos");
+        duplicateButton.addActionListener(event -> duplicateTag());
+        clearButton.addActionListener(event -> clearSelectedTagDraft());
+        footer.add(duplicateButton);
+        footer.add(clearButton);
+        panel.add(footer, BorderLayout.SOUTH);
+        return panel;
+    }
+
+    private JPanel buildProfileDetailsPanel() {
+        JPanel panel = new JPanel(new BorderLayout(8, 8));
+        panel.setOpaque(false);
+        panel.setBorder(BorderFactory.createTitledBorder("Detalhes do perfil"));
+
+        JPanel fields = new JPanel(new GridLayout(0, 1, 0, 8));
+        fields.setOpaque(false);
+        fields.add(profilePrefixField);
+        fields.add(profilePreferredTagsField);
+        panel.add(fields, BorderLayout.CENTER);
+
+        JButton applyCurrentTagButton = new JButton("Usar tag selecionada");
+        applyCurrentTagButton.addActionListener(event -> appendSelectedTagToProfile());
+        panel.add(applyCurrentTagButton, BorderLayout.SOUTH);
+        return panel;
+    }
+
+    private JPanel buildTagLibrarySummaryPanel() {
+        JPanel panel = new JPanel(new GridLayout(1, 0, 8, 0));
+        panel.setOpaque(false);
+        panel.add(buildEditorBadge(selectedTagUsageLabel));
+        panel.add(buildEditorBadge(selectedTagStatusLabel));
+        return panel;
+    }
+
+    private JPanel buildTagProfileSummaryPanel() {
+        JPanel panel = new JPanel(new GridLayout(1, 0, 8, 0));
+        panel.setOpaque(false);
+        panel.add(buildEditorBadge(selectedProfileCharacterLabel));
+        panel.add(buildEditorBadge(selectedProfileStatusLabel));
+        return panel;
     }
 
     private JPanel buildCharacterDetailsPanel() {
@@ -521,6 +687,20 @@ public final class StoryFlameDesktopApp {
         panel.add(deleteButton);
         panel.add(assignButton);
         panel.add(focusButton);
+        return panel;
+    }
+
+    private JPanel buildTagToolbar() {
+        JPanel panel = new JPanel();
+        JButton addButton = new JButton("+");
+        JButton deleteButton = new JButton("-");
+        JButton clearButton = new JButton("Limpar busca");
+        addButton.addActionListener(event -> addTag());
+        deleteButton.addActionListener(event -> deleteTag());
+        clearButton.addActionListener(event -> tagSearchField.setText(""));
+        panel.add(addButton);
+        panel.add(deleteButton);
+        panel.add(clearButton);
         return panel;
     }
 
@@ -637,6 +817,38 @@ public final class StoryFlameDesktopApp {
                 onCharacterEdited();
             }
         };
+        DocumentListener tagListener = new DocumentListener() {
+            @Override
+            public void insertUpdate(DocumentEvent event) {
+                onTagEdited();
+            }
+
+            @Override
+            public void removeUpdate(DocumentEvent event) {
+                onTagEdited();
+            }
+
+            @Override
+            public void changedUpdate(DocumentEvent event) {
+                onTagEdited();
+            }
+        };
+        DocumentListener profileListener = new DocumentListener() {
+            @Override
+            public void insertUpdate(DocumentEvent event) {
+                onProfileEdited();
+            }
+
+            @Override
+            public void removeUpdate(DocumentEvent event) {
+                onProfileEdited();
+            }
+
+            @Override
+            public void changedUpdate(DocumentEvent event) {
+                onProfileEdited();
+            }
+        };
 
         titleField.getDocument().addDocumentListener(metadataListener);
         authorField.getDocument().addDocumentListener(metadataListener);
@@ -645,6 +857,12 @@ public final class StoryFlameDesktopApp {
         sceneEditorArea.getDocument().addDocumentListener(sceneContentListener);
         characterNameField.getDocument().addDocumentListener(characterListener);
         characterDescriptionArea.getDocument().addDocumentListener(characterListener);
+        tagIdField.getDocument().addDocumentListener(tagListener);
+        tagLabelField.getDocument().addDocumentListener(tagListener);
+        tagTemplateField.getDocument().addDocumentListener(tagListener);
+        tagDescriptionArea.getDocument().addDocumentListener(tagListener);
+        profilePrefixField.getDocument().addDocumentListener(profileListener);
+        profilePreferredTagsField.getDocument().addDocumentListener(profileListener);
         searchField.getDocument().addDocumentListener(new DocumentListener() {
             @Override
             public void insertUpdate(DocumentEvent event) {
@@ -659,6 +877,22 @@ public final class StoryFlameDesktopApp {
             @Override
             public void changedUpdate(DocumentEvent event) {
                 scheduleSearchRefresh();
+            }
+        });
+        tagSearchField.getDocument().addDocumentListener(new DocumentListener() {
+            @Override
+            public void insertUpdate(DocumentEvent event) {
+                refreshTagLibrary();
+            }
+
+            @Override
+            public void removeUpdate(DocumentEvent event) {
+                refreshTagLibrary();
+            }
+
+            @Override
+            public void changedUpdate(DocumentEvent event) {
+                refreshTagLibrary();
             }
         });
         characterSearchField.getDocument().addDocumentListener(new DocumentListener() {
@@ -697,13 +931,17 @@ public final class StoryFlameDesktopApp {
         chapterList.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
         sceneList.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
         searchList.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
+        tagList.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
         characterList.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
         povList.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
+        profileList.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
 
         chapterList.addListSelectionListener(this::onChapterSelected);
         sceneList.addListSelectionListener(this::onSceneSelected);
         searchList.addListSelectionListener(this::onSearchSelected);
+        tagList.addListSelectionListener(this::onTagSelected);
         characterList.addListSelectionListener(this::onCharacterSelected);
+        profileList.addListSelectionListener(this::onProfileSelected);
         searchList.addMouseListener(new java.awt.event.MouseAdapter() {
             @Override
             public void mouseClicked(java.awt.event.MouseEvent event) {
@@ -727,6 +965,7 @@ public final class StoryFlameDesktopApp {
         installWindowShortcut(frame.getRootPane(), "F3", this::focusProjectFrame);
         installWindowShortcut(frame.getRootPane(), "F4", this::focusSearchFrame);
         installWindowShortcut(frame.getRootPane(), "F5", this::focusCharacterFrame);
+        installWindowShortcut(frame.getRootPane(), "F6", this::focusTagsFrame);
         installWindowShortcut(frame.getRootPane(), "control alt P", this::assignSelectedCharacterAsPointOfView);
     }
 
@@ -860,12 +1099,54 @@ public final class StoryFlameDesktopApp {
         statusLabel.setText("Alteracoes pendentes...");
     }
 
+    private void onTagEdited() {
+        if (syncingUi || currentProject == null || currentPath == null || selectedTag == null) {
+            return;
+        }
+        NarrativeTag updatedTag = new NarrativeTag(
+                nonBlankOrFallback(tagIdField.getText(), selectedTag.id()),
+                tagLabelField.getText(),
+                tagDescriptionArea.getText(),
+                tagTemplateField.getText()
+        );
+        int index = currentProject.getNarrativeTags().indexOf(selectedTag);
+        if (index >= 0) {
+            currentProject.getNarrativeTags().set(index, updatedTag);
+            selectedTag = updatedTag;
+        }
+        refreshTagLibrary();
+        renderSummary();
+        scheduleAutosave();
+        statusLabel.setText("Alteracoes pendentes...");
+    }
+
+    private void onProfileEdited() {
+        if (syncingUi || currentProject == null || currentPath == null || selectedProfile == null) {
+            return;
+        }
+        selectedProfile.setPrefix(profilePrefixField.getText().trim());
+        selectedProfile.getPreferredTagIds().clear();
+        for (String value : profilePreferredTagsField.getText().split(",")) {
+            String trimmed = value.trim().toLowerCase();
+            if (!trimmed.isBlank()) {
+                selectedProfile.getPreferredTagIds().add(trimmed);
+            }
+        }
+        refreshTagProfiles();
+        renderSummary();
+        scheduleAutosave();
+        statusLabel.setText("Alteracoes pendentes...");
+    }
+
     private void syncFieldsFromProject() {
         syncingUi = true;
         titleField.setText(currentProject.getTitle());
         authorField.setText(currentProject.getAuthor());
+        ensureCharacterTagProfiles();
         refreshStructureLists();
         refreshCharacterLists();
+        refreshTagLibrary();
+        refreshTagProfiles();
         updateEditorFields();
         refreshSearchResultsNow();
         syncingUi = false;
@@ -966,10 +1247,12 @@ public final class StoryFlameDesktopApp {
         );
         currentProject.getCharacters().add(character);
         selectedCharacter = character;
+        ensureCharacterTagProfiles();
         if (!characterSearchField.getText().isBlank()) {
             characterSearchField.setText("");
         }
         refreshCharacterLists();
+        refreshTagProfiles();
         refreshPointOfViewList();
         onProjectEdited();
     }
@@ -997,9 +1280,91 @@ public final class StoryFlameDesktopApp {
         selectedCharacter = currentProject.getCharacters().isEmpty()
                 ? null
                 : currentProject.getCharacters().get(Math.max(0, removedIndex - 1));
+        currentProject.getCharacterTagProfiles().removeIf(profile -> currentProject.getCharacters().stream().noneMatch(character -> character.getId().equals(profile.getCharacterId())));
         refreshCharacterLists();
+        refreshTagProfiles();
         refreshPointOfViewList();
         onProjectEdited();
+    }
+
+    private void addTag() {
+        if (currentProject == null) {
+            return;
+        }
+        String baseId = sanitizeTagId(tagSearchField.getText().isBlank() ? tagIdField.getText() : tagSearchField.getText());
+        if (baseId.isBlank()) {
+            baseId = "tag" + (currentProject.getNarrativeTags().size() + 1);
+        }
+        String uniqueId = ensureUniqueTagId(baseId);
+        NarrativeTag tag = new NarrativeTag(uniqueId, uniqueId, "", "");
+        currentProject.getNarrativeTags().add(tag);
+        selectedTag = tag;
+        tagSearchField.setText("");
+        refreshTagLibrary();
+        renderSummary();
+        scheduleAutosave();
+        statusLabel.setText("Nova tag criada.");
+    }
+
+    private void deleteTag() {
+        if (currentProject == null || selectedTag == null) {
+            return;
+        }
+        int confirmation = JOptionPane.showConfirmDialog(
+                frame,
+                "Excluir tag '" + selectedTag.id() + "'?",
+                "Excluir tag",
+                JOptionPane.YES_NO_OPTION,
+                JOptionPane.WARNING_MESSAGE
+        );
+        if (confirmation != JOptionPane.YES_OPTION) {
+            return;
+        }
+        currentProject.getNarrativeTags().remove(selectedTag);
+        for (CharacterTagProfile profile : currentProject.getCharacterTagProfiles()) {
+            profile.getPreferredTagIds().removeIf(tagId -> tagId.equals(selectedTag.id()));
+        }
+        selectedTag = currentProject.getNarrativeTags().isEmpty() ? null : currentProject.getNarrativeTags().get(0);
+        refreshTagLibrary();
+        refreshTagProfiles();
+        renderSummary();
+        scheduleAutosave();
+        statusLabel.setText("Tag removida.");
+    }
+
+    private void duplicateTag() {
+        if (currentProject == null || selectedTag == null) {
+            return;
+        }
+        String newId = ensureUniqueTagId(selectedTag.id() + "-copy");
+        NarrativeTag copy = new NarrativeTag(newId, selectedTag.label(), selectedTag.description(), selectedTag.template());
+        currentProject.getNarrativeTags().add(copy);
+        selectedTag = copy;
+        refreshTagLibrary();
+        scheduleAutosave();
+        statusLabel.setText("Tag duplicada.");
+    }
+
+    private void clearSelectedTagDraft() {
+        syncingUi = true;
+        tagIdField.setText("");
+        tagLabelField.setText("");
+        tagTemplateField.setText("");
+        tagDescriptionArea.setText("");
+        syncingUi = false;
+    }
+
+    private void appendSelectedTagToProfile() {
+        if (selectedProfile == null || selectedTag == null) {
+            return;
+        }
+        if (!selectedProfile.getPreferredTagIds().contains(selectedTag.id())) {
+            selectedProfile.getPreferredTagIds().add(selectedTag.id());
+        }
+        refreshTagProfiles();
+        renderSummary();
+        scheduleAutosave();
+        statusLabel.setText("Tag adicionada ao perfil.");
     }
 
     private void assignSelectedCharacterAsPointOfView() {
@@ -1159,6 +1524,100 @@ public final class StoryFlameDesktopApp {
         syncingUi = previousSyncingUi;
     }
 
+    private void refreshTagLibrary() {
+        boolean previousSyncingUi = syncingUi;
+        syncingUi = true;
+        NarrativeTag previousSelection = selectedTag;
+
+        visibleTags.clear();
+        tagListModel.clear();
+        if (currentProject == null) {
+            tagIdField.setText("");
+            tagLabelField.setText("");
+            tagTemplateField.setText("");
+            tagDescriptionArea.setText("");
+            tagLibraryIssuesLabel.setText("0 inconsistencias de tags");
+            selectedTagUsageLabel.setText("0 usos no manuscrito");
+            selectedTagStatusLabel.setText("Tag valida");
+            syncingUi = previousSyncingUi;
+            return;
+        }
+
+        String query = tagSearchField.getText() == null ? "" : tagSearchField.getText().trim().toLowerCase();
+        for (NarrativeTag tag : currentProject.getNarrativeTags()) {
+            String haystack = (tag.id() + "\n" + tag.label() + "\n" + tag.description() + "\n" + tag.template()).toLowerCase();
+            if (!query.isBlank() && !haystack.contains(query)) {
+                continue;
+            }
+            visibleTags.add(tag);
+            tagListModel.addElement(tag.id() + " | " + displayTitle(tag.label(), "Sem rotulo"));
+        }
+
+        if (previousSelection != null && visibleTags.contains(previousSelection)) {
+            tagList.setSelectedIndex(visibleTags.indexOf(previousSelection));
+        } else if (!visibleTags.isEmpty()) {
+            selectedTag = visibleTags.get(0);
+            tagList.setSelectedIndex(0);
+        } else if (!currentProject.getNarrativeTags().contains(selectedTag)) {
+            selectedTag = currentProject.getNarrativeTags().isEmpty() ? null : currentProject.getNarrativeTags().get(0);
+        }
+
+        tagIdField.setText(selectedTag == null ? "" : selectedTag.id());
+        tagLabelField.setText(selectedTag == null ? "" : selectedTag.label());
+        tagTemplateField.setText(selectedTag == null ? "" : selectedTag.template());
+        tagDescriptionArea.setText(selectedTag == null ? "" : selectedTag.description());
+        selectedTagUsageLabel.setText(selectedTag == null
+                ? "0 usos no manuscrito"
+                : countTagUsage(selectedTag.id()) + " usos no manuscrito");
+        selectedTagStatusLabel.setText(selectedTag == null
+                ? "Tag valida"
+                : (selectedTag.template().isBlank() ? "Sem template proprio" : "Template configurado"));
+        updateTagLibraryIssuesLabel();
+        syncingUi = previousSyncingUi;
+    }
+
+    private void refreshTagProfiles() {
+        boolean previousSyncingUi = syncingUi;
+        syncingUi = true;
+        ensureCharacterTagProfiles();
+
+        visibleProfiles.clear();
+        profileListModel.clear();
+        if (currentProject == null) {
+            profilePrefixField.setText("");
+            profilePreferredTagsField.setText("");
+            selectedProfileCharacterLabel.setText("Nenhum perfil selecionado");
+            selectedProfileStatusLabel.setText("Sem inconsistencias");
+            syncingUi = previousSyncingUi;
+            return;
+        }
+
+        for (CharacterTagProfile profile : currentProject.getCharacterTagProfiles()) {
+            visibleProfiles.add(profile);
+            profileListModel.addElement(formatProfileLabel(profile));
+        }
+
+        if (selectedProfile != null && visibleProfiles.contains(selectedProfile)) {
+            profileList.setSelectedIndex(visibleProfiles.indexOf(selectedProfile));
+        } else if (!visibleProfiles.isEmpty()) {
+            selectedProfile = visibleProfiles.get(0);
+            profileList.setSelectedIndex(0);
+        } else {
+            selectedProfile = null;
+        }
+
+        profilePrefixField.setText(selectedProfile == null ? "" : selectedProfile.getPrefix());
+        profilePreferredTagsField.setText(selectedProfile == null ? "" : String.join(", ", selectedProfile.getPreferredTagIds()));
+        selectedProfileCharacterLabel.setText(selectedProfile == null
+                ? "Nenhum perfil selecionado"
+                : formatProfileLabel(selectedProfile));
+        selectedProfileStatusLabel.setText(selectedProfile == null
+                ? "Sem inconsistencias"
+                : profileHasIssues(selectedProfile) ? "Perfil com inconsistencias" : "Perfil consistente");
+        updateTagLibraryIssuesLabel();
+        syncingUi = previousSyncingUi;
+    }
+
     private void refreshPointOfViewList() {
         boolean previousSyncingUi = syncingUi;
         syncingUi = true;
@@ -1275,6 +1734,30 @@ public final class StoryFlameDesktopApp {
         refreshCharacterLists();
     }
 
+    private void onTagSelected(ListSelectionEvent event) {
+        if (event.getValueIsAdjusting() || syncingUi || currentProject == null) {
+            return;
+        }
+        int selectedIndex = tagList.getSelectedIndex();
+        if (selectedIndex < 0 || selectedIndex >= visibleTags.size()) {
+            return;
+        }
+        selectedTag = visibleTags.get(selectedIndex);
+        refreshTagLibrary();
+    }
+
+    private void onProfileSelected(ListSelectionEvent event) {
+        if (event.getValueIsAdjusting() || syncingUi || currentProject == null) {
+            return;
+        }
+        int selectedIndex = profileList.getSelectedIndex();
+        if (selectedIndex < 0 || selectedIndex >= visibleProfiles.size()) {
+            return;
+        }
+        selectedProfile = visibleProfiles.get(selectedIndex);
+        refreshTagProfiles();
+    }
+
     private void onSearchSelected(ListSelectionEvent event) {
         if (event.getValueIsAdjusting() || syncingUi) {
             return;
@@ -1307,6 +1790,7 @@ public final class StoryFlameDesktopApp {
             summaryArea.setText("");
             return;
         }
+        TemplateExpansionResult expansionResult = currentSceneExpansion();
         summaryArea.setText("""
                 Arquivo: %s
                 Projeto: %s
@@ -1315,6 +1799,10 @@ public final class StoryFlameDesktopApp {
                 Cena atual: %s
                 POV da cena: %s
                 Tags na cena: %s
+                Modo de expansao: %s
+                Tags expandidas: %s
+                Tags invalidas: %s
+                Inconsistencias de tags: %d
                 Capitulos: %d
                 Cenas no capitulo: %d
                 Personagens: %d
@@ -1322,6 +1810,9 @@ public final class StoryFlameDesktopApp {
                 Referencias quebradas: %d
                 Palavras na cena: %d
                 Atualizado em: %s
+
+                Preview:
+                %s
                 """.formatted(
                 currentPath,
                 currentProject.getTitle(),
@@ -1330,13 +1821,18 @@ public final class StoryFlameDesktopApp {
                 selectedScene == null ? "-" : selectedScene.getTitle(),
                 displayPointOfViewName(),
                 formatCurrentSceneTagSummary(),
+                templateExpansionMode == TemplateExpansionMode.DRAFT ? "rascunho" : "render",
+                expansionResult.expandedTagIds().isEmpty() ? "-" : String.join(", ", expansionResult.expandedTagIds()),
+                expansionResult.invalidTagIds().isEmpty() ? "-" : String.join(", ", expansionResult.invalidTagIds()),
+                TagLibraryValidator.validate(currentProject).size(),
                 currentProject.getChapters().size(),
                 selectedChapter == null ? 0 : selectedChapter.getScenes().size(),
                 currentProject.getCharacters().size(),
                 searchMatches.size(),
                 NarrativeIntegrityValidator.findBrokenPointOfViewReferences(currentProject).size(),
                 selectedScene == null ? 0 : WordCount.count(selectedScene.getContent()),
-                currentProject.getUpdatedAt()
+                currentProject.getUpdatedAt(),
+                expansionResult.text()
         ));
     }
 
@@ -1402,11 +1898,18 @@ public final class StoryFlameDesktopApp {
         chapterTitleField.enableInputMethods(true);
         sceneTitleField.enableInputMethods(true);
         searchField.enableInputMethods(true);
+        tagSearchField.enableInputMethods(true);
         characterSearchField.enableInputMethods(true);
         characterNameField.enableInputMethods(true);
         povSearchField.enableInputMethods(true);
+        tagIdField.enableInputMethods(true);
+        tagLabelField.enableInputMethods(true);
+        tagTemplateField.enableInputMethods(true);
+        profilePrefixField.enableInputMethods(true);
+        profilePreferredTagsField.enableInputMethods(true);
         sceneEditorArea.enableInputMethods(true);
         characterDescriptionArea.enableInputMethods(true);
+        tagDescriptionArea.enableInputMethods(true);
 
         titleField.setFont(new Font("Serif", Font.PLAIN, 15));
         authorField.setFont(new Font("Serif", Font.PLAIN, 15));
@@ -1415,20 +1918,30 @@ public final class StoryFlameDesktopApp {
         chapterTitleField.setBorder(BorderFactory.createTitledBorder("Titulo do capitulo"));
         sceneTitleField.setBorder(BorderFactory.createTitledBorder("Titulo da cena"));
         searchField.setBorder(BorderFactory.createTitledBorder("Buscar"));
+        tagSearchField.setBorder(BorderFactory.createTitledBorder("Buscar tag"));
         characterSearchField.setBorder(BorderFactory.createTitledBorder("Buscar personagem"));
         characterNameField.setBorder(BorderFactory.createTitledBorder("Nome do personagem"));
         povSearchField.setBorder(BorderFactory.createTitledBorder("Buscar POV"));
+        tagIdField.setBorder(BorderFactory.createTitledBorder("Id da tag"));
+        tagLabelField.setBorder(BorderFactory.createTitledBorder("Rotulo"));
+        tagTemplateField.setBorder(BorderFactory.createTitledBorder("Template"));
+        profilePrefixField.setBorder(BorderFactory.createTitledBorder("Prefixo do personagem"));
+        profilePreferredTagsField.setBorder(BorderFactory.createTitledBorder("Tags preferidas (csv)"));
 
         chapterList.setFont(new Font("Serif", Font.PLAIN, 15));
         sceneList.setFont(new Font("Serif", Font.PLAIN, 15));
         searchList.setFont(new Font("Serif", Font.PLAIN, 14));
+        tagList.setFont(new Font("Serif", Font.PLAIN, 14));
         characterList.setFont(new Font("Serif", Font.PLAIN, 15));
         povList.setFont(new Font("Serif", Font.PLAIN, 14));
+        profileList.setFont(new Font("Serif", Font.PLAIN, 14));
         chapterList.setFixedCellHeight(28);
         sceneList.setFixedCellHeight(28);
         searchList.setFixedCellHeight(32);
+        tagList.setFixedCellHeight(28);
         characterList.setFixedCellHeight(28);
         povList.setFixedCellHeight(28);
+        profileList.setFixedCellHeight(28);
 
         sceneTitleField.setFont(new Font("Serif", Font.BOLD, 22));
         sceneEditorArea.setFont(new Font("Serif", Font.PLAIN, 22));
@@ -1458,6 +1971,13 @@ public final class StoryFlameDesktopApp {
         characterDescriptionArea.setFont(new Font("Serif", Font.PLAIN, 14));
         characterDescriptionArea.setBackground(new Color(251, 248, 242));
         characterDescriptionArea.setBorder(BorderFactory.createTitledBorder("Descricao"));
+
+        tagDescriptionArea.setLineWrap(true);
+        tagDescriptionArea.setWrapStyleWord(true);
+        tagDescriptionArea.setRows(5);
+        tagDescriptionArea.setFont(new Font("Serif", Font.PLAIN, 14));
+        tagDescriptionArea.setBackground(new Color(251, 248, 242));
+        tagDescriptionArea.setBorder(BorderFactory.createTitledBorder("Descricao da tag"));
 
         statusLabel.setBorder(BorderFactory.createEmptyBorder(6, 10, 6, 10));
         statusLabel.setOpaque(true);
@@ -1631,7 +2151,14 @@ public final class StoryFlameDesktopApp {
         if (selectedScene == null) {
             return List.of();
         }
-        return NarrativeTagParser.parse(selectedScene.getContent(), narrativeTagCatalog);
+        return NarrativeTagParser.parse(selectedScene.getContent(), currentNarrativeTagCatalog());
+    }
+
+    private TemplateExpansionResult currentSceneExpansion() {
+        if (selectedScene == null) {
+            return new TemplateExpansionResult("", List.of(), List.of());
+        }
+        return TemplateExpansionEngine.expand(selectedScene.getContent(), currentNarrativeTagCatalog(), templateExpansionMode);
     }
 
     private String formatCurrentSceneTagSummary() {
@@ -1656,6 +2183,108 @@ public final class StoryFlameDesktopApp {
             return "invalidas: " + String.join(", ", invalidTagIds);
         }
         return "validas: " + String.join(", ", validTagIds) + " | invalidas: " + String.join(", ", invalidTagIds);
+    }
+
+    private void setTemplateExpansionMode(TemplateExpansionMode mode) {
+        templateExpansionMode = mode;
+        renderModeLabel.setText(mode == TemplateExpansionMode.DRAFT ? "Rascunho" : "Render");
+        renderSummary();
+        statusLabel.setText(mode == TemplateExpansionMode.DRAFT
+                ? "Modo rascunho ativo."
+                : "Modo render ativo.");
+    }
+
+    private NarrativeTagCatalog currentNarrativeTagCatalog() {
+        if (currentProject == null || currentProject.getNarrativeTags().isEmpty()) {
+            return NarrativeTagCatalog.defaultCatalog();
+        }
+        return new NarrativeTagCatalog(currentProject.getNarrativeTags());
+    }
+
+    private void updateTagLibraryIssuesLabel() {
+        List<TagLibraryIssue> issues = TagLibraryValidator.validate(currentProject);
+        tagLibraryIssuesLabel.setText(issues.size() + " inconsistencias de tags");
+    }
+
+    private void ensureCharacterTagProfiles() {
+        if (currentProject == null) {
+            return;
+        }
+        for (Character character : currentProject.getCharacters()) {
+            boolean exists = currentProject.getCharacterTagProfiles().stream()
+                    .anyMatch(profile -> profile.getCharacterId().equals(character.getId()));
+            if (!exists) {
+                currentProject.getCharacterTagProfiles().add(new CharacterTagProfile(character.getId(), "", List.of()));
+            }
+        }
+        currentProject.getCharacterTagProfiles().removeIf(profile ->
+                currentProject.getCharacters().stream().noneMatch(character -> character.getId().equals(profile.getCharacterId())));
+    }
+
+    private String formatProfileLabel(CharacterTagProfile profile) {
+        Character character = findCharacterById(profile.getCharacterId());
+        String name = character == null ? profile.getCharacterId() : displayCharacterName(character);
+        String prefix = profile.getPrefix() == null || profile.getPrefix().isBlank() ? "sem prefixo" : profile.getPrefix();
+        return name + " | " + prefix;
+    }
+
+    private String sanitizeTagId(String value) {
+        if (value == null || value.isBlank()) {
+            return "";
+        }
+        return value.trim().toLowerCase().replaceAll("[^a-z0-9_-]+", "-");
+    }
+
+    private String ensureUniqueTagId(String baseId) {
+        String candidate = baseId;
+        int suffix = 2;
+        while (hasTagId(candidate)) {
+            candidate = baseId + "-" + suffix;
+            suffix++;
+        }
+        return candidate;
+    }
+
+    private boolean hasTagId(String candidate) {
+        for (NarrativeTag tag : currentProject.getNarrativeTags()) {
+            if (tag.id().equals(candidate)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private int countTagUsage(String tagId) {
+        if (currentProject == null || tagId == null || tagId.isBlank()) {
+            return 0;
+        }
+        int count = 0;
+        for (Chapter chapter : currentProject.getChapters()) {
+            for (Scene scene : chapter.getScenes()) {
+                for (ParsedNarrativeTag parsedTag : NarrativeTagParser.parse(scene.getContent(), currentNarrativeTagCatalog())) {
+                    if (parsedTag.tagId().equals(tagId)) {
+                        count++;
+                    }
+                }
+            }
+        }
+        return count;
+    }
+
+    private boolean profileHasIssues(CharacterTagProfile profile) {
+        if (profile == null || currentProject == null) {
+            return false;
+        }
+        for (TagLibraryIssue issue : TagLibraryValidator.validate(currentProject)) {
+            if (issue.message().contains(profile.getCharacterId()) || issue.message().contains(profile.getPrefix())) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private String nonBlankOrFallback(String value, String fallback) {
+        return value == null || value.isBlank() ? fallback : value.trim();
     }
 
     private void scheduleAutosave() {
@@ -1695,6 +2324,11 @@ public final class StoryFlameDesktopApp {
     private void focusCharacterFrame() {
         selectTab("Personagens");
         characterList.requestFocusInWindow();
+    }
+
+    private void focusTagsFrame() {
+        selectTab("Tags");
+        tagList.requestFocusInWindow();
     }
 
     private void selectTab(String title) {
