@@ -1,177 +1,249 @@
-**Roadmap do Projeto StoryFlame (Flutter multiplataforma)**
+# Roadmap do Projeto StoryFlame
 
-StoryFlame é uma aplicação Flutter (Dart) multiplataforma voltada para organização de projetos literários. O objetivo deste roadmap é conectar visão de produto, arquitetura e execução, priorizando entregas incrementais com critérios claros de aceite.
+StoryFlame e o nome oficial do produto neste repositório. Este roadmap substitui o planejamento anterior e organiza as 12 semanas iniciais do MVP em sprints semanais, com foco em entregas incrementais reais para autores de web novel.
 
-## 1. Pilar Técnico
+## 1. Visao Geral
 
-- **Stack**: Flutter 3.24 (Dart 3.5), arquitetura por packages (`app`, `domain`, `data`), Riverpod/Bloc para estado, Drift/sqflite + JSON para compatibilidade, pacotes `printing`/`pdf` para exportações.
-- **Qualidade**: cobertura mínima 65% no MVP, `flutter analyze`, formatadores automáticos, GitHub Actions (build + testes + pana/dart analyze).
-- **Dados**: persistência primária em JSON local via `path_provider` + `dart:io`, com roadmap para criptografia e sincronização futura (cloud opcional).
-- **Deploy**: `flutter build` desktop/mobile, distribuição com `flutter_distributor` ou CI dedicado; releases versionadas (`v0.x` MVP, `v1.x` pós-MVP).
+- Duracao: 12 semanas
+- Cadencia: 1 semana por sprint
+- Meta: tornar o StoryFlame utilizavel por autores de web novel
+- Plataformas alvo: Java Desktop + Android
+- Direcao tecnica: offline first, projeto portavel em ZIP, expansao narrativa por tags e analise emocional local
 
-## 2. Legenda de Status
+## 2. Principios do MVP
 
-- ✅ Concluído
-- 🟡 Em andamento ou planejado para a fase atual
-- 💤 Backlog futuro
+- Offline first como requisito estrutural, nao como melhoria futura.
+- ZIP como formato canonico do projeto, com JSON e artefatos internos versionados.
+- Narrative Tag Engine como diferencial central do produto desde o inicio.
+- Pipeline emocional priorizando o Modo B antes do Modo C.
+- Cada sprint precisa deixar uma capacidade concreta utilizavel pelo autor.
 
-## 3. Visão por Releases
+## 3. Norte Tecnico
 
-### Release 0 – Fundamentos (Semana 0)
+- Monorepo com modulos `core`, `desktop` e `android`.
+- `core` concentra dominio, persistencia, parser de tags, expansao e pipeline de analise.
+- `desktop` entrega a experiencia principal de escrita.
+- `android` garante mobilidade, consulta, edicao leve e validacao da portabilidade do nucleo.
+- Persistencia local baseada em JSON empacotado em ZIP versionado.
+- Build padronizado com Gradle, com espaco para Maven apenas se houver necessidade especifica de distribuicao.
 
-Status: desenvolvimento iniciado em 2024-05-28.
+## 4. Backlog por Sprints Semanais
 
-- Backlog imediato:
-  - [x] Finalizar setup de ferramentas (lint, format, CI, documentação).
-  - [x] Evoluir protótipo navegável com dados JSON reais para validar fluxo completo.
-  - [x] Documentar fluxo de criação de workspaces para novos contribuintes.
-  - [ ] Ampliar cobertura de testes widget/integration para fluxos chave.
+### Sprint 1 - Fundacao do projeto
 
-Objetivo: consolidar a base Flutter multiplataforma com navegação ponta a ponta, pipeline de qualidade mínimo e documentação inicial.
+Objetivo: criar um esqueleto tecnico solido.
 
-Plano de execução:
-1. **Workspace e packages** — usar `flutter create storyflame` em modo multiplataforma, mover código para packages `app`, `domain`, `data` gerenciados por `melos`, configurar `analysis_options.yaml` compartilhado. (✅)
-2. **Ferramentas de engenharia** — habilitar `flutter format`, `flutter analyze`, hooks com `melos run ...`, pipeline CI (GitHub Actions) com lint + testes + build desktop, atualizar README e scripts. (✅)
-3. **Protótipo navegável** — implementar navegação Projetos → Capítulos → Editor usando dados mockados carregados de JSON local, responsivo para desktop/mobile, validando temas claro/escuro básicos. (✅)
-4. **Validação final** — rodar `flutter test`, `melos bootstrap`, build mínimo desktop (`flutter build linux` ou `flutter build windows`) e registrar resultado em README/CHANGELOG. (✅)
+Backlog:
+- [ ] Criar monorepo (`core`, `desktop`, `android`)
+- [ ] Definir estrutura de pacotes
+- [ ] Criar modelos base `Project`, `Chapter`, `Scene` e `Character`
+- [ ] Definir formato ZIP v1 em rascunho
+- [ ] Configurar build com Gradle
 
-- **Estrutura Flutter multi-package** (✅) — Workspace com `app`, `domain`, `data`; `flutter test` e `melos bootstrap` verdes.
-- **Setup de ferramentas** (✅) — `flutter analyze`, formatadores, pipeline CI local configurado; README com instruções de build.
-- **Protótipo de UI navegável** (✅) — Fluxo Projetos → Capítulos → Editor funcional responsivo com dados mockados.
+Entregavel:
+- Projeto compila nas duas plataformas
 
-### Release 1 – Núcleo Essencial (MVP, Semanas 1-3)
+### Sprint 2 - Persistencia local
 
-- **Gerenciamento de Projetos** (✅) — CRUD completo com persistência JSON local (`storyflame_projects.json`), busca em tempo real e exclusão segura.
-- **Capítulos/Cenas** (✅) — Estrutura hierárquica com reorder drag-and-drop, timestamps por capítulo e histórico mínimo.
-- **Resumos + Conteúdo** (✅) — Editor Markdown com toolbar, autosave com debounce, preview opcional e contagem de palavras em tempo real.
-- **Exportação TXT/PDF** (✅) — Botões dedicados geram arquivos completos (títulos, resumos, conteúdo) usando `pdf`/`txt` e informam o caminho salvo.
-- **Dark/Light Mode** (✅) — Toggle persistido em `SharedPreferences`, aplicado ao app inteiro antes da renderização.
-- **Segurança básica** (✅) — Senha por projeto com hash SHA-256, 5 tentativas e bloqueio de 1 min; prompts integrados à UI.
-- **Métricas de Escrita** (✅) — Dashboard com palavras totais/diárias, metas configuráveis e indicadores de progresso.
-- **Testes automatizados** (✅) — `flutter_test` cobrindo parsing, repositório mock e fluxo principal; rodados via `melos run test`.
+Objetivo: salvar e carregar projetos sem dependencia externa.
 
-Entregável: builds `flutter build windows/macos/linux/apk`, pacote ZIP com instruções rápidas, manual do usuário e checklist de QA atualizados no README.
+Backlog:
+- [ ] Implementar storage local de projeto
+- [ ] Implementar serializacao JSON
+- [ ] Criar fluxo de criar projeto
+- [ ] Criar fluxo de abrir projeto
+- [ ] Criar fluxo de salvar projeto
+- [ ] Adicionar autosave basico
+- [ ] Testar com projeto grande
 
-### Release 2 – Organização Narrativa (Semanas 4-6) — Concluído
+Entregavel:
+- Projeto abre e salva sem perder dados
 
-- Status: desenvolvimento encerrado em 2024-05-29.
+### Sprint 3 - Editor MVP
 
-- Objetivo: consolidar recursos de worldbuilding (personagens, glossário, timeline) e criar conexões explícitas com capítulos/cenas.
+Objetivo: permitir escrita real de cenas.
 
-- Backlog imediato:
-  - [x] Definir modelo compartilhado `WorldElement` (`Character`, `Location`, `Item`).
-  - [x] Prototipar tela de fichas multi-aba com filtros e busca.
-  - [x] Investigar UX para timeline navegável e vínculos bidirecionais com capítulos.
+Backlog:
+- [ ] Implementar editor de cena
+- [ ] Criar binding entre cena e editor
+- [ ] Adicionar undo/redo
+- [ ] Adicionar contador de palavras
+- [ ] Tratar performance de scroll
+- [ ] Testar com texto longo
 
-- **Fichas de Personagens** (✅) — CRUD completo (nome, apelidos, descrições, relações), tags, vínculo a capítulos e visualização Matriz Personagem × Cena.
-- **Glossário Interno** (✅) — Termos com categorias/notas, associação a capítulos e inserção direta no editor via atalho “Inserir termo”.
-- **Linha do Tempo** (✅) — Eventos com data opcional, drag & drop para ordenação, tags e vínculo a capítulos (com filtros básicos).
-- **Banco de Locais e Itens** (✅) — Modelagem comum `WorldElement`, filtro por tipo, chips de vínculo a capítulos e notas de lore.
-- **Ligações Entre Elementos** (✅) — Chips interativos Personagem × Cena/Elemento × Cena + matriz dedicada para visão geral.
+Entregavel:
+- Ja e possivel escrever capitulos
 
-Critério de aceite: release `v0.2` publicado com testes de integração (domínio + widget) e documentação atualizada (README + notas de release).
+### Sprint 4 - Estrutura do livro
 
-### Release 3 – Produtividade & UX (Semanas 7-9) — Concluído
+Objetivo: organizar o manuscrito de forma navegavel.
 
-- **Editor Markdown avançado** (✅) — Preview lado a lado, toolbar estendida (tabelas, códigos, citações) e inserção de termos do glossário diretamente do editor.
-- **Banco Criativo** (✅) — Repositório de ideias/prompts com status (ideia/rascunho/concluída), tags e filtros rápidos para desbloquear cenas.
-- **Templates Narrativos** (✅) — Galeria com modelos clássicos (Três Atos, Jornada do Herói) + templates customizados, checklists por etapa e botões de aplicação.
-- **Colaboração local** (✅) — Exportação/importação completa (`.storyflame`), com merge automático e feedback via Snackbar.
-- **UI/UX refinements** (✅) — Painel multi-abas (capítulos, fichas, glossário, timeline, mundo, ideias, templates), matriz Personagem × Cena e melhorias de navegação.
+Backlog:
+- [ ] CRUD de capitulos
+- [ ] CRUD de cenas
+- [ ] Reordenar capitulos
+- [ ] Reordenar cenas
+- [ ] Criar navegacao rapida
+- [ ] Implementar busca textual simples
 
-### Release 4 – Publicação e Distribuição (Pós-MVP) — Concluído
+Entregavel:
+- Livro navegavel dentro da aplicacao
 
-- Objetivo: transformar o StoryFlame em uma estação final de entrega, facilitando exportações profissionais e submissões em poucas etapas.
+### Sprint 5 - Narrative Tag Engine (base)
 
-- Entregas:
-  - **Exportação e-book avançada** (✅) — Geração de `.epub` com sumário automático, metadados (ISBN/direitos) e arquivos compatíveis com leitores populares.
-  - **Pacote multimídia** (✅) — Exportação “caixa” (`.zip`) contendo PDF, JSON e texto plano para beta readers/coautores.
-  - **Integrações KDP/Wattpad** (✅) — Assistente passo a passo que coleta sinopse, categorias e palavras-chave, gerando pacote JSON pronto para upload.
-  - **Checklist de publicação** (✅) — Aba dedicada com switches de progresso (beta, capa, ISBN, e-book, KDP) e histórico de releases.
-  - **Histórico de releases** (✅) — Registro versionado de exports com notas/links para facilitar auditoria e duplicação.
+Objetivo: reconhecer tags narrativas como `{lfp1}` dentro do texto.
 
-- Critérios cumpridos: exportadores validados localmente, assistente KDP funcional, checklist integrado à UI e documentação atualizada no README.
+Backlog:
+- [ ] Criar modelo `NarrativeTag`
+- [ ] Criar modelo `CharacterTagProfile`
+- [ ] Implementar detector por regex para `{tag}`
+- [ ] Implementar parser de tags
+- [ ] Validar existencia da tag
+- [ ] Criar testes unitarios
 
-### Release 5 – Automação & Insights (Pós-MVP)
+Entregavel:
+- Sistema detecta tags no texto
 
-- Status: desenvolvimento em andamento (iniciado em 2024-06) com foco em análises locais e ferramentas de revisão.
-- Objetivo: oferecer inteligência embarcada para diagnóstico do manuscrito e apoio criativo, mantendo dados 100% locais.
+Marco:
+- Primeiro momento de diferenciacao clara do produto
 
-- Entregas já disponíveis:
-  - **Análise de estilo local** (✅) — Pipeline heurístico em Dart calculando ritmo, densidade de diálogos, tamanho médio de frases e variação emocional inteiramente offline.
-  - **Insights acionáveis** (✅) — Dashboard dedicado exibindo alertas por categoria (metas, personagens, terminologia) e radar por capítulo com metas vs. execução.
-  - **Assistente de prompts** (✅) — Sugestões contextuais para capítulos curtos, termos repetitivos, personagens ociosos e worldbuilding não utilizado, integradas ao painel de Insights.
-  - **Modo revisão** (✅) — Aba específica para registrar comentários locais por capítulo, marcar resolvidos e acompanhar pendências do release.
-  - **Exportação de insights** (✅) — Relatório `.txt` com métricas, achados e sugestões gerado diretamente do painel de Insights.
-  - **Binder / Corkboard visual** (✅) — Quadro de cartões para capítulos/cenas com capa opcional, sinopse em destaque, status customizáveis (rascunho/revisão/pronto) e drag-and-drop entre colunas/atos, inspirado no corkboard do Scrivener.
-  - **Skin Scrivener-like** (✅) — Layout alternativo com binder lateral + painel de detalhes que aproxima a UI do StoryFlame à ergonomia do Scrivener clássico.
+### Sprint 6 - Expansao de templates
 
-- Backlog alvo:
-  - **Conectores externos opcionais** (🟡) — Extensões compatíveis com o mini SDK que podem exportar projetos/insights para ferramentas de planejamento (Scrivener, Notion, Obsidian) ou executar scripts de limpeza/normalização em sandbox local, sempre respeitando aprovação explícita do autor.
+Objetivo: transformar tags em texto renderizado.
 
-- Critérios de saída: análises rodando offline em <5s por capítulo médio, UI dedicada para Insights/Revisão (entregue), documentação do SDK e exemplos de extensões.
+Backlog:
+- [ ] Implementar `TemplateExpansionEngine`
+- [ ] Mapear tag para template
+- [ ] Preservar pontuacao na expansao
+- [ ] Separar modo rascunho e modo render
+- [ ] Criar preview de expansao
+- [ ] Testar multiplas tags no mesmo trecho
 
-## 4. Roadmap Futuro
+Entregavel:
+- Tags como `{lfp1}` passam a virar texto real
 
-### Release 6 – Plataforma Técnica & Estabilidade (Pós-MVP)
+Marco:
+- O diferencial narrativo do StoryFlame passa a ser visivel no uso diario
 
-- Objetivo: fortalecer a base técnica para suportar crescimento de dados, depuração avançada e extensões da comunidade.
-- Entregas planejadas:
-  - **Observabilidade estruturada** (🟡) — Logging unificado (`logger` + Sentry/Crashlytics opcional) e dashboards locais de erros.
-  - **Cache quente em Isolates** (🟡) — Prefetch de capítulos recentes com limites configuráveis para manter abertura <2s em projetos grandes.
-  - **Persistência híbrida** (🟡) — Camada Drift/SQLite mantendo compatibilidade com JSON e scripts de migração versionados.
-  - **Extensões avançadas** (🟡) — Suporte oficial a packages/plugins Flutter para distribuirmos analisadores comunitários.
-- Critérios de saída: telemetria local habilitada, benchmark público demonstrando ganho de performance com cache + SQLite e guia de criação de extensões instaláveis via plugin.
+### Sprint 7 - Biblioteca de tags
 
-### Release 7 – Paridade com Scrivener/Notion/Obsidian (Planejado)
+Objetivo: tornar o sistema de tags utilizavel na pratica.
 
-- **Research Hub** — Biblioteca multimídia com anotação, tags e vinculação a capítulos.
-- **Editor em blocos Notion-like** — Blocos drag-and-drop, templates e colunas com slash commands.
-- **Bases relacionais** — Tabelas com filtros/visões (board/list/calendar), relacionando fichas/locais/itens.
-- **Graph View** — Diagrama interativo mostrando backlinks entre personagens, cenas e elementos de worldbuilding.
-- **Colaboração em tempo real** — Edição simultânea com indicadores de presença, comentários e histórico.
-- Critério de saída: usuários experientes conseguem reproduzir seus fluxos atuais no Notion/Scrivener/Obsidian apenas dentro do StoryFlame, com benchmarks de UX e satisfação.
+Backlog:
+- [ ] Criar `narrative_tags.json`
+- [ ] Montar biblioteca inicial de tags
+- [ ] Suportar prefixo por personagem
+- [ ] Criar editor de perfil de personagem
+- [ ] Permitir criar nova tag
+- [ ] Implementar validador de inconsistencias
 
-### Backlog Técnico & Paridade
+Entregavel:
+- O escritor consegue produzir texto usando tags como fluxo principal
 
-> Todos os itens prioritários migraram para os Releases 6 e 7. Novas ideias serão registradas aqui após avaliação de impacto.
+### Sprint 8 - UX de produtividade
 
-### Concorrentes Diretos e Inspirações
+Objetivo: acelerar o ritmo de escrita.
 
-- **Scrivener** — Binder, corkboard e research robusto; referência para navegação hierárquica e exportação profissional.
-- **Notion** — Blocos e databases colaborativas; inspira o editor em blocos e visões board/list/calendar.
-- **Obsidian** — Graph view + backlinks markdown-first; base para visualização de tópicos e links cruzados.
-- **Ulysses** — Foco em UX limpa e objetivos de escrita; reforça metas/contextos minimalistas.
-- **Storyist** — App mac/iOS com research board e story sheets; referência para fichas e cenas conectadas.
-- **Campfire / Campfire Blaze** — Plataforma web de worldbuilding colaborativo; inspira dashboards integrados e timelines.
-- **Dabble Writer** — Ferramenta com plot grid e metas diárias; referência para integrações de plot/word goals.
-- **Plottr** — Planejamento visual multi-linha temporal; reforça necessidade de views gráficas personalizáveis.
-- **Manuskript (OSS)** — Alternativa open-source com modo “Snowflake” e outlines; guia features avançadas mantendo local-first.
-- **bibisco (OSS)** — Conhecido por fichas detalhadas e análise de capítulos; inspira relatórios e métricas narrativas.
-- **Quoll Writer (OSS)** — Editor desktop com bancos de ideias e objetivos; referência para extensões comunitárias.
-- **Logseq (OSS)** — Workflow de blocos + graph open-source; referência para community plugins e sync local.
-- **Joplin (OSS)** — Notas markdown com sync criptografado; inspira foco em privacidade/offline.
-- **AppFlowy (OSS)** — Versão open-source do Notion; reforça nossa meta de APIs abertas e temas customizáveis.
+Backlog:
+- [ ] Autocomplete de tags
+- [ ] Popup de sugestoes
+- [ ] Favoritos
+- [ ] Lista de ultimos usados
+- [ ] Hover preview
+- [ ] Toggle entre rascunho e leitura
 
-## 5. Riscos & Mitigações
+Entregavel:
+- Escrita com tags fica realmente rapida
 
-- **Crescimento do arquivo JSON** — Impacto em performance; mitigar com paginação virtual, compressão incremental e carregamento em Isolates.
-- **Complexidade da UI Flutter multiplataforma** — Impacto em qualidade; mitigar separando camadas (presenter/domain/data), Storybook/Widgetbook e testes de widget/instrumentação.
-- **Dependência de APIs externas para IA** — Impacto em escopo; mitigar priorizando pipelines locais e aprovação explícita para integrações.
+Marco:
+- O StoryFlame ganha um diferencial forte de produtividade
 
-## 6. Métricas de Sucesso
+### Sprint 9 - Exportacao ZIP solida
 
-- Tempo de abertura de projeto < 2s para até 1.000 cenas.
-- Crash rate < 1% por sessão (logs locais).
-- ≥ 3 usuários piloto concluindo um livro curto usando apenas o MVP.
-- Feedback NPS interno ≥ +30 após Release 2.
+Objetivo: garantir portabilidade confiavel do projeto.
 
-## 7. Checklist de Pronto para Release
+Backlog:
+- [ ] Exportar ZIP
+- [ ] Importar ZIP
+- [ ] Validar integridade do pacote
+- [ ] Implementar migracao de versao
+- [ ] Criar backups automaticos
+- [ ] Executar teste de stress
 
-1. `melos run format && melos run analyze && melos run test` executados em ambiente limpo (CI e local).
-2. Builds principais verificados (`flutter build linux|macos|windows|apk`) para garantir portabilidade.
-3. Documentação atualizada (`README`, `ROADMAP`, notas de versão) e instruções para novos recursos.
-4. Scripts/migrações de dados (JSON/SQLite) versionados e testados.
-5. Checklist manual de smoke-test preenchido (exportações, importações, insights e novas telas do release).
+Entregavel:
+- Projeto portavel e seguro
 
-Este roadmap deverá ser revisitado a cada encerramento de release para incorporar feedback de usuários e reavaliar prioridades.
+### Sprint 10 - Pipeline emocional (infra)
+
+Objetivo: preparar a base tecnica da analise emocional.
+
+Backlog:
+- [ ] Implementar `Chunker`
+- [ ] Implementar `EmotionAggregator`
+- [ ] Implementar `EmotionCache`
+- [ ] Criar estrutura `analysis/`
+- [ ] Criar heatmap base
+- [ ] Criar timeline base
+
+Entregavel:
+- Infraestrutura pronta para IA local
+
+### Sprint 11 - Modo B (leve)
+
+Objetivo: colocar a classificacao emocional offline para funcionar.
+
+Backlog:
+- [ ] Implementar `FastTextEmotionEngine`
+- [ ] Integrar modelo PT-BR
+- [ ] Classificar sentimento
+- [ ] Classificar emocoes
+- [ ] Persistir `emotion.json`
+- [ ] Criar UI de relatorio
+
+Entregavel:
+- StoryFlame analisa emocao offline
+
+Marco:
+- Grande marco funcional do produto
+
+### Sprint 12 - Exportacao publicavel
+
+Objetivo: fechar um MVP forte e exportavel.
+
+Backlog:
+- [ ] Criar pipeline de expansao antes do export
+- [ ] Exportar TXT e MD
+- [ ] Exportar PDF
+- [ ] Estruturar EPUB base
+- [ ] Criar templates de formatacao
+- [ ] Testar com um livro real
+
+Entregavel:
+- Manuscrito sai em formato publicavel
+
+## 5. Resultado Esperado ao Final da Semana 12
+
+- StoryFlame compila em desktop e Android
+- Projetos funcionam offline com armazenamento local e portabilidade em ZIP
+- O autor consegue estruturar livro, escrever cenas e navegar no manuscrito
+- O sistema de Narrative Tags ja suporta deteccao, expansao e biblioteca inicial
+- A produtividade de escrita melhora com autocomplete, preview e alternancia de modos
+- A analise emocional offline funciona no Modo B
+- O manuscrito pode ser exportado para formatos de publicacao
+
+## 6. Pos-MVP
+
+Proximos grandes blocos:
+
+- Modo C com transformer
+- Revisao inteligente
+- Analise por personagem
+- Packs de templates
+- Otimizacoes Android
+
+## 7. Criterios de Revisao do Roadmap
+
+- Revisar ao fim de cada sprint com base no que ficou pronto de fato
+- Nao mover feature complexa para frente sem validar impacto no offline first
+- Manter a Narrative Tag Engine como prioridade ate consolidar o diferencial do produto
+- So iniciar o Modo C depois de estabilizar persistencia, expansao e Modo B
