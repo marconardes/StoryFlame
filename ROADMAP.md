@@ -173,12 +173,12 @@ Entregavel:
 Objetivo: acelerar o ritmo de escrita com tags e navegacao.
 
 Backlog:
-- [ ] Autocomplete de tags
-- [ ] Popup de sugestoes
-- [ ] Favoritos
-- [ ] Lista de ultimos usados
-- [ ] Hover preview
-- [ ] Toggle entre rascunho e leitura
+- [x] Autocomplete de tags
+- [x] Popup de sugestoes
+- [x] Favoritos
+- [x] Lista de ultimos usados
+- [x] Hover preview
+- [x] Toggle entre rascunho e leitura
 
 Entregavel:
 - Escrita com tags fica realmente rapida
