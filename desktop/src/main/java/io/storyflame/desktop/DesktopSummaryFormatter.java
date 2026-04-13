@@ -45,6 +45,9 @@ final class DesktopSummaryFormatter {
                 Palavras na cena: %d
                 Atualizado em: %s
 
+                Este preview e calculado a partir da cena atual.
+                O texto original do editor nao e alterado.
+
                 Preview:
                 %s
                 """.formatted(

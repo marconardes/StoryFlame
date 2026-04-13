@@ -1,5 +1,7 @@
 package io.storyflame.core.model;
 
+import io.storyflame.core.analysis.EmotionAnalysisReport;
+import io.storyflame.core.analysis.EmotionCache;
 import io.storyflame.core.tags.CharacterTagProfile;
 import io.storyflame.core.tags.NarrativeTag;
 import java.time.Instant;
@@ -18,6 +20,8 @@ public final class Project {
     private final List<Character> characters;
     private final List<NarrativeTag> narrativeTags;
     private final List<CharacterTagProfile> characterTagProfiles;
+    private EmotionAnalysisReport emotionAnalysis;
+    private EmotionCache emotionCache;
 
     public Project() {
         this(
@@ -29,7 +33,9 @@ public final class Project {
                 new ArrayList<>(),
                 new ArrayList<>(),
                 new ArrayList<>(),
-                new ArrayList<>()
+                new ArrayList<>(),
+                null,
+                new EmotionCache()
         );
     }
 
@@ -42,7 +48,9 @@ public final class Project {
             List<Chapter> chapters,
             List<Character> characters,
             List<NarrativeTag> narrativeTags,
-            List<CharacterTagProfile> characterTagProfiles
+            List<CharacterTagProfile> characterTagProfiles,
+            EmotionAnalysisReport emotionAnalysis,
+            EmotionCache emotionCache
     ) {
         Instant now = Instant.now();
         this.id = Objects.requireNonNullElse(id, UUID.randomUUID().toString());
@@ -54,10 +62,12 @@ public final class Project {
         this.characters = new ArrayList<>(Objects.requireNonNullElse(characters, List.of()));
         this.narrativeTags = new ArrayList<>(Objects.requireNonNullElse(narrativeTags, List.of()));
         this.characterTagProfiles = new ArrayList<>(Objects.requireNonNullElse(characterTagProfiles, List.of()));
+        this.emotionAnalysis = emotionAnalysis;
+        this.emotionCache = Objects.requireNonNullElse(emotionCache, new EmotionCache());
     }
 
     public static Project blank(String title, String author) {
-        return new Project(UUID.randomUUID().toString(), title, author, Instant.now(), Instant.now(), List.of(), List.of(), List.of(), List.of());
+        return new Project(UUID.randomUUID().toString(), title, author, Instant.now(), Instant.now(), List.of(), List.of(), List.of(), List.of(), null, new EmotionCache());
     }
 
     public String getId() {
@@ -116,6 +126,22 @@ public final class Project {
 
     public List<CharacterTagProfile> getCharacterTagProfiles() {
         return characterTagProfiles;
+    }
+
+    public EmotionAnalysisReport getEmotionAnalysis() {
+        return emotionAnalysis;
+    }
+
+    public void setEmotionAnalysis(EmotionAnalysisReport emotionAnalysis) {
+        this.emotionAnalysis = emotionAnalysis;
+    }
+
+    public EmotionCache getEmotionCache() {
+        return emotionCache;
+    }
+
+    public void setEmotionCache(EmotionCache emotionCache) {
+        this.emotionCache = Objects.requireNonNullElse(emotionCache, new EmotionCache());
     }
 
     public void touch() {

@@ -13,6 +13,8 @@ public final class ProjectArchiveLayout {
     public static final String CHARACTERS_DIRECTORY = "characters/";
     public static final String ANALYSIS_DIRECTORY = "analysis/";
     public static final String ASSETS_DIRECTORY = "assets/";
+    public static final String EMOTION_ANALYSIS_FILE = ANALYSIS_DIRECTORY + "emotion.json";
+    public static final String EMOTION_CACHE_FILE = ANALYSIS_DIRECTORY + "emotion_cache.json";
 
     private ProjectArchiveLayout() {
     }

@@ -1,5 +1,6 @@
 package io.storyflame.desktop;
 
+import io.storyflame.core.character.CharacterDirectory;
 import io.storyflame.core.model.Chapter;
 import io.storyflame.core.model.Character;
 import io.storyflame.core.model.Project;
@@ -13,6 +14,8 @@ import io.storyflame.core.tags.TagLibraryValidator;
 import io.storyflame.core.tags.TemplateExpansionEngine;
 import io.storyflame.core.tags.TemplateExpansionMode;
 import io.storyflame.core.tags.TemplateExpansionResult;
+import java.util.ArrayList;
+import java.util.LinkedHashSet;
 import java.util.List;
 
 final class DesktopProjectInsights {
@@ -35,21 +38,13 @@ final class DesktopProjectInsights {
             return displayCharacterName(project, selectedScene, povCharacter);
         }
         if (selectedScene != null && selectedScene.getPointOfViewCharacterId() != null && !selectedScene.getPointOfViewCharacterId().isBlank()) {
-            return "referencia quebrada (" + selectedScene.getPointOfViewCharacterId() + ")";
+            return "personagem ausente";
         }
         return "sem personagem";
     }
 
     static Character findCharacterById(Project project, String characterId) {
-        if (project == null || characterId == null || characterId.isBlank()) {
-            return null;
-        }
-        for (Character character : project.getCharacters()) {
-            if (characterId.equals(character.getId())) {
-                return character;
-            }
-        }
-        return null;
+        return CharacterDirectory.findById(project, characterId);
     }
 
     static int countScenesForCharacter(Project project, Character character) {
@@ -118,6 +113,37 @@ final class DesktopProjectInsights {
         return "validas: " + String.join(", ", validTagIds) + " | invalidas: " + String.join(", ", invalidTagIds);
     }
 
+    static List<String> currentSceneLinkedCharacterNames(Project project, Scene selectedScene) {
+        if (project == null || selectedScene == null) {
+            return List.of();
+        }
+        LinkedHashSet<String> names = new LinkedHashSet<>();
+        Character povCharacter = findCharacterById(project, selectedScene.getPointOfViewCharacterId());
+        if (povCharacter != null) {
+            names.add(displayTitle(povCharacter.getName(), "Personagem"));
+        }
+
+        List<String> tagIds = currentSceneTags(project, selectedScene).stream()
+                .filter(ParsedNarrativeTag::valid)
+                .map(ParsedNarrativeTag::tagId)
+                .distinct()
+                .toList();
+        if (tagIds.isEmpty() || project.getCharacterTagProfiles().isEmpty()) {
+            return new ArrayList<>(names);
+        }
+        for (CharacterTagProfile profile : project.getCharacterTagProfiles()) {
+            boolean matches = profile.getPreferredTagIds().stream().anyMatch(tagIds::contains);
+            if (!matches) {
+                continue;
+            }
+            Character character = findCharacterById(project, profile.getCharacterId());
+            if (character != null) {
+                names.add(displayTitle(character.getName(), "Personagem"));
+            }
+        }
+        return new ArrayList<>(names);
+    }
+
     static String formatProfileLabel(Project project, Scene selectedScene, CharacterTagProfile profile) {
         Character character = findCharacterById(project, profile.getCharacterId());
         String name = character == null ? profile.getCharacterId() : displayCharacterName(project, selectedScene, character);
@@ -161,6 +187,22 @@ final class DesktopProjectInsights {
             return usage + " | revisar";
         }
         return usage;
+    }
+
+    static String formatCharacterTagSummary(CharacterTagProfile profile) {
+        if (profile == null) {
+            return "nenhuma";
+        }
+        List<String> tags = new java.util.ArrayList<>();
+        if (profile.getPrefix() != null && !profile.getPrefix().isBlank()) {
+            tags.add("{" + profile.getPrefix() + "}");
+        }
+        for (String tagId : profile.getPreferredTagIds()) {
+            if (tagId != null && !tagId.isBlank()) {
+                tags.add("{" + tagId + "}");
+            }
+        }
+        return tags.isEmpty() ? "nenhuma" : String.join(", ", tags);
     }
 
     private static String displayTitle(String value, String fallbackPrefix) {

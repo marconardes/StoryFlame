@@ -25,9 +25,19 @@ class NarrativeTagParserTest {
 
     @Test
     void usesDefaultCatalogForKnownExampleTag() {
-        List<ParsedNarrativeTag> parsedTags = NarrativeTagParser.parse("{lfp1}", NarrativeTagCatalog.defaultCatalog());
+        List<ParsedNarrativeTag> parsedTags = NarrativeTagParser.parse("{fala1}", NarrativeTagCatalog.defaultCatalog());
 
         assertEquals(1, parsedTags.size());
         assertTrue(parsedTags.get(0).valid());
+    }
+
+    @Test
+    void returnsEmptyListForNullOrBlankText() {
+        NarrativeTagCatalog catalog = new NarrativeTagCatalog(List.of(
+                new NarrativeTag("lfp1", "LFP", "Descricao", "template 1")
+        ));
+
+        assertEquals(List.of(), NarrativeTagParser.parse(null, catalog));
+        assertEquals(List.of(), NarrativeTagParser.parse("   ", catalog));
     }
 }

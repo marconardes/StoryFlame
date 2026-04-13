@@ -3,6 +3,8 @@ package io.storyflame.core.storage;
 import com.google.gson.Gson;
 import io.storyflame.core.archive.ProjectArchiveLayout;
 import io.storyflame.core.archive.ProjectManifest;
+import io.storyflame.core.analysis.EmotionAnalysisReport;
+import io.storyflame.core.analysis.EmotionCache;
 import io.storyflame.core.model.Chapter;
 import io.storyflame.core.model.Character;
 import io.storyflame.core.model.Project;
@@ -10,6 +12,9 @@ import io.storyflame.core.model.Scene;
 import io.storyflame.core.tags.CharacterTagProfile;
 import io.storyflame.core.tags.NarrativeTag;
 import io.storyflame.core.tags.NarrativeTagCatalog;
+import io.storyflame.core.validation.ProjectValidationOperation;
+import io.storyflame.core.validation.ProjectValidationResult;
+import io.storyflame.core.validation.ProjectValidationService;
 import java.io.BufferedInputStream;
 import java.io.BufferedOutputStream;
 import java.io.IOException;
@@ -24,10 +29,12 @@ import java.nio.file.Path;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Comparator;
+import java.util.LinkedHashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Set;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
 import java.util.zip.ZipOutputStream;
@@ -57,6 +64,14 @@ public final class ProjectArchiveStore {
         return save(project, ProjectStoragePaths.suggestedArchivePath(baseDirectory, project));
     }
 
+    public ProjectValidationResult validateForSave(Project project) {
+        return ProjectValidationService.validate(project, ProjectValidationOperation.SAVE_ARCHIVE);
+    }
+
+    public ProjectValidationResult validateForArchiveExport(Project project) {
+        return ProjectValidationService.validate(project, ProjectValidationOperation.EXPORT_ARCHIVE);
+    }
+
     public Path save(Project project, Path path) {
         Objects.requireNonNull(project);
         Objects.requireNonNull(path);
@@ -72,6 +87,12 @@ public final class ProjectArchiveStore {
                 zip.closeEntry();
                 zip.putNextEntry(new ZipEntry(ProjectArchiveLayout.CHARACTERS_DIRECTORY));
                 zip.closeEntry();
+                zip.putNextEntry(new ZipEntry(ProjectArchiveLayout.ANALYSIS_DIRECTORY));
+                zip.closeEntry();
+                if (project.getEmotionAnalysis() != null) {
+                    writeJson(zip, ProjectArchiveLayout.EMOTION_ANALYSIS_FILE, project.getEmotionAnalysis());
+                }
+                writeJson(zip, ProjectArchiveLayout.EMOTION_CACHE_FILE, project.getEmotionCache());
 
                 for (Chapter chapter : project.getChapters()) {
                     writeJson(zip, ProjectArchiveLayout.chapterFile(chapter.getId()), ChapterDocument.from(chapter));
@@ -106,6 +127,8 @@ public final class ProjectArchiveStore {
             Map<String, Character> characters = new LinkedHashMap<>();
             List<NarrativeTag> narrativeTags = List.of();
             List<CharacterTagProfile> characterTagProfiles = List.of();
+            EmotionAnalysisReport emotionAnalysis = null;
+            EmotionCache emotionCache = new EmotionCache();
             ProjectManifest manifest = null;
             ZipEntry entry;
             while ((entry = zip.getNextEntry()) != null) {
@@ -121,6 +144,10 @@ public final class ProjectArchiveStore {
                     narrativeTags = readNarrativeTags(zip);
                 } else if (ProjectArchiveLayout.CHARACTER_TAG_PROFILES_FILE.equals(name)) {
                     characterTagProfiles = readCharacterTagProfiles(zip);
+                } else if (ProjectArchiveLayout.EMOTION_ANALYSIS_FILE.equals(name)) {
+                    emotionAnalysis = readEmotionAnalysis(zip);
+                } else if (ProjectArchiveLayout.EMOTION_CACHE_FILE.equals(name)) {
+                    emotionCache = readEmotionCache(zip);
                 } else if (name.startsWith(ProjectArchiveLayout.CHAPTERS_DIRECTORY)) {
                     ChapterDocument document = readChapter(zip);
                     chapters.put(document.id(), document.toModel());
@@ -133,7 +160,8 @@ public final class ProjectArchiveStore {
                 throw new IllegalStateException("Project archive is missing project.json");
             }
             normalizeManifest(manifest);
-            return projectDocument.toModel(chapters, characters, narrativeTags, characterTagProfiles);
+            projectDocument.validateArchiveContents(chapters, characters);
+            return projectDocument.toModel(chapters, characters, narrativeTags, characterTagProfiles, emotionAnalysis, emotionCache);
         } catch (IOException exception) {
             throw new UncheckedIOException("Unable to open project archive: " + path, exception);
         }
@@ -193,30 +221,49 @@ public final class ProjectArchiveStore {
     }
 
     private ProjectDocument readProject(ZipInputStream zip) {
-        Reader reader = new InputStreamReader(zip, StandardCharsets.UTF_8);
-        return gson.fromJson(reader, ProjectDocument.class);
+        return readJson(zip, ProjectDocument.class, "project.json");
     }
 
     private ChapterDocument readChapter(ZipInputStream zip) {
-        Reader reader = new InputStreamReader(zip, StandardCharsets.UTF_8);
-        return gson.fromJson(reader, ChapterDocument.class);
+        return readJson(zip, ChapterDocument.class, "chapter document");
     }
 
     private Character readCharacter(ZipInputStream zip) {
-        Reader reader = new InputStreamReader(zip, StandardCharsets.UTF_8);
-        return gson.fromJson(reader, Character.class);
+        return readJson(zip, Character.class, "character document");
     }
 
     private List<NarrativeTag> readNarrativeTags(ZipInputStream zip) {
-        Reader reader = new InputStreamReader(zip, StandardCharsets.UTF_8);
-        NarrativeTag[] tags = gson.fromJson(reader, NarrativeTag[].class);
+        NarrativeTag[] tags = readJson(zip, NarrativeTag[].class, "narrative_tags.json");
         return tags == null ? List.of() : List.of(tags);
     }
 
     private List<CharacterTagProfile> readCharacterTagProfiles(ZipInputStream zip) {
-        Reader reader = new InputStreamReader(zip, StandardCharsets.UTF_8);
-        CharacterTagProfile[] profiles = gson.fromJson(reader, CharacterTagProfile[].class);
+        CharacterTagProfile[] profiles = readJson(zip, CharacterTagProfile[].class, "character_tag_profiles.json");
         return profiles == null ? List.of() : List.of(profiles);
+    }
+
+    private EmotionAnalysisReport readEmotionAnalysis(ZipInputStream zip) {
+        return readJson(zip, EmotionAnalysisReport.class, "analysis/emotion.json");
+    }
+
+    private EmotionCache readEmotionCache(ZipInputStream zip) {
+        EmotionCache cache = readJson(zip, EmotionCache.class, "analysis/emotion_cache.json");
+        return cache == null ? new EmotionCache() : cache;
+    }
+
+    private <T> T readJson(ZipInputStream zip, Class<T> type, String entryLabel) {
+        try {
+            Reader reader = new InputStreamReader(zip, StandardCharsets.UTF_8);
+            T value = gson.fromJson(reader, type);
+            if (value == null) {
+                throw new IllegalStateException("Archive entry is empty or null: " + entryLabel);
+            }
+            return value;
+        } catch (IllegalStateException exception) {
+            throw exception;
+        } catch (Exception exception) {
+            throw new IllegalStateException("Invalid archive entry: " + entryLabel, exception);
+        }
     }
 
     private record ProjectDocument(
@@ -240,11 +287,41 @@ public final class ProjectArchiveStore {
             );
         }
 
+        void validateArchiveContents(Map<String, Chapter> chaptersById, Map<String, Character> charactersById) {
+            List<String> missingChapters = missingEntries(chapterIds, chaptersById.keySet());
+            if (!missingChapters.isEmpty()) {
+                throw new IllegalStateException(
+                        "Project archive is incomplete: missing chapter entries " + String.join(", ", missingChapters)
+                );
+            }
+            List<String> missingCharacters = missingEntries(characterIds, charactersById.keySet());
+            if (!missingCharacters.isEmpty()) {
+                throw new IllegalStateException(
+                        "Project archive is incomplete: missing character entries " + String.join(", ", missingCharacters)
+                );
+            }
+        }
+
+        private static List<String> missingEntries(List<String> referencedIds, Set<String> availableIds) {
+            if (referencedIds == null || referencedIds.isEmpty()) {
+                return List.of();
+            }
+            Set<String> uniqueMissingIds = new LinkedHashSet<>();
+            for (String referencedId : referencedIds) {
+                if (referencedId != null && !availableIds.contains(referencedId)) {
+                    uniqueMissingIds.add(referencedId);
+                }
+            }
+            return List.copyOf(uniqueMissingIds);
+        }
+
         Project toModel(
                 Map<String, Chapter> chaptersById,
                 Map<String, Character> charactersById,
                 List<NarrativeTag> narrativeTags,
-                List<CharacterTagProfile> characterTagProfiles
+                List<CharacterTagProfile> characterTagProfiles,
+                EmotionAnalysisReport emotionAnalysis,
+                EmotionCache emotionCache
         ) {
             List<Chapter> orderedChapters = new ArrayList<>();
             for (String chapterId : chapterIds) {
@@ -260,7 +337,19 @@ public final class ProjectArchiveStore {
                     orderedCharacters.add(character);
                 }
             }
-            return new Project(id, title, author, createdAt, updatedAt, orderedChapters, orderedCharacters, narrativeTags, characterTagProfiles);
+            return new Project(
+                    id,
+                    title,
+                    author,
+                    createdAt,
+                    updatedAt,
+                    orderedChapters,
+                    orderedCharacters,
+                    narrativeTags,
+                    characterTagProfiles,
+                    emotionAnalysis,
+                    emotionCache
+            );
         }
     }
 

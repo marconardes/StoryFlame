@@ -1,0 +1,8 @@
+{
+  "joy": ["feliz", "sorriu", "alegria", "esperanca", "leve", "calor", "alivio", "vitoria"],
+  "sadness": ["triste", "vazio", "chorou", "saudade", "perda", "dor", "luto", "abatido"],
+  "anger": ["raiva", "odio", "gritou", "furia", "ferveu", "irritado", "explodiu", "agressivo"],
+  "fear": ["medo", "temeu", "tremia", "sombrio", "ameaca", "panico", "receio", "horror"],
+  "tension": ["silencio", "pausa", "hesitou", "pressao", "curto", "duro", "tenso", "suspense"],
+  "calm": ["calmo", "sereno", "respirou", "manso", "quieto", "estavel", "claro", "suave"]
+}

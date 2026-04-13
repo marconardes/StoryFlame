@@ -1,35 +1,24 @@
 package io.storyflame.android;
 
 import android.os.Bundle;
-import android.view.Gravity;
+import android.widget.Button;
 import android.widget.TextView;
-import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
 import io.storyflame.core.model.Project;
-import io.storyflame.core.storage.ProjectArchiveStore;
-import java.nio.file.Path;
 
 public final class MainActivity extends AppCompatActivity {
     @Override
-    protected void onCreate(@Nullable Bundle savedInstanceState) {
+    protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        setContentView(R.layout.activity_main);
 
-        Path projectsDirectory = getFilesDir().toPath().resolve("projects");
-        ProjectArchiveStore store = new ProjectArchiveStore(projectsDirectory);
-        Project project = store.createProject("Android Sample", "StoryFlame");
-        Path savedPath = store.save(project);
-        Project loaded = store.open(savedPath);
+        TextView overviewText = findViewById(R.id.project_overview_text);
+        Button loadExampleButton = findViewById(R.id.load_example_button);
 
-        TextView textView = new TextView(this);
-        textView.setGravity(Gravity.CENTER);
-        textView.setPadding(32, 32, 32, 32);
-        textView.setText(
-                "StoryFlame Android\n\n"
-                        + "Persistencia local ativa.\n"
-                        + "Projeto salvo em:\n" + savedPath + "\n\n"
-                        + "Titulo carregado: " + loaded.getTitle()
-        );
-
-        setContentView(textView);
+        overviewText.setText(AndroidProjectOverviewFormatter.emptyState());
+        loadExampleButton.setOnClickListener(view -> {
+            Project project = AndroidProjectPreviewFactory.sampleProject();
+            overviewText.setText(AndroidProjectOverviewFormatter.format(project));
+        });
     }
 }

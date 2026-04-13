@@ -46,6 +46,24 @@ class ProjectSearchTest {
     }
 
     @Test
+    void ignoresAccentsDuringSearch() {
+        Project project = Project.blank("Livro", "Marco");
+        project.getChapters().add(new Chapter(
+                "chapter-1",
+                "Capitulo de introducao",
+                List.of(new Scene("scene-1", "Ação inicial", "O heroi chegou ao portão.", null))
+        ));
+
+        List<SearchMatch> chapterMatches = ProjectSearch.search(project, "capítulo");
+        List<SearchMatch> sceneMatches = ProjectSearch.search(project, "acao");
+
+        assertEquals(1, chapterMatches.size());
+        assertEquals(SearchTarget.CHAPTER, chapterMatches.get(0).target());
+        assertEquals(1, sceneMatches.size());
+        assertEquals(SearchTarget.SCENE_TITLE, sceneMatches.get(0).target());
+    }
+
+    @Test
     void returnsNoMatchesForBlankQuery() {
         Project project = Project.blank("Livro", "Marco");
 

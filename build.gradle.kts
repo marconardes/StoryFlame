@@ -18,8 +18,8 @@ subprojects {
 
     pluginManager.withPlugin("java") {
         extensions.configure<JavaPluginExtension> {
-            sourceCompatibility = JavaVersion.VERSION_17
-            targetCompatibility = JavaVersion.VERSION_17
+            sourceCompatibility = JavaVersion.VERSION_21
+            targetCompatibility = JavaVersion.VERSION_21
         }
     }
 
@@ -38,6 +38,7 @@ tasks.register("buildWeek1") {
     group = "build"
     description = "Builds the StoryFlame Week 1 deliverables."
     dependsOn(":core:build")
+    dependsOn(":app:build")
     dependsOn(":desktop:build")
     dependsOn(":android:assembleDebug")
 }

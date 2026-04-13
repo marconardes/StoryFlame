@@ -3,6 +3,7 @@ package io.storyflame.core.search;
 import io.storyflame.core.model.Chapter;
 import io.storyflame.core.model.Project;
 import io.storyflame.core.model.Scene;
+import java.text.Normalizer;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
@@ -85,6 +86,8 @@ public final class ProjectSearch {
     }
 
     private static String normalize(String value) {
-        return value.toLowerCase(Locale.ROOT);
+        return Normalizer.normalize(value, Normalizer.Form.NFD)
+                .replaceAll("\\p{M}+", "")
+                .toLowerCase(Locale.ROOT);
     }
 }

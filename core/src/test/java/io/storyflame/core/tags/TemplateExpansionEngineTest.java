@@ -10,23 +10,23 @@ class TemplateExpansionEngineTest {
     @Test
     void keepsDraftModeUntouched() {
         TemplateExpansionResult result = TemplateExpansionEngine.expand(
-                "Ela {lfp1} e seguiu.",
+                "Ela {fala1} e seguiu.",
                 NarrativeTagCatalog.defaultCatalog(),
                 TemplateExpansionMode.DRAFT
         );
 
-        assertEquals("Ela {lfp1} e seguiu.", result.text());
+        assertEquals("Ela {fala1} e seguiu.", result.text());
     }
 
     @Test
     void expandsMultipleTagsInRenderMode() {
         TemplateExpansionResult result = TemplateExpansionEngine.expand(
-                "Ela {lfp1}, respirou e {emo1}.",
+                "Ela {fala1}, respirou e {suss1}.",
                 NarrativeTagCatalog.defaultCatalog(),
                 TemplateExpansionMode.RENDER
         );
 
-        assertEquals("Ela leu o rosto com precisão, respirou e sentiu a emoção crescer no peito.", result.text());
+        assertEquals("Ela disse, respirou e sussurrou.", result.text());
         assertEquals(2, result.expandedTagIds().size());
     }
 
@@ -70,5 +70,24 @@ class TemplateExpansionEngineTest {
         );
 
         assertEquals("Clima foco tenso.", result.text());
+    }
+
+    @Test
+    void preservesSpacingBeforeMultiplePunctuationMarks() {
+        NarrativeTagCatalog catalog = new NarrativeTagCatalog(List.of(
+                new NarrativeTag("alerta", "Alerta", "Descricao", "gritou"),
+                new NarrativeTag("duvida", "Duvida", "Descricao", "hesitou"),
+                new NarrativeTag("pausa", "Pausa", "Descricao", "respirou fundo"),
+                new NarrativeTag("explica", "Explica", "Descricao", "explicou")
+        ));
+
+        TemplateExpansionResult result = TemplateExpansionEngine.expand(
+                "Ela {alerta} ! Depois {duvida} ? Entao {pausa} ; e {explica} : tudo mudou.",
+                catalog,
+                TemplateExpansionMode.RENDER
+        );
+
+        assertEquals("Ela gritou! Depois hesitou? Entao respirou fundo; e explicou: tudo mudou.", result.text());
+        assertEquals(List.of("alerta", "duvida", "pausa", "explica"), result.expandedTagIds());
     }
 }

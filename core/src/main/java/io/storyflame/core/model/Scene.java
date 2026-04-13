@@ -6,16 +6,22 @@ import java.util.UUID;
 public final class Scene {
     private String id;
     private String title;
+    private String synopsis;
     private String content;
     private String pointOfViewCharacterId;
 
     public Scene() {
-        this(UUID.randomUUID().toString(), "", "", null);
+        this(UUID.randomUUID().toString(), "", "", "", null);
     }
 
     public Scene(String id, String title, String content, String pointOfViewCharacterId) {
+        this(id, title, "", content, pointOfViewCharacterId);
+    }
+
+    public Scene(String id, String title, String synopsis, String content, String pointOfViewCharacterId) {
         this.id = Objects.requireNonNullElse(id, UUID.randomUUID().toString());
         this.title = Objects.requireNonNullElse(title, "");
+        this.synopsis = Objects.requireNonNullElse(synopsis, "");
         this.content = Objects.requireNonNullElse(content, "");
         this.pointOfViewCharacterId = pointOfViewCharacterId;
     }
@@ -36,6 +42,14 @@ public final class Scene {
         this.title = Objects.requireNonNullElse(title, "");
     }
 
+    public String getSynopsis() {
+        return synopsis == null ? "" : synopsis;
+    }
+
+    public void setSynopsis(String synopsis) {
+        this.synopsis = Objects.requireNonNullElse(synopsis, "");
+    }
+
     public String getContent() {
         return content;
     }
@@ -52,4 +66,3 @@ public final class Scene {
         this.pointOfViewCharacterId = pointOfViewCharacterId;
     }
 }
-

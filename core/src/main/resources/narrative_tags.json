@@ -28,5 +28,41 @@
     "label": "Beat de ritmo",
     "description": "Pausa curta para marcar ritmo de cena.",
     "template": "houve uma pausa curta"
+  },
+  {
+    "id": "fala1",
+    "label": "Fala neutra",
+    "description": "Marcador padrao para fala direta sem emocao forte.",
+    "template": "disse"
+  },
+  {
+    "id": "perg1",
+    "label": "Pergunta",
+    "description": "Marcador padrao para fala em tom de pergunta.",
+    "template": "perguntou"
+  },
+  {
+    "id": "suss1",
+    "label": "Sussurro",
+    "description": "Marcador padrao para fala baixa ou confidencial.",
+    "template": "sussurrou"
+  },
+  {
+    "id": "grit1",
+    "label": "Grito",
+    "description": "Marcador padrao para fala intensa ou elevada.",
+    "template": "gritou"
+  },
+  {
+    "id": "murm1",
+    "label": "Murmurio",
+    "description": "Marcador padrao para fala contida ou pouco audivel.",
+    "template": "murmurou"
+  },
+  {
+    "id": "intr1",
+    "label": "Interrupcao",
+    "description": "Marcador padrao para fala cortada ou interrompida.",
+    "template": "interrompeu"
   }
 ]

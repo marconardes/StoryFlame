@@ -1,0 +1,331 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>StoryFlame Electron</title>
+    <link rel="stylesheet" href="./styles.css" />
+  </head>
+  <body>
+    <div class="shell">
+      <aside class="sidebar">
+        <div class="brand">
+          <p class="eyebrow">StoryFlame</p>
+          <h1>Workspace Electron</h1>
+          <p class="subtle">Estrutura inspirada na aplicacao Java, mantendo a shell em Electron.</p>
+        </div>
+
+        <div class="card">
+          <label for="titleInput">Titulo</label>
+          <input id="titleInput" type="text" placeholder="Novo Projeto" />
+          <label for="authorInput">Autor</label>
+          <input id="authorInput" type="text" placeholder="Autor" />
+        </div>
+
+        <div class="actions">
+          <button id="createButton" class="primary">Criar projeto</button>
+          <button id="openButton">Abrir arquivo</button>
+          <button id="saveButton">Salvar projeto</button>
+        </div>
+
+        <div class="card">
+          <p class="card-label">Diretorio base</p>
+          <p id="baseDirectory" class="mono">Carregando...</p>
+        </div>
+
+        <div class="card">
+          <p class="card-label">Projetos locais</p>
+          <div id="localProjects" class="local-projects">
+            <p class="subtle">Carregando lista local...</p>
+          </div>
+        </div>
+      </aside>
+
+      <main class="workspace">
+        <header class="workspace-toolbar header-bar">
+          <div class="toolbar-group">
+            <button id="toolbarCreateButton" class="toolbar-button">Novo</button>
+            <button id="toolbarOpenButton" class="toolbar-button">Abrir</button>
+            <button id="toolbarSaveButton" class="toolbar-button">Salvar</button>
+          </div>
+          <div class="toolbar-group toolbar-group-tabs">
+            <button id="tabEditorButton" class="tab-button active" data-tab="editor">Editor</button>
+            <button id="tabStructureButton" class="tab-button" data-tab="structure">Estrutura</button>
+            <button id="tabSearchButton" class="tab-button" data-tab="search">Busca</button>
+            <button id="tabCharactersButton" class="tab-button" data-tab="characters">Personagens</button>
+            <button id="tabTagsButton" class="tab-button" data-tab="tags">Tags</button>
+            <button id="tabAnalysisButton" class="tab-button" data-tab="analysis">Analise</button>
+          </div>
+          <div class="toolbar-group toolbar-group-metrics">
+            <span id="chapterCountBadge" class="toolbar-badge">0 capitulos</span>
+            <span id="sceneCountBadge" class="toolbar-badge">0 cenas</span>
+          </div>
+        </header>
+
+        <div class="workspace-body">
+          <section class="workspace-tab active" data-tab-panel="editor">
+            <section class="hero">
+              <div>
+                <p class="eyebrow">Sessao atual</p>
+                <h2 id="projectTitle">Nenhum projeto carregado</h2>
+                <p id="projectMeta" class="subtle">Crie ou abra um projeto para iniciar o fluxo Electron.</p>
+              </div>
+              <div class="status-panel">
+                <p class="card-label">Status</p>
+                <p id="statusMessage">Bridge iniciado.</p>
+                <p id="projectPath" class="mono"></p>
+              </div>
+            </section>
+
+            <section class="panel editor-panel">
+              <div class="panel-header header-bar">
+                <div>
+                  <h3>Editor da cena atual</h3>
+                  <p id="sceneSelectionLabel" class="subtle editor-subtle">Nenhuma cena selecionada.</p>
+                </div>
+                <button id="saveSceneButton" class="primary">Aplicar na sessao</button>
+              </div>
+
+              <div class="editor-grid">
+                <div class="field-stack">
+                  <label for="sceneTitleInput">Titulo da cena</label>
+                  <input id="sceneTitleInput" type="text" placeholder="Cena" />
+                </div>
+                <div class="field-stack">
+                  <label for="sceneSynopsisInput">Sinopse</label>
+                  <textarea id="sceneSynopsisInput" rows="3" placeholder="Resumo breve da cena"></textarea>
+                </div>
+                <div class="field-stack field-stack-wide">
+                  <label for="sceneContentInput">Conteudo</label>
+                  <textarea id="sceneContentInput" rows="12" placeholder="Texto da cena atual"></textarea>
+                  <div id="tagAutocomplete" class="tag-autocomplete hidden"></div>
+                </div>
+              </div>
+            </section>
+          </section>
+
+          <section class="workspace-tab" data-tab-panel="structure">
+            <section class="grid">
+              <article class="panel">
+                <div class="panel-header header-bar">
+                  <div>
+                    <h3>Estrutura</h3>
+                    <span id="structureCount" class="badge badge-compact">0 capitulos</span>
+                  </div>
+                  <div class="toolbar-actions toolbar-row">
+                    <button id="addChapterButton">+ Capitulo</button>
+                    <button id="removeChapterButton" class="btn-danger">- Capitulo</button>
+                    <button id="moveChapterUpButton">Capitulo ↑</button>
+                    <button id="moveChapterDownButton">Capitulo ↓</button>
+                  </div>
+                </div>
+                <div class="toolbar-actions toolbar-actions-secondary toolbar-row compact">
+                  <button id="addSceneButton">+ Cena</button>
+                  <button id="removeSceneButton" class="btn-danger">- Cena</button>
+                  <button id="moveSceneUpButton">Cena ↑</button>
+                  <button id="moveSceneDownButton">Cena ↓</button>
+                </div>
+                <div id="structureTree" class="structure empty-state">
+                  <p>Nenhuma estrutura carregada.</p>
+                  <button id="structureEmptyAction" class="btn-secondary">Adicionar capitulo</button>
+                </div>
+              </article>
+
+              <article class="panel">
+                <div class="panel-header header-bar">
+                  <h3>Validacao</h3>
+                  <span id="validationBadge" class="badge badge-ok">Sem bloqueios</span>
+                </div>
+                <ul id="validationList" class="validation-list">
+                  <li>Nenhuma validacao carregada.</li>
+                </ul>
+              </article>
+            </section>
+          </section>
+
+          <section class="workspace-tab" data-tab-panel="search">
+            <section class="panel search-panel">
+                <div class="panel-header header-bar">
+                  <div>
+                    <h3>Busca</h3>
+                    <p id="searchStatus" class="subtle editor-subtle">Digite para buscar no manuscrito.</p>
+                  </div>
+                  <span id="searchCountBadge" class="badge badge-compact">0 resultados</span>
+                </div>
+              <div class="field-stack">
+                <label for="searchQueryInput">Consulta</label>
+                <input id="searchQueryInput" type="text" placeholder="Buscar por capitulo, cena ou texto" />
+              </div>
+                <div id="searchResults" class="search-results empty-state">
+                  <p>Nenhum resultado ainda.</p>
+                  <button id="searchEmptyAction" class="btn-secondary">Buscar agora</button>
+                </div>
+            </section>
+          </section>
+
+          <section class="workspace-tab" data-tab-panel="characters">
+            <section class="characters-layout">
+              <article class="panel">
+                <div class="panel-header header-bar">
+                  <div>
+                    <h3>Personagens</h3>
+                    <span id="characterCountBadge" class="badge badge-compact">0 personagens</span>
+                  </div>
+                  <div class="toolbar-actions toolbar-row">
+                    <button id="addCharacterButton">Novo personagem</button>
+                    <button id="deleteCharacterButton" class="btn-danger">Excluir personagem</button>
+                  </div>
+                </div>
+                <div id="characterList" class="character-list empty-state">
+                  <p>Nenhum personagem carregado.</p>
+                  <button id="characterEmptyAction" class="btn-secondary">Novo personagem</button>
+                </div>
+              </article>
+
+              <article class="panel">
+                <div class="panel-header header-bar">
+                  <div>
+                    <h3>Ficha do personagem</h3>
+                    <p id="characterSelectionLabel" class="subtle editor-subtle">Nenhum personagem selecionado.</p>
+                  </div>
+                  <button id="saveCharacterButton" class="primary">Salvar personagem</button>
+                </div>
+                <div class="editor-grid">
+                  <div class="field-stack">
+                    <label for="characterNameInput">Nome</label>
+                    <input id="characterNameInput" type="text" placeholder="Personagem" />
+                  </div>
+                  <div class="field-stack">
+                    <label for="characterScenesInfo">Cenas ligadas</label>
+                    <div id="characterScenesInfo" class="info-chip">0 cenas ligadas</div>
+                  </div>
+                  <div class="field-stack field-stack-wide">
+                    <label for="characterDescriptionInput">Descricao</label>
+                    <textarea id="characterDescriptionInput" rows="10" placeholder="Ficha do personagem"></textarea>
+                  </div>
+                  <div class="field-stack field-stack-wide">
+                    <label for="characterPointOfViewInfo">POV</label>
+                    <div id="characterPointOfViewInfo" class="info-chip">Nao e o POV atual</div>
+                  </div>
+                </div>
+              </article>
+            </section>
+          </section>
+
+          <section class="workspace-tab" data-tab-panel="tags">
+            <section class="characters-layout">
+              <article class="panel">
+                <div class="panel-header header-bar">
+                  <div>
+                    <h3>Biblioteca de tags</h3>
+                    <span id="tagCountBadge" class="badge badge-compact">0 tags</span>
+                  </div>
+                  <div class="toolbar-actions toolbar-row">
+                    <button id="addTagButton">Nova tag</button>
+                    <button id="deleteTagButton" class="btn-danger">Excluir tag</button>
+                  </div>
+                </div>
+                <div id="tagList" class="character-list empty-state">
+                  <p>Nenhuma tag carregada.</p>
+                  <button id="tagEmptyAction" class="btn-secondary">Nova tag</button>
+                </div>
+              </article>
+
+              <article class="panel">
+                <div class="panel-header header-bar">
+                  <div>
+                    <h3>Ficha da tag</h3>
+                    <p id="tagSelectionLabel" class="subtle editor-subtle">Nenhuma tag selecionada.</p>
+                  </div>
+                  <button id="saveTagButton" class="primary">Salvar tag</button>
+                </div>
+                <div class="editor-grid">
+                  <div class="field-stack">
+                    <label for="tagIdInput">Id</label>
+                    <input id="tagIdInput" type="text" placeholder="falc1" />
+                  </div>
+                  <div class="field-stack">
+                    <label for="tagUsageInfo">Uso no manuscrito</label>
+                    <div id="tagUsageInfo" class="info-chip">0 usos no manuscrito</div>
+                  </div>
+                  <div class="field-stack">
+                    <label for="tagLabelInput">Rotulo</label>
+                    <input id="tagLabelInput" type="text" placeholder="Falha interna" />
+                  </div>
+                  <div class="field-stack field-stack-wide">
+                    <label for="tagTemplateInput">Texto renderizado</label>
+                    <textarea id="tagTemplateInput" rows="10" placeholder="Texto da tag"></textarea>
+                  </div>
+                </div>
+              </article>
+
+              <article class="panel profile-panel">
+                <div class="panel-header header-bar">
+                  <div>
+                    <h3>Perfil de tags</h3>
+                    <p id="profileSelectionLabel" class="subtle editor-subtle">Nenhum perfil selecionado.</p>
+                  </div>
+                  <button id="saveProfilePrefixButton" class="primary">Salvar prefixo</button>
+                </div>
+                <div id="profileList" class="character-list empty-state">
+                  <p>Nenhum perfil carregado.</p>
+                  <button id="profileEmptyAction" class="btn-secondary">Selecionar personagem</button>
+                </div>
+                <div class="field-stack">
+                  <label for="profilePrefixInput">Prefixo</label>
+                  <input id="profilePrefixInput" type="text" placeholder="prefixo" />
+                </div>
+                <div class="toolbar-actions toolbar-row compact">
+                  <button id="addTagToProfileButton">Adicionar tag selecionada</button>
+                  <button id="removeTagFromProfileButton" class="btn-danger">Remover tag selecionada</button>
+                </div>
+                <div id="profileTagsInfo" class="info-chip">Tags do perfil: nenhuma</div>
+              </article>
+            </section>
+          </section>
+
+          <section class="workspace-tab" data-tab-panel="analysis">
+            <section class="panel analysis-panel">
+              <div class="panel-header header-bar">
+                <div>
+                  <h3>Analise emocional</h3>
+                  <p id="analysisStatus" class="subtle editor-subtle">Analise ainda nao executada.</p>
+                </div>
+                <button id="runAnalysisButton" class="primary">Executar analise</button>
+              </div>
+              <div class="analysis-badges">
+                <span id="analysisSentimentBadge" class="badge badge-compact">Clima geral: sem analise</span>
+                <span id="analysisDominantBadge" class="badge badge-compact">Emocao mais presente: sem analise</span>
+                <span id="analysisChunkBadge" class="badge badge-compact">0 trechos avaliados</span>
+              </div>
+              <div id="analysisResults" class="analysis-results empty-state">
+                <p>Nenhum relatorio emocional carregado.</p>
+                <button id="analysisEmptyAction" class="btn-secondary">Executar analise</button>
+              </div>
+            </section>
+          </section>
+        </div>
+
+        <footer class="status-bar">
+          <span id="contextSummary">Projeto, estrutura e editor sincronizados no bridge local.</span>
+          <span id="autosaveLabel" class="status-pill status-neutral">Autosave: aguardando.</span>
+        </footer>
+      </main>
+    </div>
+
+    <script src="./ui-dom.js"></script>
+    <script src="./ui-state.js"></script>
+    <script src="./ui-utils.js"></script>
+    <script src="./ui-status.js"></script>
+    <script src="./ui-render.js"></script>
+    <script src="./ui-core-actions.js"></script>
+    <script src="./ui-project-actions.js"></script>
+    <script src="./ui-entity-actions.js"></script>
+    <script src="./ui-search-actions.js"></script>
+    <script src="./ui-actions.js"></script>
+    <script src="./ui-autocomplete.js"></script>
+    <script src="./ui-bindings.js"></script>
+    <script src="./ui-app.js"></script>
+    <script src="./renderer.js"></script>
+  </body>
+  </html>

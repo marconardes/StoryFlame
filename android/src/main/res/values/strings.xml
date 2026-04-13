@@ -1,5 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="app_name">StoryFlame</string>
+    <string name="android_scope_title">StoryFlame Android</string>
+    <string name="android_scope_subtitle">Modulo de apoio: consulta leve do nucleo compartilhado. Nao substitui a experiencia editorial principal do desktop.</string>
+    <string name="load_example_button">Carregar exemplo de apoio</string>
 </resources>
-

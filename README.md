@@ -1,6 +1,6 @@
 # StoryFlame
 
-StoryFlame e um app offline-first para escrita de web novel, com foco em Java Desktop e nucleo compartilhado com Android. O projeto salva tudo localmente em arquivos `.storyflame`, sem dependencia de servicos externos.
+StoryFlame e um app offline-first para escrita de web novel, com `core` em Java e migracao planejada da interface desktop para Electron. O projeto salva tudo localmente em arquivos `.storyflame`, sem dependencia de servicos externos, e a diretriz atual e entregar o produto final como uma distribuicao unificada por plataforma.
 
 ## Estado atual
 
@@ -15,13 +15,14 @@ O MVP ja cobre:
 - biblioteca local de tags e perfis por personagem
 - expansao de templates em `modo rascunho` e `modo render`
 - preview renderizado da cena atual no desktop
+- analise emocional offline com relatorio heuristico por chunks no desktop
 
 ## Estrutura
 
 ```text
 StoryFlame/
 ├── core/      # Dominio, persistencia ZIP/JSON, tags e validacoes
-├── desktop/   # Aplicacao principal em Java Swing
+├── desktop/   # Interface Swing legada em transicao
 ├── android/   # App Android usando o mesmo nucleo
 ├── docs/      # Notas de arquitetura e especificacoes
 ├── README.md
@@ -32,7 +33,7 @@ StoryFlame/
 
 Requisitos:
 
-- JDK 17
+- JDK 21
 - Android SDK configurado, se for buildar o app Android
 
 Comandos principais:
@@ -45,7 +46,7 @@ Comandos principais:
 ./gradlew :android:installDebug
 ```
 
-O desktop sobe com UTF-8 explicito via Gradle.
+O desktop Swing atual sobe com UTF-8 explicito via Gradle.
 
 ## Persistencia local
 
@@ -59,6 +60,7 @@ Arquivos relevantes do pacote atualmente incluem:
 - `project.json`
 - `narrative_tags.json`
 - `character_tag_profiles.json`
+- `analysis/emotion.json`
 - `chapters/*.json`
 - `characters/*.json`
 
@@ -77,9 +79,9 @@ No desktop:
 - `Modo rascunho` preserva as tags no texto
 - `Modo render` expande as tags para texto real no preview
 
-## Desktop
+## Desktop atual
 
-A app desktop hoje esta organizada assim:
+A interface Swing atual esta organizada assim:
 
 - painel fixo de `Projeto` na esquerda
 - abas para `Editor`, `Estrutura`, `Busca`, `Personagens` e `Tags`
@@ -90,10 +92,37 @@ Recursos relevantes:
 - busca de personagens
 - associacao simples entre tags e personagens
 - preview de expansao no resumo
+- aba `Analise` para gerar relatorio emocional offline de apoio, com heuristica lexical
+
+## Transicao de plataforma
+
+A direcao oficial do projeto agora e:
+
+- `Electron` como interface principal alvo
+- equivalencia funcional e estrutural com o produto atual
+- `core` em Java como centro da regra de negocio, validacoes e persistencia enquanto a migracao acontece
+- entrega final unificada por plataforma, com `Electron` como produto desktop distribuivel
+- migracao incremental, sem reescrever o dominio inteiro em TypeScript por padrao
+
+O plano consolidado dessa transicao esta em [docs/ELECTRON_MIGRATION_PLAN.md](/home/marconardes/IAS_Project/StoryFlame/docs/ELECTRON_MIGRATION_PLAN.md).
+
+Comandos atuais do shell Electron:
+
+```bash
+cd electron
+npm install
+npm start
+npm run package:dir
+./scripts/verify-e2.sh
+```
+
+Os comandos de pacote do Electron preparam primeiro o bridge Java local e depois geram a distribuicao do app. O verificador do `E2` checa sintaxe, bridge vendorizado e, quando `dist/linux-unpacked` ja existe, valida tambem o executavel empacotado e o bridge embutido.
+
+O `E4.5` cobre o ajuste final de empacotamento Linux e o tratamento definitivo dos avisos GTK/GLib no pacote distribuido.
 
 ## Android
 
-O modulo Android existe no monorepo e compila, mas a experiencia principal continua sendo a versao desktop nesta fase do MVP.
+O modulo Android existe no monorepo e compila, mas continua sendo modulo de apoio e validacao tardia do nucleo compartilhado, nao como frente principal de produto nem como interface editorial completa neste momento.
 
 ## Testes
 
@@ -104,6 +133,7 @@ Os testes atuais cobrem principalmente:
 - deteccao e parse de tags
 - validacao da biblioteca de tags
 - expansao de templates
+- pipeline emocional offline
 
 Execute:
 
@@ -113,7 +143,7 @@ Execute:
 
 ## Roadmap
 
-O planejamento semanal do MVP esta em [ROADMAP.md](ROADMAP.md).
+O planejamento oficial do projeto esta em [ROADMAP.md](ROADMAP.md). Este e o unico roadmap ativo do repositorio.
 
 ## Observacoes
 

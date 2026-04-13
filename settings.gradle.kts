@@ -19,5 +19,6 @@ dependencyResolutionManagement {
 rootProject.name = "StoryFlame"
 
 include(":core")
+include(":app")
 include(":desktop")
 include(":android")
