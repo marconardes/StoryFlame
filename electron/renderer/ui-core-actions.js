@@ -151,7 +151,7 @@ async function runAutosaveIfNeeded() {
   try {
     await window.storyflame.session.updateMetadata(dom.titleInput.value, dom.authorInput.value);
     await window.storyflame.session.updateScene(
-      dom.sceneTitleInput.value,
+      state.currentSession && state.currentSession.scene ? state.currentSession.scene.title : "",
       dom.sceneSynopsisInput.value,
       dom.sceneContentInput.value
     );

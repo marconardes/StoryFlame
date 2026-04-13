@@ -8,7 +8,6 @@ function renderSession(session, handlers) {
   if (!session) {
     dom.projectTitle.textContent = "Nenhum projeto carregado";
     dom.projectMeta.textContent = "Crie ou abra um projeto para iniciar o fluxo Electron.";
-    dom.projectPath.textContent = "";
     dom.structureCount.textContent = "0 capitulos";
     dom.chapterCountBadge.textContent = "0 capitulos";
     dom.sceneCountBadge.textContent = "0 cenas";
@@ -17,7 +16,7 @@ function renderSession(session, handlers) {
     dom.validationBadge.className = "badge";
     dom.validationList.innerHTML = "<li class=\"validation-item validation-ok\">Nenhuma validacao carregada.</li>";
     dom.sceneSelectionLabel.textContent = "Nenhuma cena selecionada.";
-    dom.sceneTitleInput.value = "";
+    renderSceneTitleSelect(null);
     dom.sceneSynopsisInput.value = "";
     dom.sceneContentInput.value = "";
     dom.characterCountBadge.textContent = "0 personagens";
@@ -63,17 +62,18 @@ function renderSession(session, handlers) {
   dom.authorInput.value = session.project.author || "";
   dom.projectTitle.textContent = session.project.title || "Projeto sem titulo";
   dom.projectMeta.textContent = `${session.project.author || "Autor"} • ${session.project.chapterCount} capitulos • ${session.project.sceneCount} cenas`;
-  dom.projectPath.textContent = session.path || "";
   status.setStatus(session.message || "Sessao carregada.", "success");
   dom.structureCount.textContent = `${session.project.chapterCount} capitulos`;
   dom.chapterCountBadge.textContent = `${session.project.chapterCount} capitulos`;
   dom.sceneCountBadge.textContent = `${session.project.sceneCount} cenas`;
   renderStructure(session.project.chapters || [], handlers);
   renderValidation(session.validation);
+  renderSceneTitleSelect(session);
   renderScene(session);
   renderCharacters(session.project.characters || [], session.characterSelection, handlers);
-  renderTags(session.project.tags || [], session.tagSelection, handlers);
-  renderProfiles(session.project.profiles || [], session.profileSelection, session.project.tags || [], handlers);
+  const tags = session.project.tags || session.project.narrativeTags || [];
+  renderTags(tags, session.tagSelection, handlers);
+  renderProfiles(session.project.profiles || [], session.profileSelection, tags, handlers);
   dom.runAnalysisButton.disabled = false;
   dom.contextSummary.textContent = session.selection && session.scene
     ? `Capitulo ativo: ${session.selection.chapterId} • Cena ativa: ${session.selection.sceneId}`
@@ -128,9 +128,9 @@ function renderScene(session) {
   const scene = session.scene;
   if (!scene) {
     dom.sceneSelectionLabel.textContent = "Nenhuma cena selecionada.";
-    dom.sceneTitleInput.value = "";
     dom.sceneSynopsisInput.value = "";
     dom.sceneContentInput.value = "";
+    dom.sceneTitleSelect.value = "";
     return;
   }
 
@@ -138,9 +138,53 @@ function renderScene(session) {
     (item) => item.id === session.selection.chapterId
   );
   dom.sceneSelectionLabel.textContent = `${chapter ? chapter.title : "Capitulo"} / ${scene.title || "Cena"}`;
-  dom.sceneTitleInput.value = scene.title || "";
+  dom.sceneTitleSelect.value = `${session.selection.chapterId}::${session.selection.sceneId}`;
   dom.sceneSynopsisInput.value = scene.synopsis || "";
   dom.sceneContentInput.value = scene.content || "";
+}
+
+function renderSceneTitleSelect(session) {
+  const select = dom.sceneTitleSelect;
+  if (!select) {
+    return;
+  }
+
+  select.innerHTML = "";
+
+  if (!session || !session.project || !session.project.chapters || session.project.chapters.length === 0) {
+    const option = document.createElement("option");
+    option.value = "";
+    option.textContent = "Nenhuma cena disponivel";
+    option.selected = true;
+    option.disabled = true;
+    select.appendChild(option);
+    select.disabled = true;
+    return;
+  }
+
+  const placeholder = document.createElement("option");
+  placeholder.value = "";
+  placeholder.textContent = "Selecione uma cena";
+  placeholder.disabled = true;
+  select.appendChild(placeholder);
+
+  session.project.chapters.forEach((chapter) => {
+    (chapter.scenes || []).forEach((scene) => {
+      const option = document.createElement("option");
+      option.value = `${chapter.id}::${scene.id}`;
+      option.textContent = `${chapter.title || "Capitulo"} / ${scene.title || "Cena"}`;
+      select.appendChild(option);
+    });
+  });
+
+  const selectedValue = session.selection
+    ? `${session.selection.chapterId}::${session.selection.sceneId}`
+    : "";
+  select.value = selectedValue;
+  select.disabled = false;
+  if (!select.value) {
+    placeholder.selected = true;
+  }
 }
 
 function renderValidation(validation) {

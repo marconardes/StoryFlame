@@ -71,7 +71,24 @@ function initBindings() {
     autocomplete.updateTagAutocomplete();
   });
 
+  dom.sceneContentInput.addEventListener("click", () => {
+    autocomplete.updateTagAutocomplete();
+  });
+
+  dom.sceneContentInput.addEventListener("mouseup", () => {
+    autocomplete.updateTagAutocomplete();
+  });
+
+  dom.sceneContentInput.addEventListener("scroll", () => {
+    autocomplete.refreshTagAutocompletePosition();
+  });
+
   dom.sceneContentInput.addEventListener("keydown", (event) => {
+    if (event.ctrlKey && event.code === "Space") {
+      event.preventDefault();
+      autocomplete.showTagAutocomplete();
+      return;
+    }
     if (dom.tagAutocomplete.classList.contains("hidden")) {
       return;
     }
@@ -93,10 +110,21 @@ function initBindings() {
     dom.tagAutocomplete.classList.add("hidden");
   });
 
+  dom.sceneTitleSelect.addEventListener("change", () => {
+    if (!dom.sceneTitleSelect.value) {
+      return;
+    }
+    const [chapterId, sceneId] = dom.sceneTitleSelect.value.split("::");
+    actions.selectScene(chapterId, sceneId);
+  });
+
+  window.addEventListener("resize", () => {
+    autocomplete.refreshTagAutocompletePosition();
+  });
+
   [
     dom.titleInput,
     dom.authorInput,
-    dom.sceneTitleInput,
     dom.sceneSynopsisInput,
     dom.sceneContentInput,
     dom.characterNameInput,

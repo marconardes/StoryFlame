@@ -71,14 +71,12 @@
                 <p id="projectMeta" class="subtle">Crie ou abra um projeto para iniciar o fluxo Electron.</p>
               </div>
               <div class="status-panel">
-                <p class="card-label">Status</p>
-                <p id="statusMessage">Bridge iniciado.</p>
-                <p id="projectPath" class="mono"></p>
+                <span id="statusMessage" class="status-pill status-success">Bridge iniciado.</span>
               </div>
             </section>
 
             <section class="panel editor-panel">
-              <div class="panel-header header-bar">
+              <div class="panel-header">
                 <div>
                   <h3>Editor da cena atual</h3>
                   <p id="sceneSelectionLabel" class="subtle editor-subtle">Nenhuma cena selecionada.</p>
@@ -87,17 +85,17 @@
               </div>
 
               <div class="editor-grid">
-                <div class="field-stack">
-                  <label for="sceneTitleInput">Titulo da cena</label>
-                  <input id="sceneTitleInput" type="text" placeholder="Cena" />
+                <div class="field-stack field-stack-wide">
+                  <label for="sceneTitleSelect">Cena</label>
+                  <select id="sceneTitleSelect"></select>
                 </div>
-                <div class="field-stack">
+                <div class="field-stack field-stack-wide">
                   <label for="sceneSynopsisInput">Sinopse</label>
                   <textarea id="sceneSynopsisInput" rows="3" placeholder="Resumo breve da cena"></textarea>
                 </div>
                 <div class="field-stack field-stack-wide">
                   <label for="sceneContentInput">Conteudo</label>
-                  <textarea id="sceneContentInput" rows="12" placeholder="Texto da cena atual"></textarea>
+                  <textarea id="sceneContentInput" rows="14" placeholder="Texto da cena atual"></textarea>
                   <div id="tagAutocomplete" class="tag-autocomplete hidden"></div>
                 </div>
               </div>
@@ -106,8 +104,8 @@
 
           <section class="workspace-tab" data-tab-panel="structure">
             <section class="grid">
-              <article class="panel">
-                <div class="panel-header header-bar">
+              <article class="panel structure-panel">
+                <div class="panel-header">
                   <div>
                     <h3>Estrutura</h3>
                     <span id="structureCount" class="badge badge-compact">0 capitulos</span>
@@ -132,7 +130,7 @@
               </article>
 
               <article class="panel">
-                <div class="panel-header header-bar">
+                <div class="panel-header">
                   <h3>Validacao</h3>
                   <span id="validationBadge" class="badge badge-ok">Sem bloqueios</span>
                 </div>
@@ -145,7 +143,7 @@
 
           <section class="workspace-tab" data-tab-panel="search">
             <section class="panel search-panel">
-                <div class="panel-header header-bar">
+                <div class="panel-header">
                   <div>
                     <h3>Busca</h3>
                     <p id="searchStatus" class="subtle editor-subtle">Digite para buscar no manuscrito.</p>
@@ -166,7 +164,7 @@
           <section class="workspace-tab" data-tab-panel="characters">
             <section class="characters-layout">
               <article class="panel">
-                <div class="panel-header header-bar">
+                <div class="panel-header">
                   <div>
                     <h3>Personagens</h3>
                     <span id="characterCountBadge" class="badge badge-compact">0 personagens</span>
@@ -183,7 +181,7 @@
               </article>
 
               <article class="panel">
-                <div class="panel-header header-bar">
+                <div class="panel-header">
                   <div>
                     <h3>Ficha do personagem</h3>
                     <p id="characterSelectionLabel" class="subtle editor-subtle">Nenhum personagem selecionado.</p>
@@ -215,7 +213,7 @@
           <section class="workspace-tab" data-tab-panel="tags">
             <section class="characters-layout">
               <article class="panel">
-                <div class="panel-header header-bar">
+                <div class="panel-header">
                   <div>
                     <h3>Biblioteca de tags</h3>
                     <span id="tagCountBadge" class="badge badge-compact">0 tags</span>
@@ -232,7 +230,7 @@
               </article>
 
               <article class="panel">
-                <div class="panel-header header-bar">
+                <div class="panel-header">
                   <div>
                     <h3>Ficha da tag</h3>
                     <p id="tagSelectionLabel" class="subtle editor-subtle">Nenhuma tag selecionada.</p>
@@ -260,7 +258,7 @@
               </article>
 
               <article class="panel profile-panel">
-                <div class="panel-header header-bar">
+                <div class="panel-header">
                   <div>
                     <h3>Perfil de tags</h3>
                     <p id="profileSelectionLabel" class="subtle editor-subtle">Nenhum perfil selecionado.</p>
@@ -286,7 +284,7 @@
 
           <section class="workspace-tab" data-tab-panel="analysis">
             <section class="panel analysis-panel">
-              <div class="panel-header header-bar">
+              <div class="panel-header">
                 <div>
                   <h3>Analise emocional</h3>
                   <p id="analysisStatus" class="subtle editor-subtle">Analise ainda nao executada.</p>

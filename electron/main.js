@@ -1,4 +1,4 @@
-const { app, BrowserWindow, dialog, ipcMain } = require("electron");
+const { app, BrowserWindow, dialog, ipcMain, Menu } = require("electron");
 const fs = require("fs");
 const path = require("path");
 const { spawn } = require("child_process");
@@ -7,6 +7,7 @@ const readline = require("readline");
 const ROOT_DIR = path.resolve(__dirname, "..");
 const IS_WINDOWS = process.platform === "win32";
 const IS_LINUX = process.platform === "linux";
+const IS_UI_DEBUG = process.env.STORYFLAME_ELECTRON_DEVTOOLS === "1";
 
 if (IS_LINUX) {
   app.disableHardwareAcceleration();
@@ -34,6 +35,39 @@ function createWindow() {
     }
   });
   window.loadFile(path.join(__dirname, "renderer", "index.html"));
+  window.maximize();
+
+  window.webContents.on("before-input-event", (event, input) => {
+    const toggleShortcut = input.key === "F12" || (input.control && input.shift && input.key.toLowerCase() === "i");
+    if (!toggleShortcut) {
+      return;
+    }
+    event.preventDefault();
+    if (window.webContents.isDevToolsOpened()) {
+      window.webContents.closeDevTools();
+    } else {
+      window.webContents.openDevTools({ mode: "detach" });
+    }
+  });
+
+  window.webContents.on("context-menu", (event, params) => {
+    const menu = Menu.buildFromTemplate([
+      {
+        label: "Inspect Element",
+        click: () => {
+          window.webContents.inspectElement(params.x, params.y);
+          if (!window.webContents.isDevToolsOpened()) {
+            window.webContents.openDevTools({ mode: "detach" });
+          }
+        }
+      }
+    ]);
+    menu.popup({ window });
+  });
+
+  if (IS_UI_DEBUG) {
+    window.webContents.openDevTools({ mode: "detach" });
+  }
 }
 
 function resolveBridgeCommand() {

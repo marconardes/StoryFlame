@@ -54,23 +54,27 @@ function extractTagToken(text, caretPos) {
   if (!text || caretPos <= 0) {
     return null;
   }
-  let start = caretPos - 1;
-  while (start >= 0 && !/\\s/.test(text[start])) {
-    start -= 1;
-  }
-  const token = text.slice(start + 1, caretPos);
-  if (!token.startsWith("#")) {
+  const start = text.lastIndexOf("{", caretPos - 1);
+  if (start < 0) {
     return null;
   }
-  return { query: token.slice(1), start: start + 1, end: caretPos };
+  const end = text.indexOf("}", start + 1);
+  if (end !== -1 && end < caretPos) {
+    return null;
+  }
+  const token = text.slice(start, caretPos);
+  if (!token.startsWith("{")) {
+    return null;
+  }
+  return { query: token.slice(1), start, end: caretPos };
 }
 
 function buildTagSuggestions(session, query) {
-  if (!session || !session.project || !session.project.tags) {
+  if (!session || !session.project) {
     return [];
   }
   const normalized = (query || "").trim().toLowerCase();
-  const tags = session.project.tags || [];
+  const tags = session.project.tags || session.project.narrativeTags || [];
   return tags
     .filter((tag) => {
       if (!normalized) {

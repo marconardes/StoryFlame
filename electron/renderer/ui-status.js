@@ -5,7 +5,7 @@ const { dom, state } = window.storyflameUI;
 
 function setStatus(message, tone = "neutral") {
   dom.statusMessage.textContent = message;
-  dom.statusMessage.className = `status-text status-${tone}`;
+  dom.statusMessage.className = `status-pill status-${tone}`;
 }
 
 function setInlineStatus(element, message, tone = "neutral", baseClass = "editor-subtle") {

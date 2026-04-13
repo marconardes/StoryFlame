@@ -32,7 +32,7 @@ window.storyflameUI.dom = {
   baseDirectory: document.querySelector("#baseDirectory"),
   localProjects: document.querySelector("#localProjects"),
   sceneSelectionLabel: document.querySelector("#sceneSelectionLabel"),
-  sceneTitleInput: document.querySelector("#sceneTitleInput"),
+  sceneTitleSelect: document.querySelector("#sceneTitleSelect"),
   sceneSynopsisInput: document.querySelector("#sceneSynopsisInput"),
   sceneContentInput: document.querySelector("#sceneContentInput"),
   tagAutocomplete: document.querySelector("#tagAutocomplete"),
