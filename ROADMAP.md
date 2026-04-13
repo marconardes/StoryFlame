@@ -145,7 +145,7 @@ Criterio de pronto:
 - UX revisa e aprova a nova base visual e de navegacao
 
 Status atual:
-- em andamento (refino visual, densidade, padronizacao de componentes e empacotamento Linux)
+- concluido
 
 #### Marco E4.5 - Empacotamento Linux e GTK
 Objetivo:
@@ -162,7 +162,7 @@ Criterio de pronto:
 - a entrega final permanece unificada por plataforma
 
 Status atual:
-- em andamento
+- concluido
 
 #### Marco E5 - Mapeamento de paridade Swing
 Objetivo:

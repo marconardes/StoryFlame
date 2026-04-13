@@ -415,14 +415,14 @@ Status atual desta frente:
 
 #### Status detalhado do E4
 
-- E4 geral: em andamento, 84% concluido, 16% pendente
+- E4 geral: concluido, 100% concluido, 0% pendente
 - E4.1 (layout e navegacao similar ao Java): 100% concluido, 0% pendente
 - E4.2 (padronizacao de estados visuais): 100% concluido, 0% pendente
 - E4.3 (modularizacao do renderer): concluido
 - E4.3 arquivos base: `electron/renderer/ui-core-actions.js`, `electron/renderer/ui-actions.js`, `electron/renderer/ui-project-actions.js`, `electron/renderer/ui-entity-actions.js`, `electron/renderer/ui-search-actions.js`, `electron/renderer/ui-render.js`, `electron/renderer/ui-bindings.js`, `electron/renderer/ui-app.js`
 - E4.3 percentual: 100% concluido, 0% pendente
 - E4.4 (layout similar ao Java com ajustes ergonômicos): 100% concluido, 0% pendente
-- E4.5 (empacotamento Linux e tratamento GTK/GLib): 0% concluido, 100% pendente
+- E4.5 (empacotamento Linux e tratamento GTK/GLib): 100% concluido, 0% pendente
 
 ### Fase 7 - Remocao do bridge Java (E6)
 
