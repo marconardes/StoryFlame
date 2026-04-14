@@ -1,6 +1,6 @@
 # StoryFlame
 
-StoryFlame e um app offline-first para escrita de web novel, com `core` em Java e migracao planejada da interface desktop para Electron. O projeto salva tudo localmente em arquivos `.storyflame`, sem dependencia de servicos externos, e a diretriz atual e entregar o produto final como uma distribuicao unificada por plataforma.
+StoryFlame e um app offline-first para escrita de web novel, com `core` em Java e interface desktop Swing. O projeto salva tudo localmente em arquivos `.storyflame`, sem dependencia de servicos externos, e a diretriz atual e manter a aplicacao desktop focada em Swing com backend Java separado.
 
 ## Estado atual
 
@@ -94,31 +94,15 @@ Recursos relevantes:
 - preview de expansao no resumo
 - aba `Analise` para gerar relatorio emocional offline de apoio, com heuristica lexical
 
-## Transicao de plataforma
+## Direcao de plataforma
 
 A direcao oficial do projeto agora e:
 
-- `Electron` como interface principal alvo
-- equivalencia funcional e estrutural com o produto atual
-- `core` em Java como centro da regra de negocio, validacoes e persistencia enquanto a migracao acontece
-- entrega final unificada por plataforma, com `Electron` como produto desktop distribuivel
-- migracao incremental, sem reescrever o dominio inteiro em TypeScript por padrao
-
-O plano consolidado dessa transicao esta em [docs/ELECTRON_MIGRATION_PLAN.md](/home/marconardes/IAS_Project/StoryFlame/docs/ELECTRON_MIGRATION_PLAN.md).
-
-Comandos atuais do shell Electron:
-
-```bash
-cd electron
-npm install
-npm start
-npm run package:dir
-./scripts/verify-e2.sh
-```
-
-Os comandos de pacote do Electron preparam primeiro o bridge Java local e depois geram a distribuicao do app. O verificador do `E2` checa sintaxe, bridge vendorizado e, quando `dist/linux-unpacked` ja existe, valida tambem o executavel empacotado e o bridge embutido.
-
-O `E4.5` cobre o ajuste final de empacotamento Linux e o tratamento definitivo dos avisos GTK/GLib no pacote distribuido.
+- `Swing` como interface desktop principal
+- `core` em Java como centro da regra de negocio, validacoes e persistencia
+- separacao clara entre backend, frontend e revisao de UX
+- evolucao incremental da UI Swing sem introduzir uma shell separada
+- foco em estabilidade, consistencia visual e baixo acoplamento entre modulos
 
 ## Android
 

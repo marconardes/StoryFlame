@@ -33,6 +33,20 @@ class ProjectApplicationServiceTest {
     }
 
     @Test
+    void createProjectDoesNotOverwriteExistingArchiveWithSameTitle() {
+        ProjectApplicationService service = newService();
+
+        ProjectApplicationService.LoadedProject first = service.createProject("Projeto Ativo", "Autor");
+        ProjectApplicationService.LoadedProject second = service.createProject("Projeto Ativo", "Autor");
+
+        assertTrue(Files.exists(first.path()));
+        assertTrue(Files.exists(second.path()));
+        assertFalse(first.path().equals(second.path()));
+        assertEquals("projeto-ativo.storyflame", first.path().getFileName().toString());
+        assertTrue(second.path().getFileName().toString().startsWith("projeto-ativo-"));
+    }
+
+    @Test
     void saveProjectRenamesManagedArchiveWhenTitleChanges() {
         ProjectApplicationService service = newService();
         ProjectApplicationService.LoadedProject loadedProject = service.createProject("Projeto Inicial", "Autor");
@@ -66,7 +80,7 @@ class ProjectApplicationServiceTest {
 
         assertEquals("DTO Projeto", result.project().getTitle());
         assertEquals("SAVE_ARCHIVE", result.validation().operation());
-        assertTrue(result.message().startsWith("Projeto criado em "));
+        assertEquals("Projeto criado.", result.message());
     }
 
     @Test

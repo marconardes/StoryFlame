@@ -298,22 +298,19 @@ Ferramenta de escrita de romance com grande ênfase em personagens, arquitetura 
 ### Onde o StoryFlame pode se diferenciar
 
 - escopo mais enxuto e mais fácil de manter
-- desktop principal em Java Swing, sem peso de Electron
+- desktop principal em Java Swing
 - persistência de projeto mais direta
 - tags narrativas e preview renderizado são diferenciais próprios
 
 ### Implementação
 
 - stack confirmada:
-  - Electron
   - AngularJS 1.x
   - LokiJS
 - evidências:
   - `app/package.json`
-  - `app/index.js`
   - `app/app.module.js`
 - arquitetura observada:
-  - processo principal Electron em `app/index.js`
   - SPA AngularJS em `app/app.module.js`
   - muitas features organizadas por componentes em `app/components/*`
   - persistência local apoiada por `lokijs`

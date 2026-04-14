@@ -53,7 +53,7 @@ public final class ProjectApplicationService {
         Project project = store.createProject(title, author);
         ensureEditorStructure(project);
         CharacterTagProfileSynchronizer.synchronize(project);
-        Path path = ProjectStoragePaths.suggestedArchivePath(store.getBaseDirectory(), project);
+        Path path = resolveNewProjectPath(project);
         store.save(project, path);
         return new LoadedProject(project, path);
     }
@@ -72,7 +72,7 @@ public final class ProjectApplicationService {
                 loadedProject.project(),
                 loadedProject.path(),
                 ProjectValidationDto.from(validateForSave(loadedProject.project())),
-                "Projeto criado em " + loadedProject.path()
+                "Projeto criado."
         );
     }
 
@@ -83,7 +83,7 @@ public final class ProjectApplicationService {
                 loadedProject.project(),
                 loadedProject.path(),
                 ProjectValidationDto.from(validateForSave(loadedProject.project())),
-                "Projeto aberto de " + loadedProject.path()
+                "Projeto aberto."
         );
     }
 
@@ -94,7 +94,7 @@ public final class ProjectApplicationService {
                 request.project(),
                 saveResult.path(),
                 ProjectValidationDto.from(validateForSave(request.project())),
-                "Projeto salvo em " + saveResult.path()
+                "Projeto salvo."
         );
     }
 
@@ -195,6 +195,22 @@ public final class ProjectApplicationService {
                 chapter.getScenes().add(new Scene(null, "Cena 1", "", null));
             }
         }
+    }
+
+    private Path resolveNewProjectPath(Project project) {
+        Path suggestedPath = ProjectStoragePaths.suggestedArchivePath(store.getBaseDirectory(), project);
+        if (!Files.exists(suggestedPath)) {
+            return suggestedPath;
+        }
+        String fileName = suggestedPath.getFileName().toString();
+        String stem = fileName.substring(0, fileName.length() - ProjectStoragePaths.ARCHIVE_EXTENSION.length());
+        for (int index = 2; index < 10_000; index++) {
+            Path candidate = suggestedPath.resolveSibling(stem + "-" + index + ProjectStoragePaths.ARCHIVE_EXTENSION);
+            if (!Files.exists(candidate)) {
+                return candidate;
+            }
+        }
+        throw new IllegalStateException("Nao foi possivel gerar um nome unico para o novo projeto.");
     }
 
     public record LoadedProject(Project project, Path path) {

@@ -2,7 +2,7 @@
 
 ## Objetivo
 
-Manter um plano operacional curto e atualizado para consolidar o StoryFlame como projeto desktop offline-first multiplataforma, com `core` em `Java 21` e migracao planejada da interface de `Swing` para `Electron`, preservando equivalencia estrutural e funcional e preparando a entrega final como distribuicao unificada por plataforma.
+Manter um plano operacional curto e atualizado para consolidar o StoryFlame como projeto desktop offline-first multiplataforma, com `core` em `Java 21` e interface Swing, preservando equivalencia estrutural e funcional e preparando a entrega final como distribuicao desktop coesa.
 
 ## Estado atual
 
@@ -19,18 +19,17 @@ Manter um plano operacional curto e atualizado para consolidar o StoryFlame como
 - reducao de acoplamento da `StoryFlameDesktopApp`
 - consolidacao de criterios de pronto por sprint no uso real
 - revisao de UX dos fluxos apos a mudanca de responsividade
-- preparacao do `E4`, com refactor estrutural da UI Electron apos a paridade funcional minima
+- preparacao do `E4`, com refactor estrutural da UI Swing apos a paridade funcional minima
 
 ### Pendente
-- refactor estrutural da UI Electron apos a paridade funcional minima
-- mapeamento de paridade Swing -> Electron (`E5`)
-- planejamento e execucao do `E6` para remover o bridge Java externo
-- planejamento do `E8` para remover totalmente Java da aplicacao final
-- preservacao da familiaridade do layout Java na composicao final da UI Electron
-- cobertura de testes especifica da transicao `Java <-> Electron`
+- refactor estrutural da UI Swing apos a paridade funcional minima
+- mapeamento de paridade e consistencia da UI (`E5`)
+- planejamento e execucao do `E6` para reduzir acoplamento entre UI e backend
+- planejamento do `E8` para consolidar o desktop Java
+- preservacao da familiaridade do layout Java na composicao final da UI
+- cobertura de testes especifica da evolucao da interface
 - definicao mais objetiva do escopo pratico do `android`
 - refinamento de UX nos fluxos de exportacao, importacao e analise
-- tratar avisos recorrentes do Electron/GTK no Linux (GLib-GObject) com solucao definitiva no empacotamento/ambiente
 
 ## Eixo 1 - Alinhamento de base
 
@@ -58,7 +57,7 @@ Manter um plano operacional curto e atualizado para consolidar o StoryFlame como
 
 ### O que ainda falta
 - transformar a separacao arquitetural em menor concentracao real de responsabilidades na UI principal
-- estabilizar contratos mais enxutos para consumo do Electron
+- estabilizar contratos mais enxutos para consumo da UI Swing
 
 ## Eixo 3 - Estabilizacao tecnica do desktop
 
@@ -111,12 +110,12 @@ Essas operacoes passaram a rodar fora da EDT, com estado de espera e tratamento 
 
 ## Proximas acoes recomendadas
 
-1. Executar o `E3` pela migracao dos modulos editoriais restantes para `Electron`.
-2. Criar testes focados nos contratos da migracao e nos fluxos Electron ja ativos.
-3. Estabilizar DTOs e contratos de sessao para reduzir dependencia de objetos de dominio ricos no bridge.
-4. Planejar o `E4` como refactor da UI Electron, separado da migracao funcional.
-   O refactor deve manter a organizacao visual principal proxima da experiencia Java atual, mas implementada corretamente em Electron.
-5. Limitar o `android` a validacao de portabilidade ate a nova frente Electron estabilizar o fluxo principal.
+1. Executar o `E3` pela consolidacao dos modulos editoriais restantes em Swing.
+2. Criar testes focados nos contratos da interface e nos fluxos ja ativos.
+3. Estabilizar DTOs e contratos de sessao para reduzir dependencia de objetos de dominio ricos na UI.
+4. Planejar o `E4` como refactor da UI Swing, separado da consolidacao funcional.
+   O refactor deve manter a organizacao visual principal proxima da experiencia Java atual, mas com melhor separacao interna.
+5. Limitar o `android` a validacao de portabilidade ate a UI desktop estabilizar o fluxo principal.
 
 ## Politica de uso de modelo (operacao)
 
@@ -124,7 +123,7 @@ Objetivo:
 - reduzir consumo de cota sem perder qualidade nas etapas criticas
 
 Regra atual:
-- usar `codex medium` em tarefas de arquitetura, refactor estrutural, integracao bridge/backend e depuracao de regressao
+- usar `codex medium` em tarefas de arquitetura, refactor estrutural, integracao backend e depuracao de regressao
 - usar `gpt-5.4-mini low` em tarefas mecanicas de UI, ajustes pequenos de texto/estilo e organizacao repetitiva
 
 Gatilhos de troca:

@@ -2,17 +2,17 @@
 
 ## Visao geral
 
-O StoryFlame e um sistema desktop offline-first para gerenciamento de manuscritos, com `core` em Java 21 e migracao planejada da interface de `Swing` para `Electron`. O Android continua como validacao tardia de portabilidade do nucleo. A diretriz atual da migracao e preservar equivalencia estrutural e funcional com o produto existente, entregando ao final uma distribuicao unificada por plataforma.
+O StoryFlame e um sistema desktop offline-first para gerenciamento de manuscritos, com `core` em Java 21 e interface desktop Swing. O Android continua como validacao tardia de portabilidade do nucleo. A diretriz atual e preservar equivalencia estrutural e funcional dentro da stack Java existente, com frontend Swing e backend Java bem separados.
 
 O projeto trabalha com duas visoes complementares:
 
 - visao de responsabilidade: `backend`, `frontend` e `ux`
-- visao de modulo: `core`, `desktop`, `electron` e `android`
+- visao de modulo: `core`, `desktop` e `android`
 
 Essas visoes nao competem entre si. Elas se sobrepoem da seguinte forma:
 
 - `backend` vive principalmente no modulo `core`
-- `frontend` vive hoje principalmente no modulo `desktop`, mas a interface-alvo passa a ser `electron`
+- `frontend` vive principalmente no modulo `desktop`, com foco em Swing
 - `ux` revisa fluxos e interfaces, sem virar modulo de runtime
 - `android` reutiliza o `core`, mas nao e a experiencia principal do MVP
 
@@ -23,9 +23,8 @@ Essas visoes nao competem entre si. Elas se sobrepoem da seguinte forma:
 - permitir evolucao incremental do desktop
 - preservar responsividade da UI durante a transicao de plataforma
 - manter o produto offline-first
-- permitir migracao para Electron sem reescrever o dominio por padrao
 - preservar equivalencia estrutural entre a logica atual e a entrega final
-- permitir empacotamento unificado do produto final por plataforma
+- manter o produto desktop coerente e responsivo
 
 ## Mapeamento de responsabilidades
 
@@ -51,10 +50,7 @@ Responsavel por:
 
 No repositorio atual, isso fica concentrado em `desktop`.
 
-Na arquitetura-alvo, isso sera repartido entre:
-
-- modulo Java de aplicacao para contratos e casos de uso
-- modulo `electron` para shell, navegacao e apresentacao
+Na arquitetura atual, isso continua concentrado na aplicacao Swing, com contratos Java claros entre o frontend e o backend.
 
 ### UX
 Responsavel por:
@@ -84,14 +80,6 @@ Responsavel por:
 - exibicao de estados, erros e resultados
 - operacoes Swing executadas na thread correta
 
-### `electron`
-Responsavel por:
-- nova interface principal do produto
-- shell desktop multiplataforma
-- navegacao, layout e feedback visual modernos
-- integracao com backend Java local por bridge ou IPC
-- composicao da distribuicao final unificada do produto desktop
-
 ### `android`
 Responsavel por:
 - validacao de portabilidade do nucleo
@@ -104,7 +92,6 @@ O Android nao deve guiar a ordem das prioridades do MVP enquanto a transicao pri
 - `core` nao depende de Swing
 - `desktop` nao implementa regra de negocio
 - `desktop` nao acessa persistencia fora dos contratos do `core`
-- `electron` nao implementa regra de negocio
 - validacoes criticas ficam no `core`
 - UX revisa comportamento e clareza, nao logica de dominio
 
@@ -112,12 +99,7 @@ O Android nao deve guiar a ordem das prioridades do MVP enquanto a transicao pri
 
 As interfaces devem consumir o `core` por servicos e tipos explicitos, evitando espalhar regra de negocio na UI.
 
-Durante a transicao para Electron, deve existir uma camada de aplicacao Java entre `core` e frontend.
-
-Essa camada existe para dois objetivos:
-
-- preservar equivalencia de comportamento entre Swing e Electron durante a migracao
-- permitir que a distribuicao final em Electron embarque a logica equivalente sem mover regra de negocio para o renderer
+A camada de aplicacao Java entre `core` e frontend existe para manter os casos de uso claros e evitar que a UI Swing acesse persistencia ou regra de negocio diretamente.
 
 Contratos atuais relevantes incluem:
 
@@ -144,18 +126,17 @@ Enquanto a UI Swing ainda estiver ativa:
 - atualizacoes visuais devem acontecer apenas na thread correta
 - operacoes longas devem exibir estado de carregamento ou progresso
 
-Na nova frente Electron:
+Na UI Swing:
 
 - operacoes pesadas continuam fora da camada de apresentacao
-- a bridge entre Electron e Java nao deve transportar regra de negocio para o renderer
-- estados de carregamento, erro e sucesso devem ser unificados na nova linguagem visual
-- o empacotamento final deve ser percebido pelo usuario como um unico app por plataforma, mesmo que internamente exista mais de um processo
+- estados de carregamento, erro e sucesso devem ser consistentes
+- o empacotamento final deve ser percebido pelo usuario como um unico app desktop coeso
 
 ## Risco arquitetural atual
 
 O principal risco tecnico atual esta na concentracao de responsabilidades da UI desktop. A janela principal ainda acumula estado, navegacao, integracao e acoes demais.
 
-O principal risco da migracao e repetir esse acoplamento em Electron sem antes criar contratos de aplicacao claros.
+O principal risco tecnico atual e repetir esse acoplamento dentro da propria janela Swing sem separar bem contratos de aplicacao.
 
 Diretriz de mitigacao:
 
@@ -164,7 +145,7 @@ Diretriz de mitigacao:
 - manter nomes e contratos claros
 - evitar refatoracao ampla sem entregas concretas
 - migrar por fatias funcionais, nao por reescrita total
-- tratar a equivalencia funcional como criterio de aceite em cada fatia migrada
+- tratar a equivalencia funcional como criterio de aceite em cada fatia entregue
 
 ## Fluxo padrao entre agentes
 
@@ -182,4 +163,4 @@ Uma funcionalidade so esta pronta quando:
 - UX revisou o fluxo alterado
 - testes relevantes passam
 - a interface continua responsiva
-- a mudanca permanece coerente com `core`, `desktop`, `electron` e `android`
+- a mudanca permanece coerente com `core`, `desktop` e `android`
